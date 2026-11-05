@@ -41,7 +41,13 @@ export function AdSlot({
     try {
       w.adsbygoogle.push({});
       const timer = window.setTimeout(() => {
-        const filled = Boolean(ref.current?.getAttribute("data-ad-status") === "filled" || (ref.current?.clientHeight ?? 0) > 40);
+        const ins = ref.current;
+        const status = ins?.getAttribute("data-ad-status");
+        // Reserved min-height survives an AdSense height:0 collapse, so only extra height counts.
+        const reservedHeight = AD_SLOT_MIN_HEIGHT_PX - 36;
+        const filled =
+          status === "filled" ||
+          (status !== "unfilled" && (ins?.clientHeight ?? 0) > reservedHeight);
         setState(filled ? "filled" : "no-fill");
       }, 1800);
       return () => window.clearTimeout(timer);
