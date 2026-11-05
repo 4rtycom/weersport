@@ -2,6 +2,7 @@ import { classifyUv } from "@/lib/data/uv";
 import type { SourceObservation, UvBundle, WeatherBundle } from "@/lib/data/types";
 
 type OpenMeteoResponse = {
+  utc_offset_seconds?: number;
   hourly?: {
     time?: string[];
     temperature_2m?: Array<number | null>;
@@ -11,8 +12,22 @@ type OpenMeteoResponse = {
   };
 };
 
+const HOUR_MS = 60 * 60 * 1000;
+const FORECAST_WINDOW_MS = 48 * HOUR_MS;
+
 function stamp(partial: Omit<SourceObservation<WeatherBundle>, "receivedAt">): SourceObservation<WeatherBundle> {
   return { ...partial, receivedAt: new Date().toISOString() };
+}
+
+// Hourly times are local clock readings without an offset. `utc_offset_seconds` is that zone's offset.
+function localTimestampMs(time: string, utcOffsetSeconds: number): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(time);
+  if (!match) return Number.NaN;
+  const [, year, month, day, hour, minute, second] = match;
+  return (
+    Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second ?? 0)) -
+    utcOffsetSeconds * 1000
+  );
 }
 
 export async function fetchOpenMeteoWeather(input: {
@@ -31,16 +46,19 @@ export async function fetchOpenMeteoWeather(input: {
       "hourly",
       "temperature_2m,precipitation_probability,wind_speed_10m,uv_index",
     );
-    url.searchParams.set("forecast_days", "2");
+    // Counted from the current local hour, so 49 steps still include the last hour inside now+48h.
+    url.searchParams.set("forecast_hours", "49");
     url.searchParams.set("timezone", "Europe/Amsterdam");
     const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const body = (await response.json()) as OpenMeteoResponse;
     const times = body.hourly?.time ?? [];
-    if (times.length === 0) throw new Error("Geen uurdata");
+    const utcOffsetSeconds = body.utc_offset_seconds;
+    if (times.length === 0 || typeof utcOffsetSeconds !== "number") throw new Error("Geen uurdata");
 
-    const hours = times.slice(0, 48).map((time, index) => ({
+    const points = times.map((time, index) => ({
       time,
+      timeMs: localTimestampMs(time, utcOffsetSeconds),
       temperatureC: body.hourly?.temperature_2m?.[index] ?? null,
       windKmh: body.hourly?.wind_speed_10m?.[index] ?? null,
       precipitationProbability: body.hourly?.precipitation_probability?.[index] ?? null,
@@ -48,13 +66,29 @@ export async function fetchOpenMeteoWeather(input: {
     }));
 
     const now = Date.now();
-    const nearest =
-      hours.find((hour) => new Date(hour.time).getTime() >= now) ?? hours[0];
-    const dayHours = hours.filter((hour) => {
-      const stampMs = new Date(hour.time).getTime();
-      return stampMs >= now && stampMs <= now + 48 * 60 * 60 * 1000;
-    });
-    const maxUv = dayHours.reduce<number | null>((max, hour) => {
+    let nearest = points[0];
+    let nearestDist = Number.POSITIVE_INFINITY;
+    for (const hour of points) {
+      if (!Number.isFinite(hour.timeMs)) continue;
+      const dist = Math.abs(hour.timeMs - now);
+      if (dist < nearestDist) {
+        nearest = hour;
+        nearestDist = dist;
+      }
+    }
+    if (!Number.isFinite(nearest.timeMs)) throw new Error("Geen bruikbare tijdstippen");
+    const current = nearestDist <= HOUR_MS;
+
+    const hours = points
+      .filter((hour) => hour.timeMs >= now && hour.timeMs <= now + FORECAST_WINDOW_MS)
+      .map((hour) => ({
+        time: hour.time,
+        temperatureC: hour.temperatureC,
+        windKmh: hour.windKmh,
+        precipitationProbability: hour.precipitationProbability,
+        uvIndex: hour.uvIndex,
+      }));
+    const maxUv = hours.reduce<number | null>((max, hour) => {
       if (hour.uvIndex === null) return max;
       return max === null ? hour.uvIndex : Math.max(max, hour.uvIndex);
     }, null);
@@ -64,7 +98,7 @@ export async function fetchOpenMeteoWeather(input: {
       weather: stamp({
         sourceId: "open-meteo",
         sourceLabel: "Open-Meteo (voorlopige weeradapter)",
-        status: "READY",
+        status: current ? "READY" : "STALE",
         rightsNote: rights,
         coverageNote: "Wereldwijde modelvoorspelling; geen KNMI-officiële waarneming.",
         publishedAt: nearest.time,
@@ -72,12 +106,14 @@ export async function fetchOpenMeteoWeather(input: {
         locationLabel: input.placeLabel,
         demo: false,
         value: {
-          temperatureC: nearest.temperatureC,
-          windKmh: nearest.windKmh,
-          precipitationProbability: nearest.precipitationProbability,
+          temperatureC: current ? nearest.temperatureC : null,
+          windKmh: current ? nearest.windKmh : null,
+          precipitationProbability: current ? nearest.precipitationProbability : null,
           hours,
         },
-        message: "Weer-uurdata ontvangen via Open-Meteo.",
+        message: current
+          ? "Weer-uurdata ontvangen via Open-Meteo."
+          : "Geen uur dicht bij nu. Actuele meting is niet als live weer getoond.",
       }),
       uv: {
         sourceId: "open-meteo-uv",
