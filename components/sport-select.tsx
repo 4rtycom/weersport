@@ -56,9 +56,9 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((index) => Math.max(index - 1, 0));
-    } else if (event.key === "Enter" && filtered[activeIndex]) {
+    } else if (event.key === "Enter") {
       event.preventDefault();
-      choose(filtered[activeIndex].id);
+      if (filtered[activeIndex]) choose(filtered[activeIndex].id);
     }
   }
 

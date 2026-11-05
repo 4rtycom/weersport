@@ -2,18 +2,22 @@ import type { Metadata } from "next";
 import { BrandMark } from "@/components/brand-mark";
 import { SiteHeader } from "@/components/site-header";
 import { SportIcon } from "@/components/sport-icon";
+import { readSession } from "@/lib/auth/cookies";
 import { families, sportsInFamily } from "@/lib/sports";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Alle 24 buitensporten",
   description: "De zes sportfamilies en 24 Nederlandse buitensporten van WeerSport, met de goedgekeurde iconen.",
 };
 
-export default function SportenPage() {
+export default async function SportenPage() {
+  const account = await readSession();
   return (
     <>
       <div className="catalog-hero">
-        <SiteHeader />
+        <SiteHeader account={Boolean(account)} />
         <div className="catalog-intro">
           <p className="eyebrow eyebrow-lime">Buitensporten in Nederland</p>
           <h1>Alle 24 sporten</h1>

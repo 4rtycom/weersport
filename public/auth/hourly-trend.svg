@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="409" height="200" viewBox="0 0 409 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Hourly Trend Editorial Vector">
+<path id="Vector" opacity="0.09" d="M200 12H161C152.163 12 145 19.1634 145 28V166C145 174.837 152.163 182 161 182H200C208.837 182 216 174.837 216 166V28C216 19.1634 208.837 12 200 12Z" fill="#D6FA63"/>
+<path id="Vector_2" d="M22 127C53 124 78 90 113 91C148 92 169 48 194 51C219 54 259 64 301 90C343 116 351 102 386 130V184H22V127Z" fill="url(#paint0_linear_0_4)"/>
+<path id="Vector_3" d="M22 127C53 124 78 90 113 91C148 92 169 48 194 51C219 54 259 64 301 90C343 116 351 102 386 130" stroke-width="3" stroke-linecap="round" stroke="#D6FA63"/>
+<path id="Vector_4" d="M194 59C198.418 59 202 55.4183 202 51C202 46.5817 198.418 43 194 43C189.582 43 186 46.5817 186 51C186 55.4183 189.582 59 194 59Z" fill="#D6FA63" stroke-width="2" stroke="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="22" y1="50.8532" x2="22" y2="184" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D6FA63" stop-opacity="0.21"/>
+<stop offset="1" stop-color="#D6FA63" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>
