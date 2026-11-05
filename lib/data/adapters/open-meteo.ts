@@ -1,5 +1,6 @@
 import { classifyUv } from "@/lib/data/uv";
 import type { SourceObservation, UvBundle, WeatherBundle } from "@/lib/data/types";
+import { forecastInstant } from "@/lib/forecast-time";
 
 type OpenMeteoResponse = {
   hourly?: {
@@ -48,10 +49,9 @@ export async function fetchOpenMeteoWeather(input: {
     }));
 
     const now = Date.now();
-    const nearest =
-      hours.find((hour) => new Date(hour.time).getTime() >= now) ?? hours[0];
+    const nearest = hours.find((hour) => forecastInstant(hour.time) >= now) ?? hours[0];
     const dayHours = hours.filter((hour) => {
-      const stampMs = new Date(hour.time).getTime();
+      const stampMs = forecastInstant(hour.time);
       return stampMs >= now && stampMs <= now + 48 * 60 * 60 * 1000;
     });
     const maxUv = dayHours.reduce<number | null>((max, hour) => {

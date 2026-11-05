@@ -17,12 +17,14 @@ export function HomePage({
   viewerName = null,
   draft = null,
   resumed = false,
+  initialSportId = null,
 }: {
   viewerName?: string | null;
   draft?: SearchDraft | null;
   resumed?: boolean;
+  initialSportId?: string | null;
 }) {
-  const [sportId, setSportId] = useState(draft?.sportId ?? "fietsen");
+  const [sportId, setSportId] = useState(initialSportId ?? draft?.sportId ?? "fietsen");
   const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
   const [placeId, setPlaceId] = useState(draft?.placeId ?? "");
   const [period, setPeriod] = useState<(typeof periods)[number]>(draft?.period ?? "Komende 48 uur");

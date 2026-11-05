@@ -1,11 +1,5 @@
 import type { HourlyScorePoint } from "@/lib/data/types";
-
-function formatHour(iso: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    hour: "2-digit",
-    timeZone: "Europe/Amsterdam",
-  }).format(new Date(iso));
-}
+import { formatHour } from "@/lib/forecast-time";
 
 export function ScoreCurve({
   hourly,
@@ -49,7 +43,7 @@ export function ScoreCurve({
           </linearGradient>
         </defs>
         <path d={area} fill="url(#scoreFill)" />
-        <path d={line} fill="none" stroke="#0b2530" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={line} fill="none" stroke="#d6fa63" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         <circle cx={peakFromProp.x} cy={peakFromProp.y} r="8" fill="#d6fa63" stroke="#ffffff" strokeWidth="3" />
         {labels.map((point) => (
           <text

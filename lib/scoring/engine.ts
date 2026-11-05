@@ -1,5 +1,6 @@
 import type { SuitabilityFactor, SuitabilityOutcome, WeatherHour } from "@/lib/data/types";
 import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
+import { forecastInstant, formatClock } from "@/lib/forecast-time";
 import {
   SCORE_MODEL_VERSION,
   getScoreProfile,
@@ -56,10 +57,7 @@ function rainScore(probability: number, sensitivity: SportScoreProfile["rainSens
 
 function usableHours(hours: WeatherHour[]) {
   const now = Date.now();
-  const upcoming = hours.filter((hour) => {
-    const stamp = new Date(hour.time).getTime();
-    return stamp >= now - 60 * 60 * 1000;
-  });
+  const upcoming = hours.filter((hour) => forecastInstant(hour.time) >= now);
   const source = upcoming.length > 0 ? upcoming : hours;
   return source
     .filter(
@@ -150,14 +148,6 @@ function findPeak(points: HourlyScorePoint[]) {
     peakScore: best.score,
     peakTime: best.time,
   };
-}
-
-function formatClock(iso: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Amsterdam",
-  }).format(new Date(iso));
 }
 
 function formatWindow(start: string, end: string) {
