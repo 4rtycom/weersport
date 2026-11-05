@@ -858,9 +858,16 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 
 .moment-top {
-  background: var(--ws-surface-dark);
+  max-width: 1280px;
+  margin: 0 auto;
+  background: transparent;
   color: white;
-  padding: 12px 16px;
+  padding: 12px 16px 0;
+}
+.moment-top .site-header {
+  background: var(--ws-surface-dark);
+  border-radius: 18px;
+  padding: 10px 14px;
 }
 .moment {
   max-width: 1280px;
@@ -1144,6 +1151,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .score-headline { grid-template-columns: 1fr minmax(180px, 0.7fr); align-items: end; }
 }
 @media (min-width: 1024px) {
+  .moment-top { padding: 20px 80px 0; }
   .moment { padding: 28px 80px 80px; }
   .moment-grid { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr); }
 }
