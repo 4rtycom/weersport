@@ -48,6 +48,7 @@ export async function buildForecastSnapshot(draft: SearchDraft): Promise<Forecas
   return {
     sportId: sport.id,
     sportName: sport.name,
+    placeId: draft.placeId,
     placeLabel: draft.placeLabel,
     period: draft.period,
     generatedAt: new Date().toISOString(),

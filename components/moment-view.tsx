@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SaveActions } from "@/components/account/save-actions";
 import { SiteHeader } from "@/components/site-header";
 import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
@@ -153,6 +154,27 @@ export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapsh
             ) : null}
           </aside>
         </div>
+
+        <section className="moment-card" aria-labelledby="bewaar-title">
+          <p className="eyebrow">Opslaan zonder verbruik</p>
+          <h2 id="bewaar-title">Bewaar dit sportmoment</h2>
+          <p>
+            Filters en plannen opslaan kost 0 aanvragen. Opgeslagen plannen zijn geen live veiligheidsgarantie; oude
+            analyses tonen hun leeftijd.
+          </p>
+          <SaveActions
+            sportId={snapshot.sportId}
+            placeId={snapshot.placeId}
+            placeLabel={snapshot.placeLabel}
+            period={snapshot.period}
+            peakLabel={scored?.peakWindow.label ?? scored?.bestTimeLabel ?? null}
+            snapshotAt={snapshot.generatedAt}
+            scoreLabel={scored ? `${scored.score}/100 · ${scored.badge}` : noScore ? "NO_SCORE" : null}
+          />
+          <p className="moment-save-link">
+            <Link href="/account/momenten">Naar mijn sportmomenten</Link>
+          </p>
+        </section>
 
         <section className="moment-card" aria-labelledby="weer-title">
           <p className="eyebrow">Weeradapter · Open-Meteo</p>
