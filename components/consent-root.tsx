@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { ConsentBanner } from "@/components/ads/consent-banner";
+import { ConsentBanner } from "@/components/consent-banner";
 import { CONSENT_COOKIE, parseConsentCookie } from "@/lib/ads/policy";
 
 export async function ConsentRoot() {

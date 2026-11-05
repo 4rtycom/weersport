@@ -13,8 +13,9 @@ export type AdDecision =
   | { allowed: true; reason: string; code: "BASIS_MOMENT" | "BASIS_SAVED" };
 
 export const AD_SLOT_MIN_HEIGHT_PX = 120;
-export const CONSENT_COOKIE = "ws_consent_ads";
-export const CONSENT_VERSION = "ads-v1";
+/** Cookie-consent preference (not an ads-only CMP). Optional cookies unlock AdSense on Basis. */
+export const CONSENT_COOKIE = "ws_consent_cookies";
+export const CONSENT_VERSION = "cookies-v1";
 
 export function decideAdPlacement(input: {
   surface: AdSurface;
@@ -38,7 +39,7 @@ export function decideAdPlacement(input: {
     return { allowed: false, reason: "Geen advertenties op kritieke NO_SCORE-schermen.", code: "NO_SCORE" };
   }
   if (!input.consentGranted) {
-    return { allowed: false, reason: "Geen advertentieverzoek vóór EER-consent.", code: "NO_CONSENT" };
+    return { allowed: false, reason: "Geen optionele cookies / AdSense vóór cookie-toestemming.", code: "NO_CONSENT" };
   }
   if (input.surface === "moment" && input.suitabilityKind === "SCORED") {
     return {

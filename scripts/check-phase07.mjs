@@ -4,7 +4,7 @@ const required = [
   "lib/ads/policy.ts",
   "lib/ads/server.ts",
   "components/ads/ad-slot.tsx",
-  "components/ads/consent-banner.tsx",
+  "components/consent-banner.tsx",
   "components/ads/ads-host.tsx",
   "app/api/consent/route.ts",
   "components/consent-root.tsx",
@@ -16,8 +16,27 @@ for (const file of required) {
 }
 
 const policy = readFileSync(new URL("../lib/ads/policy.ts", import.meta.url), "utf8");
-for (const token of ["HOME", "AUTH", "CHECKOUT", "PRO", "NO_SCORE", "NO_CONSENT", "BASIS_MOMENT", "CONSENT_COOKIE"]) {
+for (const token of [
+  "HOME",
+  "AUTH",
+  "CHECKOUT",
+  "PRO",
+  "NO_SCORE",
+  "NO_CONSENT",
+  "BASIS_MOMENT",
+  "CONSENT_COOKIE",
+  "ws_consent_cookies",
+  "cookies-v1",
+]) {
   if (!policy.includes(token)) throw new Error(`Policy missing ${token}`);
+}
+
+const banner = readFileSync(new URL("../components/consent-banner.tsx", import.meta.url), "utf8");
+if (banner.includes("Accepteer advertenties") || banner.includes("Advertenties alleen met jouw toestemming")) {
+  throw new Error("CMP must be cookie consent, not an ads-accept banner");
+}
+if (!banner.includes("Accepteer cookies") || !banner.includes("Cookies alleen met jouw toestemming")) {
+  throw new Error("Cookie CMP copy missing");
 }
 
 const slot = readFileSync(new URL("../components/ads/ad-slot.tsx", import.meta.url), "utf8");
@@ -71,9 +90,9 @@ const home = await (await request("/")).text();
 if (home.includes("ad-slot-sandbox") || home.includes("adsbygoogle")) {
   throw new Error("Homepage must not render ad inventory");
 }
-if (!home.includes("Advertenties alleen met jouw toestemming") && !home.includes("consent-banner")) {
+if (!home.includes("Cookies alleen met jouw toestemming") && !home.includes("consent-banner")) {
   // banner may be absent if prior cookie exists in other tests; fresh jar should show it
-  throw new Error("CMP banner should appear for undecided visitors");
+  throw new Error("Cookie CMP banner should appear for undecided visitors");
 }
 
 const login = await (await request("/auth/inloggen")).text();
@@ -100,19 +119,19 @@ await request(link);
 
 const beforeConsent = await (await request("/moment")).text();
 if (!beforeConsent.includes('data-ad-state="blocked"')) {
-  throw new Error("SCORED moment without consent must block ads");
+  throw new Error("SCORED moment without cookie consent must block ads");
 }
 if (beforeConsent.includes("Sandbox-advertentie")) {
-  throw new Error("Ads must not fill before consent");
+  throw new Error("Ads must not fill before cookie consent");
 }
 
 await post("/api/consent", { granted: true });
 const afterConsent = await (await request("/moment")).text();
 if (!afterConsent.includes("ad-slot")) {
-  throw new Error("Consented Basis SCORED moment must mount ad slot");
+  throw new Error("Cookie-consented Basis SCORED moment must mount ad slot");
 }
 if (afterConsent.includes('data-ad-state="blocked"')) {
-  throw new Error("Consented Basis SCORED should allow ad slot");
+  throw new Error("Cookie-consented Basis SCORED should allow ad slot");
 }
 
 const noScoreDraft = { ...draft, sportId: "schaatsen" };

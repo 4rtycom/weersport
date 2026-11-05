@@ -22,10 +22,10 @@ export default function PrivacyPage() {
           gekozen kunnen worden.
         </p>
         <p>
-          Voor EER-gebruikers vragen we toestemming vóór AdSense. Zonder toestemming wordt geen advertentieverzoek
-          gedaan. Op Basis staat maximaal één handmatig slot ná sportweer en veiligheid. Homepage, auth, Mollie
-          checkout/facturering, kritieke NO_SCORE-schermen en Pro tonen geen advertenties. AdSense is geen
-          sport+radius-targetingengine van WeerSport.
+          We vragen toestemming voor optionele cookies. Noodzakelijke cookies (account/sessie) blijven beschikbaar.
+          Zonder cookie-toestemming laden we geen AdSense. Op Basis staat maximaal één handmatig slot ná sportweer en
+          veiligheid. Homepage, auth, Mollie checkout/facturering, kritieke NO_SCORE-schermen en Pro tonen geen
+          advertenties. AdSense is geen sport+radius-targetingengine van WeerSport.
         </p>
         <Link href="/auth/registreren">Terug naar registreren</Link>
       </main>

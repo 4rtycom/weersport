@@ -20,7 +20,7 @@ export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
     });
     setPending(false);
     setVisible(false);
-    // Reload so server components re-evaluate ad eligibility with the cookie.
+    // Reload so server components re-evaluate cookie-dependent features (o.a. ads).
     window.location.reload();
   }
 
@@ -29,11 +29,11 @@ export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
   return (
     <div className="consent-banner" role="dialog" aria-labelledby="consent-title" aria-describedby="consent-copy">
       <div className="consent-banner-inner">
-        <p className="eyebrow">Privacy · EER-consent</p>
-        <h2 id="consent-title">Advertenties alleen met jouw toestemming</h2>
+        <p className="eyebrow">Privacy · cookies</p>
+        <h2 id="consent-title">Cookies alleen met jouw toestemming</h2>
         <p id="consent-copy">
-          WeerSport toont op Basis maximaal één advertentie ná sportweer en veiligheid. Zonder toestemming laden we
-          geen AdSense-verzoek. Pro blijft advertentievrij. Lees ook het{" "}
+          We gebruiken noodzakelijke cookies voor account en sessie. Optionele cookies (zoals voor AdSense op Basis)
+          zetten we pas na jouw keuze. Pro blijft advertentievrij. Meer in het{" "}
           <Link href="/privacy">privacybeleid</Link>.
         </p>
         <div className="consent-actions">
@@ -41,7 +41,7 @@ export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
             Alleen noodzakelijk
           </button>
           <button className="button button-lime" type="button" disabled={pending} onClick={() => choose(true)}>
-            Accepteer advertenties
+            Accepteer cookies
           </button>
         </div>
       </div>
