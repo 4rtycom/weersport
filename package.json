@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check": "node scripts/check-phase01.mjs && node scripts/check-phase02.mjs"
+    "check": "node scripts/check-phase01.mjs && node scripts/check-phase02.mjs && node scripts/check-phase03.mjs"
   },
   "dependencies": {
     "next": "^15.5.6",

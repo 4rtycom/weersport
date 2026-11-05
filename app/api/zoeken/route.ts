@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const jar = await cookies();
   const account = accountFromSession(jar.get(SESSION_COOKIE)?.value);
   if (account) saveDraft(account.id, prepared.draft);
-  const next = !account ? "/auth" : account.verified ? "/auth/hervat" : "/auth/verifieer";
+  const next = !account ? "/auth" : account.verified ? "/moment" : "/auth/verifieer";
   const response = NextResponse.json({ next, booked: false, draft: prepared.draft });
   writeDraft(response, request, prepared.draft);
   return response;

@@ -29,7 +29,7 @@ export default async function AccountPage() {
         )}
       </div>
       {account.verified ? (
-        <Link className="button button-dark auth-button" href={draft ? "/auth/hervat" : "/#planner"}>
+        <Link className="button button-dark auth-button" href={draft ? "/moment" : "/#planner"}>
           Terug naar je sportmoment
         </Link>
       ) : (
