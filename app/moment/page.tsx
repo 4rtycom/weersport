@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MomentView } from "@/components/moment-view";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
+import { resolveAdPlacement } from "@/lib/ads/server";
 import { runMeteredAnalysis } from "@/lib/billing/analysis";
 import { saveDraft } from "@/lib/auth/service";
 
@@ -46,12 +47,18 @@ export default async function MomentPage() {
   }
 
   saveDraft(account.id, draft);
+  const ads = await resolveAdPlacement({
+    surface: "moment",
+    suitabilityKind: result.snapshot.suitability.kind,
+    userId: account.id,
+  });
   return (
     <MomentView
       snapshot={result.snapshot}
       accountName={account.name}
       entitlement={result.entitlement}
       booking={{ booked: result.booked, consumed: result.consumed, cacheHit: result.cacheHit }}
+      ads={ads}
     />
   );
 }

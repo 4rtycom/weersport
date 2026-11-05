@@ -55,7 +55,7 @@ export default async function AbonnementPage() {
           <p className="account-tag">Aanbevolen</p>
           <h2>WeerSport Pro</h2>
           <p className="billing-price">€ {PRO_PRICE_EUR}<span> / maand</span></p>
-          <p>{PRO_MONTHLY_LIMIT} analyses / maand · advertentievrij (ads in fase 07)</p>
+          <p>{PRO_MONTHLY_LIMIT} analyses / maand · advertentievrij</p>
           {entitlement.plan === "pro" ? (
             <CancelSubscriptionButton />
           ) : (

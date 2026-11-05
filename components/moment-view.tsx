@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { SaveActions } from "@/components/account/save-actions";
+import { AdsHost } from "@/components/ads/ads-host";
 import { SiteHeader } from "@/components/site-header";
 import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
+import type { AdDecision } from "@/lib/ads/policy";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { getSportMeta } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
@@ -38,11 +40,13 @@ export function MomentView({
   accountName,
   entitlement = null,
   booking = null,
+  ads = null,
 }: {
   snapshot: ForecastSnapshot;
   accountName: string;
   entitlement?: { plan: string; used: number; limit: number; remaining: number } | null;
   booking?: { booked: boolean; consumed: number; cacheHit: boolean } | null;
+  ads?: { decision: AdDecision; scriptEnabled: boolean } | null;
 }) {
   const sport = findSport(snapshot.sportId);
   const meta = getSportMeta(snapshot.sportId);
@@ -260,6 +264,14 @@ export function MomentView({
             ))}
           </ul>
         </section>
+
+        {ads ? (
+          <AdsHost
+            decision={ads.decision}
+            scriptEnabled={ads.scriptEnabled}
+            hideWhenBlocked={false}
+          />
+        ) : null}
 
         <p className="moment-foot">
           <Link href="/#planner">Andere zoekopdracht</Link>

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountShell } from "@/components/account/account-shell";
 import { DeleteMomentButton } from "@/components/account/moment-list-actions";
+import { AdsHost } from "@/components/ads/ads-host";
 import { SportIcon } from "@/components/sport-icon";
+import { resolveAdPlacement } from "@/lib/ads/server";
 import { readSession } from "@/lib/auth/cookies";
 import { ageLabel, listPlannedMoments } from "@/lib/moments/store";
 import { findSport } from "@/lib/sports";
@@ -14,6 +16,7 @@ export default async function MomentsPage() {
   if (!account) redirect("/auth/inloggen");
   const moments = listPlannedMoments(account.id);
   const featured = moments[0] ?? null;
+  const ads = await resolveAdPlacement({ surface: "account", userId: account.id });
 
   return (
     <AccountShell active="momenten" accountName={account.name} breadcrumb="Mijn WeerSport / Sportmomenten">
@@ -94,6 +97,10 @@ export default async function MomentsPage() {
           </ul>
         )}
       </section>
+
+      {moments.length > 0 ? (
+        <AdsHost decision={ads.decision} scriptEnabled={ads.scriptEnabled} hideWhenBlocked={false} />
+      ) : null}
     </AccountShell>
   );
 }
