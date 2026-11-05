@@ -1,34 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SportIcon } from "@/components/sport-icon";
 import { SportSelect } from "@/components/sport-select";
+import { PlaceField } from "@/components/place-field";
 import { BrandMark } from "@/components/brand-mark";
 import { families, findSport, periods } from "@/lib/sports";
+import type { SearchDraft } from "@/lib/draft";
 
 const hours = ["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
 const mobileHours = new Set(["08:00", "10:00", "12:00", "16:00"]);
 
-export function HomePage() {
-  const [sportId, setSportId] = useState("fietsen");
-  const [location, setLocation] = useState("Amsterdam");
-  const [period, setPeriod] = useState<(typeof periods)[number]>("Komende 48 uur");
-  const [notice, setNotice] = useState("");
+export function HomePage({
+  viewerName = null,
+  draft = null,
+  resumed = false,
+}: {
+  viewerName?: string | null;
+  draft?: SearchDraft | null;
+  resumed?: boolean;
+}) {
+  const [sportId, setSportId] = useState(draft?.sportId ?? "fietsen");
+  const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
+  const [placeId, setPlaceId] = useState(draft?.placeId ?? "");
+  const [period, setPeriod] = useState<(typeof periods)[number]>(draft?.period ?? "Komende 48 uur");
+  const [notice, setNotice] = useState(
+    resumed && draft
+      ? `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`
+      : "",
+  );
+  const [pending, setPending] = useState(false);
 
-  function showExample() {
-    setNotice(
-      "Dit blijft een fictief voorbeeld. Zoeken vraagt later een account en verbruikt nu geen analyse.",
-    );
-    document.getElementById("moment")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  async function onSearch(event: FormEvent) {
+    event.preventDefault();
+    setPending(true);
+    const response = await fetch("/api/zoeken", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sportId, placeId, placeLabel: location, period }),
+    });
+    const data = (await response.json().catch(() => ({}))) as { error?: string; next?: string; booked?: boolean };
+    if (!response.ok || !data.next || data.booked !== false) {
+      setNotice(data.error ?? "Zoeken is niet gestart. Er is geen analyse geboekt.");
+      setPending(false);
+      return;
+    }
+    window.location.assign(data.next);
   }
 
   return (
     <>
       <section className="hero">
         <img className="hero-halo" src="/home/halo.svg" alt="" width={670} height={670} />
-        <SiteHeader />
+        <SiteHeader account={Boolean(viewerName)} />
         <div className="hero-copy">
           <p className="eyebrow eyebrow-lime">
             <img src="/home/lime-dot.svg" alt="" width={15} height={15} />
@@ -79,7 +105,7 @@ export function HomePage() {
           <h2 id="planner-title" className="planner-title">
             Kies jouw buitensport
           </h2>
-          <div className="planner-grid">
+          <form className="planner-grid" onSubmit={onSearch}>
             <div>
               <label className="field-label" htmlFor="sport-label">
                 Kies je buitensport
@@ -92,16 +118,14 @@ export function HomePage() {
               <label className="field-label" htmlFor="locatie">
                 Waar ga je sporten?
               </label>
-              <div className="text-field">
-                <span aria-hidden="true">⌖</span>
-                <input
-                  id="locatie"
-                  name="locatie"
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                  autoComplete="address-level2"
-                />
-              </div>
+              <PlaceField
+                label={location}
+                placeId={placeId}
+                onChange={(next) => {
+                  setLocation(next.label);
+                  setPlaceId(next.placeId);
+                }}
+              />
             </div>
             <div>
               <label className="field-label" htmlFor="periode">
@@ -122,10 +146,10 @@ export function HomePage() {
                 </select>
               </div>
             </div>
-            <button className="button button-dark planner-cta" type="button" onClick={showExample}>
+            <button className="button button-dark planner-cta" type="submit" disabled={pending}>
               Bekijk mijn WeerSport-moment →
             </button>
-          </div>
+          </form>
           <p className="planner-note">
             <span>Gratis account nodig bij zoeken</span>
             <span className="planner-note-long">

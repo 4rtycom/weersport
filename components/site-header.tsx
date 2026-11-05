@@ -10,7 +10,7 @@ const links = [
   { href: "/#weer-uv", label: "Weer & UV" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ account = false }: { account?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,6 +28,7 @@ export function SiteHeader() {
             {link.label}
           </Link>
         ))}
+        {account ? <Link href="/account">Account</Link> : null}
         <Link className="button button-lime nav-cta" href="/#planner">
           Bekijk jouw moment →
         </Link>
@@ -49,6 +50,11 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          {account ? (
+            <Link href="/account" onClick={() => setOpen(false)}>
+              Account
+            </Link>
+          ) : null}
           <Link className="button button-lime" href="/#planner" onClick={() => setOpen(false)}>
             Bekijk jouw moment →
           </Link>
