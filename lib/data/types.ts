@@ -58,9 +58,42 @@ export type SwimBundle = {
   quality: string | null;
 };
 
+export type SuitabilityFactor = {
+  id: string;
+  label: string;
+  impact: number;
+  explanation: string;
+};
+
+export type HourlyScorePoint = {
+  time: string;
+  score: number;
+  temperatureC: number;
+  windKmh: number;
+  precipitationProbability: number;
+  uvIndex: number;
+};
+
 export type SuitabilityOutcome =
-  | { kind: "NO_SCORE"; reason: string }
-  | { kind: "PENDING_PHASE_04"; reason: string };
+  | { kind: "NO_SCORE"; reason: string; missing?: string[] }
+  | {
+      kind: "SCORED";
+      modelVersion: string;
+      score: number;
+      badge: "GOED" | "MATIG" | "SLECHT";
+      peakWindow: {
+        start: string;
+        end: string;
+        peakTime: string;
+        peakScore: number;
+        label: string;
+      };
+      bestTimeLabel: string;
+      hourly: HourlyScorePoint[];
+      factors: SuitabilityFactor[];
+      tooltip: string;
+      caveats: string;
+    };
 
 export type ForecastSnapshot = {
   sportId: string;

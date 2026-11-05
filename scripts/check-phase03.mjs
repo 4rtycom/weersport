@@ -22,7 +22,9 @@ if (knmi.includes("code geel") || knmi.includes("fake warning")) {
   throw new Error("KNMI adapter must not invent warnings");
 }
 
-const ice = readFileSync(new URL("../lib/data/snapshot.ts", import.meta.url), "utf8");
+const ice =
+  readFileSync(new URL("../lib/data/snapshot.ts", import.meta.url), "utf8") +
+  readFileSync(new URL("../lib/scoring/engine.ts", import.meta.url), "utf8");
 if (!ice.includes("Natuurijs") || !ice.includes("NO_SCORE")) {
   throw new Error("Ice/water NO_SCORE rules missing");
 }
@@ -114,8 +116,8 @@ const land = await post("/api/moment", {
   placeLabel: "Amsterdam",
   period: "Komende 48 uur",
 });
-if (land.data.snapshot.suitability.kind !== "PENDING_PHASE_04") {
-  throw new Error("Land sport should wait for phase 04 scoring");
+if (!["PENDING_PHASE_04", "SCORED"].includes(land.data.snapshot.suitability.kind)) {
+  throw new Error("Land sport should expose PENDING_PHASE_04 or SCORED suitability");
 }
 if (land.data.snapshot.weather.status !== "READY" || land.data.snapshot.weather.value?.temperatureC === null) {
   throw new Error("Live weather missing for land sport");

@@ -1,0 +1,388 @@
+export type SportFactor = { id: string; label: string; explanation: string };
+
+export type SportScoreProfile = {
+  sportId: string;
+  tagline: string;
+  nextSportId: string | null;
+  idealTempC: [number, number];
+  /** Preferred wind band in km/h. */
+  idealWindKmh: [number, number];
+  rainSensitivity: "low" | "medium" | "high";
+  /** Relative weights; must sum to 1. */
+  weights: { temperature: number; wind: number; rain: number };
+  factors: SportFactor[];
+  caveats: string;
+};
+
+export const SCORE_MODEL_VERSION = "weersport-score-v0.1-provisional";
+
+/**
+ * Provisional sport weights for Phase 04.
+ * Safety-critical water/ice sports still require linked water/ice adapters before any score is shown.
+ */
+export const sportProfiles: Record<string, SportScoreProfile> = {
+  fietsen: {
+    sportId: "fietsen",
+    tagline: "Ontspannen buitenritten",
+    nextSportId: "wielrennen",
+    idealTempC: [12, 22],
+    idealWindKmh: [0, 25],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.3, rain: 0.35 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Tegenwind maakt fietsen zwaarder." },
+      { id: "regen", label: "Regen", explanation: "Nat wegdek vraagt om aandacht." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Te koud of te warm dempt comfort." },
+    ],
+    caveats: "Geen route- of hoogtemeterberekening.",
+  },
+  wielrennen: {
+    sportId: "wielrennen",
+    tagline: "Sportieve ritten op tempo",
+    nextSportId: "gravelbiken",
+    idealTempC: [10, 20],
+    idealWindKmh: [0, 22],
+    rainSensitivity: "high",
+    weights: { temperature: 0.3, wind: 0.4, rain: 0.3 },
+    factors: [
+      { id: "rijwind", label: "Rijwind", explanation: "Hoger tempo beïnvloedt windbeleving." },
+      { id: "windstoten", label: "Windstoten", explanation: "Windvlagen beïnvloeden de controle." },
+      { id: "regen", label: "Regen", explanation: "Nat wegdek vereist aandacht." },
+    ],
+    caveats: "Geen route-, snelheids- of effectieve rijwindberekening.",
+  },
+  gravelbiken: {
+    sportId: "gravelbiken",
+    tagline: "Onverharde paden en grind",
+    nextSportId: "mountainbiken",
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 28],
+    rainSensitivity: "high",
+    weights: { temperature: 0.3, wind: 0.3, rain: 0.4 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Modder en grip zijn doorslaggevend." },
+      { id: "wind", label: "Wind", explanation: "Open landschap vangt meer wind." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Comfort op langere grindritten." },
+    ],
+    caveats: "Geen ondergrond- of trailconditiesensor.",
+  },
+  mountainbiken: {
+    sportId: "mountainbiken",
+    tagline: "Singletracks en bossen",
+    nextSportId: "hardlopen",
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 30],
+    rainSensitivity: "high",
+    weights: { temperature: 0.28, wind: 0.22, rain: 0.5 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Wortels en bochten worden gladder." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Inspanningscomfort in het bos." },
+      { id: "wind", label: "Wind", explanation: "Minder dominant onder boombedekking." },
+    ],
+    caveats: "Geen trailstatus of bodemvochtmeting.",
+  },
+  hardlopen: {
+    sportId: "hardlopen",
+    tagline: "Tempo- en duurloop",
+    nextSportId: "trailrunning",
+    idealTempC: [8, 16],
+    idealWindKmh: [0, 28],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.45, wind: 0.25, rain: 0.3 },
+    factors: [
+      { id: "temperatuur", label: "Temperatuur", explanation: "Hitte en kou beïnvloeden tempo." },
+      { id: "regen", label: "Regen", explanation: "Gladheid en afkoeling." },
+      { id: "wind", label: "Wind", explanation: "Tegenwind kost energie." },
+    ],
+    caveats: "Geen hartslag- of tempozones.",
+  },
+  trailrunning: {
+    sportId: "trailrunning",
+    tagline: "Trails en heuvels",
+    nextSportId: "wandelen",
+    idealTempC: [6, 16],
+    idealWindKmh: [0, 30],
+    rainSensitivity: "high",
+    weights: { temperature: 0.35, wind: 0.2, rain: 0.45 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Trails worden glad en zwaar." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Inspanning en afkoeling." },
+      { id: "wind", label: "Wind", explanation: "Op open heuvelruggen merkbaar." },
+    ],
+    caveats: "Geen trail- of hoogtemeting.",
+  },
+  wandelen: {
+    sportId: "wandelen",
+    tagline: "Rustige buitenwandelingen",
+    nextSportId: "hiken",
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 35],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.4, wind: 0.25, rain: 0.35 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Comfort en zichtbaarheid." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Kledingkeuze en comfort." },
+      { id: "wind", label: "Wind", explanation: "Afkoeling bij stilstand." },
+    ],
+    caveats: "Geen padconditie of toegankelijkheidscheck.",
+  },
+  hiken: {
+    sportId: "hiken",
+    tagline: "Langere tochten in natuur",
+    nextSportId: "golf",
+    idealTempC: [6, 18],
+    idealWindKmh: [0, 32],
+    rainSensitivity: "high",
+    weights: { temperature: 0.35, wind: 0.25, rain: 0.4 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Nat terrein en zicht." },
+      { id: "wind", label: "Wind", explanation: "Op open heuvels koeler." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Duurinspanning en lagen." },
+    ],
+    caveats: "Geen terrein- of lawine-informatie.",
+  },
+  golf: {
+    sportId: "golf",
+    tagline: "Baanrondes buiten",
+    nextSportId: "tennis-padel",
+    idealTempC: [12, 24],
+    idealWindKmh: [0, 28],
+    rainSensitivity: "high",
+    weights: { temperature: 0.3, wind: 0.35, rain: 0.35 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Beïnvloedt balvlucht." },
+      { id: "regen", label: "Regen", explanation: "Speelbaarheid van de baan." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Comfort over 18 holes." },
+    ],
+    caveats: "Geen baansluiting of greenspeed.",
+  },
+  "tennis-padel": {
+    sportId: "tennis-padel",
+    tagline: "Buitenbanen",
+    nextSportId: "voetbal",
+    idealTempC: [12, 24],
+    idealWindKmh: [0, 25],
+    rainSensitivity: "high",
+    weights: { temperature: 0.3, wind: 0.3, rain: 0.4 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Banen worden onbespeelbaar." },
+      { id: "wind", label: "Wind", explanation: "Verstoort balcontrole." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Inspanningscomfort." },
+    ],
+    caveats: "Geen baanreservering of ondergrondstatus.",
+  },
+  voetbal: {
+    sportId: "voetbal",
+    tagline: "Veldwedstrijden en training",
+    nextSportId: "hockey",
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 35],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.25, rain: 0.4 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Veldomstandigheden en grip." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Belasting tijdens inspanning." },
+      { id: "wind", label: "Wind", explanation: "Beïnvloedt lange ballen." },
+    ],
+    caveats: "Geen veldkeuring of wedstrijdregels.",
+  },
+  hockey: {
+    sportId: "hockey",
+    tagline: "Kunstgras buiten",
+    nextSportId: "zeilen",
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 32],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.25, rain: 0.4 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Nat kunstgras verandert de bal." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Warmte tijdens intensief spel." },
+      { id: "wind", label: "Wind", explanation: "Minder dominant dan regen." },
+    ],
+    caveats: "Geen veldwatering- of baanstatus.",
+  },
+  zeilen: {
+    sportId: "zeilen",
+    tagline: "Windgedreven op water",
+    nextSportId: "windsurfen",
+    idealTempC: [10, 22],
+    idealWindKmh: [12, 35],
+    rainSensitivity: "low",
+    weights: { temperature: 0.25, wind: 0.55, rain: 0.2 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Kracht en richting bepalen zeilbaarheid." },
+      { id: "water", label: "Water", explanation: "Golf en stroming vereisen waterdata." },
+      { id: "regen", label: "Regen", explanation: "Zicht en comfort aan dek." },
+    ],
+    caveats: "Geen waterstands- of golfmodel zonder RWS-koppeling.",
+  },
+  windsurfen: {
+    sportId: "windsurfen",
+    tagline: "Plank en zeil",
+    nextSportId: "kitesurfen",
+    idealTempC: [12, 24],
+    idealWindKmh: [18, 40],
+    rainSensitivity: "low",
+    weights: { temperature: 0.2, wind: 0.6, rain: 0.2 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Stabiele windkracht is essentieel." },
+      { id: "water", label: "Water", explanation: "Golfslag en temperatuur." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Watersportkleding en afkoeling." },
+    ],
+    caveats: "Geen spot-specifieke windmeting.",
+  },
+  kitesurfen: {
+    sportId: "kitesurfen",
+    tagline: "Kite en plank",
+    nextSportId: "surfen",
+    idealTempC: [12, 24],
+    idealWindKmh: [20, 42],
+    rainSensitivity: "low",
+    weights: { temperature: 0.2, wind: 0.65, rain: 0.15 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Te weinig of te veel wind is onveilig." },
+      { id: "water", label: "Water", explanation: "Stroming en golven." },
+      { id: "regen", label: "Regen", explanation: "Zicht tijdens launches." },
+    ],
+    caveats: "Geen lanceerzone- of kitewaarschuwing.",
+  },
+  surfen: {
+    sportId: "surfen",
+    tagline: "Golfrijden aan de kust",
+    nextSportId: "suppen",
+    idealTempC: [12, 22],
+    idealWindKmh: [0, 30],
+    rainSensitivity: "low",
+    weights: { temperature: 0.25, wind: 0.35, rain: 0.4 },
+    factors: [
+      { id: "water", label: "Water", explanation: "Golfhoogte is kritiek en ontbreekt zonder WADAR." },
+      { id: "wind", label: "Wind", explanation: "Onshore/offshore beïnvloedt de ritten." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Watertemperatuur en pakkeuze." },
+    ],
+    caveats: "Geen swell- of getijdenmodel.",
+  },
+  suppen: {
+    sportId: "suppen",
+    tagline: "Stand-up paddling",
+    nextSportId: "kajakken",
+    idealTempC: [14, 24],
+    idealWindKmh: [0, 18],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.4, rain: 0.25 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Wind duwt de board uit koers." },
+      { id: "water", label: "Water", explanation: "Stroming en watertemperatuur." },
+      { id: "regen", label: "Regen", explanation: "Zicht en grip op het deck." },
+    ],
+    caveats: "Geen stromings- of waterkwaliteitscheck.",
+  },
+  kajakken: {
+    sportId: "kajakken",
+    tagline: "Peddelen op water",
+    nextSportId: "roeien",
+    idealTempC: [10, 22],
+    idealWindKmh: [0, 25],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.35, rain: 0.3 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Windgolven op open water." },
+      { id: "water", label: "Water", explanation: "Stroming en waterstand." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Afkoeling bij kapseizen." },
+    ],
+    caveats: "Geen vaarweg- of sluisstatus.",
+  },
+  roeien: {
+    sportId: "roeien",
+    tagline: "Boot en riemen",
+    nextSportId: "openwaterzwemmen",
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 22],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.4, rain: 0.25 },
+    factors: [
+      { id: "wind", label: "Wind", explanation: "Dwarswind maakt de boot onstabiel." },
+      { id: "water", label: "Water", explanation: "Stroming en golfslag." },
+      { id: "regen", label: "Regen", explanation: "Zicht en grip." },
+    ],
+    caveats: "Geen banen- of verenigingsstatus.",
+  },
+  openwaterzwemmen: {
+    sportId: "openwaterzwemmen",
+    tagline: "Zwemmen in open water",
+    nextSportId: "skeeleren",
+    idealTempC: [16, 24],
+    idealWindKmh: [0, 25],
+    rainSensitivity: "low",
+    weights: { temperature: 0.45, wind: 0.2, rain: 0.35 },
+    factors: [
+      { id: "water", label: "Zwemwater", explanation: "Kwaliteit en temperatuur zijn kritiek." },
+      { id: "temperatuur", label: "Luchttemperatuur", explanation: "Alleen lucht zegt niets over veilig water." },
+      { id: "wind", label: "Wind", explanation: "Golfjes en afkoeling." },
+    ],
+    caveats: "Geen zwemwateradvies zonder BIJ12/Zwemwater.",
+  },
+  skeeleren: {
+    sportId: "skeeleren",
+    tagline: "Inline buiten",
+    nextSportId: "paardrijden",
+    idealTempC: [10, 22],
+    idealWindKmh: [0, 28],
+    rainSensitivity: "high",
+    weights: { temperature: 0.3, wind: 0.25, rain: 0.45 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Nat asfalt is glad." },
+      { id: "wind", label: "Wind", explanation: "Tegenwind op open fietspaden." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Comfort bij tempo." },
+    ],
+    caveats: "Geen wegdek- of onderhoudsstatus.",
+  },
+  paardrijden: {
+    sportId: "paardrijden",
+    tagline: "Buitenritten",
+    nextSportId: "schaatsen",
+    idealTempC: [8, 22],
+    idealWindKmh: [0, 35],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.35, wind: 0.3, rain: 0.35 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Bodem en zicht voor paard en ruiter." },
+      { id: "wind", label: "Wind", explanation: "Kan paarden onrustig maken." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Belasting voor paard en ruiter." },
+    ],
+    caveats: "Geen manege- of bodemvochtmeting.",
+  },
+  schaatsen: {
+    sportId: "schaatsen",
+    tagline: "Natuurijs en banen",
+    nextSportId: "outdoorfitness",
+    idealTempC: [-8, 2],
+    idealWindKmh: [0, 30],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.5, wind: 0.25, rain: 0.25 },
+    factors: [
+      { id: "ijs", label: "IJs", explanation: "Natuurijs vraagt om ijsmetingen, niet alleen lucht." },
+      { id: "temperatuur", label: "Luchttemperatuur", explanation: "Alleen lucht is geen veiligheidsgarantie." },
+      { id: "wind", label: "Wind", explanation: "Afkoeling op open ijs." },
+    ],
+    caveats: "Natuurijs nooit veilig verklaren op luchttemperatuur alleen.",
+  },
+  outdoorfitness: {
+    sportId: "outdoorfitness",
+    tagline: "Buiten trainen",
+    nextSportId: null,
+    idealTempC: [8, 20],
+    idealWindKmh: [0, 30],
+    rainSensitivity: "medium",
+    weights: { temperature: 0.4, wind: 0.25, rain: 0.35 },
+    factors: [
+      { id: "regen", label: "Regen", explanation: "Grip op toestellen en ondergrond." },
+      { id: "temperatuur", label: "Temperatuur", explanation: "Opwarming en herstel." },
+      { id: "wind", label: "Wind", explanation: "Afkoeling bij stilstaande oefeningen." },
+    ],
+    caveats: "Geen toestel- of parkstatus.",
+  },
+};
+
+export function getScoreProfile(sportId: string) {
+  return sportProfiles[sportId] ?? sportProfiles.fietsen;
+}
