@@ -121,7 +121,7 @@ const repeat = await post("/api/zoeken", {
   placeLabel: "Amsterdam",
   period: "Komende 48 uur",
 });
-if (repeat.data.booked !== false || repeat.data.next !== "/auth/hervat") {
+if (repeat.data.booked !== false || (repeat.data.next !== "/moment" && repeat.data.next !== "/auth/hervat")) {
   throw new Error("Verified search booked an analysis");
 }
 

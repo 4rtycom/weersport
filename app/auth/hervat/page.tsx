@@ -33,7 +33,7 @@ export default async function ResumePage() {
         )}
         <small>Eén aanvraag wordt geboekt bij succesvolle nieuwe analyse. In deze fase start er geen analyse.</small>
       </div>
-      <Link className="button button-dark auth-button" href={draft ? "/?hervat=1#planner" : "/#planner"}>
+      <Link className="button button-dark auth-button" href={draft ? "/moment" : "/#planner"}>
         Bekijk mijn sportmoment →
       </Link>
       <Link className="button auth-button auth-button-soft" href="/account">
