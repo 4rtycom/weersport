@@ -33,7 +33,17 @@ function statusLabel(status: string) {
   }
 }
 
-export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapshot; accountName: string }) {
+export function MomentView({
+  snapshot,
+  accountName,
+  entitlement = null,
+  booking = null,
+}: {
+  snapshot: ForecastSnapshot;
+  accountName: string;
+  entitlement?: { plan: string; used: number; limit: number; remaining: number } | null;
+  booking?: { booked: boolean; consumed: number; cacheHit: boolean } | null;
+}) {
   const sport = findSport(snapshot.sportId);
   const meta = getSportMeta(snapshot.sportId);
   const weather = snapshot.weather.value;
@@ -60,7 +70,19 @@ export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapsh
               <p>
                 {snapshot.placeLabel}, Nederland · {snapshot.period}
               </p>
-              <p className="moment-account">Ingelogd als {accountName}. Deze laadactie boekt geen analyse.</p>
+              <p className="moment-account">
+                Ingelogd als {accountName}.
+                {booking
+                  ? booking.cacheHit
+                    ? " Cachehit · geen extra verbruik."
+                    : booking.booked
+                      ? ` Nieuwe analyse geboekt (${booking.consumed}).`
+                      : " Geen analyse verbruikt."
+                  : " Boekingsstatus volgt onder."}
+                {entitlement
+                  ? ` ${entitlement.plan === "pro" ? "Pro" : "Basis"} ${entitlement.used}/${entitlement.limit}.`
+                  : ""}
+              </p>
             </div>
           </div>
           <p className={`moment-live-badge ${snapshot.weather.demo ? "is-demo" : "is-live"}`}>

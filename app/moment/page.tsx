@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MomentView } from "@/components/moment-view";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
-import { buildForecastSnapshot } from "@/lib/data/snapshot";
+import { runMeteredAnalysis } from "@/lib/billing/analysis";
+import { saveDraft } from "@/lib/auth/service";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "WeerSport-moment" };
@@ -13,18 +15,43 @@ export default async function MomentPage() {
   const draft = (await readDraftCookie()) ?? account.draft;
   if (!draft) redirect("/#planner");
 
-  try {
-    const snapshot = await buildForecastSnapshot(draft);
-    return <MomentView snapshot={snapshot} accountName={account.name} />;
-  } catch {
+  const result = await runMeteredAnalysis({ userId: account.id, draft });
+  if (!result.ok) {
+    if (result.status === 402) {
+      return (
+        <main className="moment" id="inhoud">
+          <p className="eyebrow">Quota</p>
+          <h1>Maandelijks analyselimiet bereikt</h1>
+          <p>{result.error}</p>
+          <p>
+            Gebruikt {result.entitlement.used}/{result.entitlement.limit}. Opgeslagen plannen blijven beschikbaar.
+          </p>
+          <div className="account-item-actions" style={{ marginTop: 18 }}>
+            <Link className="button button-lime" href="/checkout/pro">
+              Upgrade naar Pro
+            </Link>
+            <Link className="button button-dark" href="/account/momenten">
+              Bekijk opgeslagen momenten
+            </Link>
+          </div>
+        </main>
+      );
+    }
     return (
       <main className="moment" id="inhoud">
         <h1>Bronnen niet bereikbaar</h1>
-        <p>
-          De plaats of de weeradapter kon niet worden geladen. Er is geen score, geen veiligheidsclaim en geen
-          analyse geboekt.
-        </p>
+        <p>{result.error}</p>
       </main>
     );
   }
+
+  saveDraft(account.id, draft);
+  return (
+    <MomentView
+      snapshot={result.snapshot}
+      accountName={account.name}
+      entitlement={result.entitlement}
+      booking={{ booked: result.booked, consumed: result.consumed, cacheHit: result.cacheHit }}
+    />
+  );
 }

@@ -1356,3 +1356,99 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .account-user { margin-left: 0; }
   .account-badge { margin-left: auto; }
 }
+
+.billing-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: grid;
+  gap: 18px;
+}
+.billing-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.billing-grid {
+  display: grid;
+  gap: 16px;
+}
+.billing-checkout-card {
+  background: white;
+  border-radius: 19px;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+.billing-field {
+  display: grid;
+  gap: 6px;
+  background: var(--ws-surface-base);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.billing-field span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ws-text-secondary);
+}
+.billing-note, .billing-foot {
+  color: var(--ws-text-secondary);
+  font-size: 13px;
+}
+.billing-foot a { color: var(--ws-teal); font-weight: 700; text-decoration: none; }
+.billing-price {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+}
+.billing-price span { font-size: 16px; font-weight: 600; color: var(--ws-text-secondary); }
+.billing-details { display: grid; gap: 12px; margin: 0; }
+.billing-details div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+}
+.billing-details dt {
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.billing-details dd { margin: 0; font-weight: 600; }
+.billing-usage .billing-balance {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+}
+.billing-usage .billing-balance span {
+  font-size: 18px;
+  color: var(--ws-text-secondary);
+  font-weight: 600;
+}
+.billing-track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--ws-surface-base);
+  overflow: hidden;
+}
+.billing-track span {
+  display: block;
+  height: 100%;
+  background: var(--ws-accent-mint);
+  border-radius: 999px;
+}
+.billing-simulate { display: grid; gap: 12px; }
+.auth-error {
+  color: #8e3427;
+  font-weight: 700;
+  font-size: 14px;
+}
+@media (min-width: 1024px) {
+  .billing-page { padding: 28px 40px 80px; }
+  .billing-grid { grid-template-columns: 1.2fr 0.9fr; align-items: start; }
+}
