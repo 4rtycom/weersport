@@ -103,23 +103,8 @@ const link = verifyHtml.match(/href="(\/auth\/verifieer\/bevestig\?token=[^"]+)"
 if (!link) throw new Error("Missing verify link");
 await request(link);
 
-const landSports = [
-  "fietsen",
-  "wielrennen",
-  "gravelbiken",
-  "mountainbiken",
-  "hardlopen",
-  "trailrunning",
-  "wandelen",
-  "hiken",
-  "golf",
-  "tennis-padel",
-  "voetbal",
-  "hockey",
-  "skeeleren",
-  "paardrijden",
-  "outdoorfitness",
-];
+// Live route checks sample land sports only; Basis quota (phase 06) is 5/month.
+const landSports = ["fietsen", "wielrennen", "hardlopen", "wandelen"];
 const waterSports = [
   "zeilen",
   "windsurfen",

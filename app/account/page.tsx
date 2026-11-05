@@ -4,6 +4,7 @@ import { AccountShell } from "@/components/account/account-shell";
 import { LogoutButton } from "@/components/logout-button";
 import { SportIcon } from "@/components/sport-icon";
 import { readSession } from "@/lib/auth/cookies";
+import { ensureBasisSubscription, getEntitlement } from "@/lib/billing/entitlement";
 import { ageLabel, listFavoriteSports, listPlannedMoments, listSavedSearches } from "@/lib/moments/store";
 import { findSport } from "@/lib/sports";
 
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 export default async function AccountPage() {
   const account = await readSession();
   if (!account) redirect("/auth/inloggen");
+  ensureBasisSubscription(account.id);
+  const entitlement = getEntitlement(account.id);
 
   const moments = listPlannedMoments(account.id);
   const searches = listSavedSearches(account.id);
@@ -19,7 +22,12 @@ export default async function AccountPage() {
   const nextMoment = moments[0] ?? null;
 
   return (
-    <AccountShell active="overview" accountName={account.name} breadcrumb="Mijn WeerSport / Overzicht">
+    <AccountShell
+      active="overview"
+      accountName={account.name}
+      breadcrumb="Mijn WeerSport / Overzicht"
+      planLabel={`${entitlement.plan === "pro" ? "Pro" : "Basis"} · ${entitlement.used}/${entitlement.limit}`}
+    >
       <p className="eyebrow">Jouw persoonlijke sportweer-overzicht</p>
       <div className="account-heading-row">
         <div>
@@ -89,10 +97,12 @@ export default async function AccountPage() {
       </div>
 
       <section className="account-panel account-quota-stub">
-        <h2>Quota volgt in fase 06</h2>
+        <h2>
+          {entitlement.plan === "pro" ? "Pro" : "Basis"} · {entitlement.used}/{entitlement.limit} analyses
+        </h2>
         <p>
-          Opslaan telt nu als 0. Basis 5/maand en Pro via Mollie worden later aangesloten. Account:{" "}
-          {account.verified ? "geverifieerd · Basis" : "nog niet geverifieerd"}.
+          Opslaan van plannen/filters blijft 0. Nieuwe succesvolle analyses tellen server-side. Account:{" "}
+          {account.verified ? "geverifieerd" : "nog niet geverifieerd"}.
         </p>
         <p className="account-email">{account.email}</p>
         {account.draft ? (
@@ -100,7 +110,12 @@ export default async function AccountPage() {
             Laatste draft: {findSport(account.draft.sportId).name} in {account.draft.placeLabel}.
           </p>
         ) : null}
-        <LogoutButton />
+        <div className="account-item-actions">
+          <Link className="button button-lime" href="/account/abonnement">
+            Bekijk quota
+          </Link>
+          <LogoutButton />
+        </div>
       </section>
     </AccountShell>
   );

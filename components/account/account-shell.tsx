@@ -8,17 +8,21 @@ const links = [
   { href: "/account/zoekopdrachten", label: "Opgeslagen zoekopdrachten", match: "zoekopdrachten" as const },
   { href: "/account/sporten", label: "Mijn sporten", match: "sporten" as const },
   { href: "/account/voorkeuren", label: "Voorkeuren", match: "voorkeuren" as const },
+  { href: "/account/abonnement", label: "Abonnement & quota", match: "abonnement" as const },
+  { href: "/account/facturering", label: "Facturering", match: "facturering" as const },
 ];
 
 export function AccountShell({
   active,
   accountName,
   breadcrumb,
+  planLabel = "Basis · opslaan = 0",
   children,
 }: {
   active: (typeof links)[number]["match"];
   accountName: string;
   breadcrumb: string;
+  planLabel?: string;
   children: ReactNode;
 }) {
   return (
@@ -46,7 +50,7 @@ export function AccountShell({
       <div className="account-main">
         <header className="account-topbar">
           <p>{breadcrumb}</p>
-          <span className="account-badge">Basis · opslaan = 0</span>
+          <span className="account-badge">{planLabel}</span>
           <span className="account-user">{accountName}</span>
         </header>
         <div className="account-content">{children}</div>
