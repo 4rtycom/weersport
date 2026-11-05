@@ -8,6 +8,8 @@ type Props = {
   placeLabel: string;
   period: string;
   peakLabel?: string | null;
+  plannedStart?: string | null;
+  plannedEnd?: string | null;
   snapshotAt?: string | null;
   scoreLabel?: string | null;
 };
@@ -41,10 +43,13 @@ export function SaveActions(props: Props) {
   async function savePlan() {
     setPending("plan");
     setNotice("");
-    const start = new Date();
-    start.setMinutes(0, 0, 0);
-    start.setHours(start.getHours() + 1);
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const plannedStart = props.plannedStart ?? "";
+    const plannedEnd = props.plannedEnd ?? "";
+    if (!plannedStart || !plannedEnd || Number.isNaN(Date.parse(plannedStart)) || Number.isNaN(Date.parse(plannedEnd))) {
+      setPending(null);
+      setNotice("Geen aanbevolen tijdvak om op te slaan.");
+      return;
+    }
     const response = await fetch("/api/moments", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -54,8 +59,8 @@ export function SaveActions(props: Props) {
         placeLabel: props.placeLabel,
         period: props.period,
         windowLabel: props.peakLabel ?? "Gepland tijdvak",
-        plannedStart: start.toISOString(),
-        plannedEnd: end.toISOString(),
+        plannedStart,
+        plannedEnd,
         lastSnapshotAt: props.snapshotAt ?? null,
         lastScoreLabel: props.scoreLabel ?? null,
         note: "Opgeslagen plan, geen live weersadvies of veiligheidsgarantie.",

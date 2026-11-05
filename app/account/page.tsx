@@ -4,7 +4,13 @@ import { AccountShell } from "@/components/account/account-shell";
 import { LogoutButton } from "@/components/logout-button";
 import { SportIcon } from "@/components/sport-icon";
 import { readSession } from "@/lib/auth/cookies";
-import { ageLabel, listFavoriteSports, listPlannedMoments, listSavedSearches } from "@/lib/moments/store";
+import {
+  ageLabel,
+  listFavoriteSports,
+  listPlannedMoments,
+  listSavedSearches,
+  nextPlannedMoment,
+} from "@/lib/moments/store";
 import { findSport } from "@/lib/sports";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +22,7 @@ export default async function AccountPage() {
   const moments = listPlannedMoments(account.id);
   const searches = listSavedSearches(account.id);
   const favorites = listFavoriteSports(account.id);
-  const nextMoment = moments[0] ?? null;
+  const nextMoment = nextPlannedMoment(moments);
 
   return (
     <AccountShell active="overview" accountName={account.name} breadcrumb="Mijn WeerSport / Overzicht">
@@ -51,7 +57,7 @@ export default async function AccountPage() {
             Bekijk sportmomenten →
           </Link>
         </section>
-      ) : (
+      ) : moments.length === 0 ? (
         <section className="account-hero-card">
           <p className="account-chip">Nog leeg</p>
           <h2>Bewaar je eerste sportmoment</h2>
@@ -60,7 +66,7 @@ export default async function AccountPage() {
             Start met plannen →
           </Link>
         </section>
-      )}
+      ) : null}
 
       <div className="account-summary-grid">
         <article className="account-panel">

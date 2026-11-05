@@ -23,7 +23,7 @@ export default async function PreferencesPage() {
         </div>
       </div>
       <section className="account-panel">
-        <p className="account-age">Laatst bijgewerkt: {ageLabel(preferences.updatedAt)}</p>
+        <p className="account-age">Laatst bijgewerkt: {ageLabel(preferences.updatedAt, "updated")}</p>
         <PreferencesForm
           initial={{
             weekendFocus: preferences.weekendFocus,

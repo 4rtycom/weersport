@@ -112,6 +112,16 @@ export function listPlannedMoments(userId: string) {
   return rows.map(mapMoment);
 }
 
+export function nextPlannedMoment(moments: PlannedMoment[]) {
+  const now = Date.now();
+  return (
+    moments.find((moment) => {
+      const end = Date.parse(moment.plannedEnd);
+      return Number.isFinite(end) && end > now;
+    }) ?? null
+  );
+}
+
 export function getPlannedMoment(userId: string, id: string) {
   ensureMomentsSchema();
   const row = db()
@@ -293,12 +303,19 @@ export function updatePreferences(
   return getPreferences(userId);
 }
 
-export function ageLabel(iso: string | null) {
-  if (!iso) return "Nog geen analyse gekoppeld";
+const AGE_COPY = {
+  analysis: { empty: "Nog geen analyse gekoppeld", fresh: "Zojuist opgeslagen" },
+  opened: { empty: "Nog niet geopend", fresh: "Zojuist geopend" },
+  updated: { empty: "Nog niet bijgewerkt", fresh: "Zojuist bijgewerkt" },
+} as const;
+
+export function ageLabel(iso: string | null, kind: keyof typeof AGE_COPY = "analysis") {
+  const copy = AGE_COPY[kind];
+  if (!iso) return copy.empty;
   const ms = Date.now() - new Date(iso).getTime();
   if (Number.isNaN(ms) || ms < 0) return "Leeftijd onbekend";
   const minutes = Math.floor(ms / 60000);
-  if (minutes < 1) return "Zojuist opgeslagen";
+  if (minutes < 1) return copy.fresh;
   if (minutes < 60) return `${minutes} min geleden`;
   const hours = Math.floor(minutes / 60);
   if (hours < 48) return `${hours} uur geleden`;

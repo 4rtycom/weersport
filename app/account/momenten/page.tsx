@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountShell } from "@/components/account/account-shell";
-import { DeleteMomentButton } from "@/components/account/moment-list-actions";
+import { DeleteMomentButton, OpenMomentButton } from "@/components/account/moment-list-actions";
 import { SportIcon } from "@/components/sport-icon";
 import { readSession } from "@/lib/auth/cookies";
-import { ageLabel, listPlannedMoments } from "@/lib/moments/store";
+import { ageLabel, listPlannedMoments, nextPlannedMoment } from "@/lib/moments/store";
 import { findSport } from "@/lib/sports";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export default async function MomentsPage() {
   const account = await readSession();
   if (!account) redirect("/auth/inloggen");
   const moments = listPlannedMoments(account.id);
-  const featured = moments[0] ?? null;
+  const featured = nextPlannedMoment(moments);
 
   return (
     <AccountShell active="momenten" accountName={account.name} breadcrumb="Mijn WeerSport / Sportmomenten">
@@ -83,9 +83,7 @@ export default async function MomentsPage() {
                   <p className="account-age">Leeftijd gekoppelde analyse: {ageLabel(moment.lastSnapshotAt)}</p>
                   <p className="account-disclaimer">{moment.note || "Geen live veiligheidsgarantie."}</p>
                   <div className="account-item-actions">
-                    <Link className="button button-lime" href={`/?sport=${moment.sportId}#planner`}>
-                      Details bekijken →
-                    </Link>
+                    <OpenMomentButton id={moment.id} />
                     <DeleteMomentButton id={moment.id} />
                   </div>
                 </li>

@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { accountFromSession } from "@/lib/auth/service";
-import { SESSION_COOKIE } from "@/lib/auth/cookies";
+import { accountFromSession, saveDraft } from "@/lib/auth/service";
+import { SESSION_COOKIE, writeDraft } from "@/lib/auth/cookies";
 import { parseDraft } from "@/lib/draft";
-import { createPlannedMoment, deletePlannedMoment, listPlannedMoments } from "@/lib/moments/store";
+import {
+  createPlannedMoment,
+  deletePlannedMoment,
+  draftFromMoment,
+  getPlannedMoment,
+  listPlannedMoments,
+} from "@/lib/moments/store";
 import { PHASE05_BOOKING } from "@/lib/moments/types";
 
 export const runtime = "nodejs";
@@ -53,6 +59,29 @@ export async function POST(request: Request) {
     lastScoreLabel: typeof body?.lastScoreLabel === "string" ? body.lastScoreLabel : null,
   });
   return NextResponse.json({ moment, ...PHASE05_BOOKING });
+}
+
+export async function PUT(request: Request) {
+  const auth = await requireAccount();
+  if ("error" in auth) return auth.error;
+  const body = (await request.json().catch(() => null)) as { id?: string } | null;
+  if (!body?.id) {
+    return NextResponse.json({ error: "Sportmoment ontbreekt.", ...PHASE05_BOOKING }, { status: 400 });
+  }
+  const moment = getPlannedMoment(auth.account.id, body.id);
+  if (!moment) {
+    return NextResponse.json({ error: "Sportmoment niet gevonden.", ...PHASE05_BOOKING }, { status: 404 });
+  }
+  const draft = draftFromMoment(moment);
+  saveDraft(auth.account.id, draft);
+  const response = NextResponse.json({
+    moment,
+    draft,
+    next: "/#planner",
+    ...PHASE05_BOOKING,
+  });
+  writeDraft(response, request, draft);
+  return response;
 }
 
 export async function DELETE(request: Request) {

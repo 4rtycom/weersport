@@ -57,7 +57,7 @@ export default async function SavedSearchesPage() {
                   {search.requiresWater ? "Water- of ijsdata vereist" : "Opgeslagen"}
                 </p>
                 <p className="account-age">
-                  Laatst geopend: {ageLabel(search.lastOpenedAt)} · bewaard {ageLabel(search.createdAt)}
+                  Laatst geopend: {ageLabel(search.lastOpenedAt, "opened")} · bewaard {ageLabel(search.createdAt)}
                 </p>
                 <div className="account-item-actions">
                   <OpenSearchButton id={search.id} />

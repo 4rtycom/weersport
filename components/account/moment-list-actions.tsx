@@ -25,6 +25,31 @@ export function DeleteMomentButton({ id }: { id: string }) {
   );
 }
 
+export function OpenMomentButton({ id }: { id: string }) {
+  const [pending, setPending] = useState(false);
+
+  async function onOpen() {
+    setPending(true);
+    const response = await fetch("/api/moments", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const data = (await response.json().catch(() => ({}))) as { next?: string };
+    if (data.next) {
+      window.location.assign(data.next);
+      return;
+    }
+    setPending(false);
+  }
+
+  return (
+    <button className="button button-lime" type="button" disabled={pending} onClick={onOpen}>
+      {pending ? "Openen…" : "Details bekijken →"}
+    </button>
+  );
+}
+
 export function OpenSearchButton({ id }: { id: string }) {
   const [pending, setPending] = useState(false);
 

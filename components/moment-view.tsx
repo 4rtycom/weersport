@@ -168,6 +168,8 @@ export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapsh
             placeLabel={snapshot.placeLabel}
             period={snapshot.period}
             peakLabel={scored?.peakWindow.label ?? scored?.bestTimeLabel ?? null}
+            plannedStart={scored?.peakWindow.start ?? null}
+            plannedEnd={scored?.peakWindow.end ?? null}
             snapshotAt={snapshot.generatedAt}
             scoreLabel={scored ? `${scored.score}/100 · ${scored.badge}` : noScore ? "NO_SCORE" : null}
           />
