@@ -74,8 +74,8 @@ export function getEntitlement(userId: string): Entitlement {
     remaining: Math.max(0, limit - used),
     periodKey,
     resetAt,
-    cancelAtPeriodEnd: Boolean(row?.cancel_at_period_end),
-    currentPeriodEnd: row?.current_period_end ?? null,
+    cancelAtPeriodEnd: pro && Boolean(row?.cancel_at_period_end),
+    currentPeriodEnd: pro ? (row?.current_period_end ?? null) : null,
     adsEligible: !pro,
   };
 }

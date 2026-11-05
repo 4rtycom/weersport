@@ -25,6 +25,11 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+/** Mollie failed, canceled, and expired payments are stored as payment_failed; the URL is no longer payable. */
+function isClosedCheckout(state: string) {
+  return state === "payment_failed" || state === "cancelled";
+}
+
 function apiKey() {
   return process.env.MOLLIE_API_KEY?.trim() || "";
 }
@@ -89,6 +94,7 @@ export async function createProCheckout(input: {
     return { ok: false, status: 409, error: "Je hebt al een actieve Pro-periode." };
   }
 
+  let closedCheckoutId: string | null = null;
   if (input.idempotencyKey) {
     const existing = db()
       .prepare("SELECT * FROM billing_checkouts WHERE idempotency_key = ? AND user_id = ?")
@@ -99,7 +105,7 @@ export async function createProCheckout(input: {
           checkout_url: string | null;
         }
       | undefined;
-    if (existing?.checkout_url) {
+    if (existing?.checkout_url && !isClosedCheckout(existing.state)) {
       return {
         ok: true,
         checkout: {
@@ -113,6 +119,7 @@ export async function createProCheckout(input: {
         },
       };
     }
+    if (existing && isClosedCheckout(existing.state)) closedCheckoutId = existing.id;
   }
 
   const checkoutId = randomUUID();
@@ -153,6 +160,16 @@ export async function createProCheckout(input: {
     mollieCustomerId = `cst_local_${input.userId.slice(0, 8)}`;
     molliePaymentId = `tr_local_${checkoutId.slice(0, 12)}`;
     state = "payment_pending";
+  }
+
+  if (closedCheckoutId) {
+    db()
+      .prepare(
+        `UPDATE billing_checkouts
+         SET idempotency_key = NULL, updated_at = ?
+         WHERE id = ? AND state IN ('payment_failed', 'cancelled')`,
+      )
+      .run(stamp, closedCheckoutId);
   }
 
   db()
