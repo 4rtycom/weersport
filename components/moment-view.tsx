@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
 import type { ForecastSnapshot } from "@/lib/data/types";
+import { getSportMeta } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
 
 function formatMetric(value: number | null, suffix: string) {
@@ -32,9 +34,13 @@ function statusLabel(status: string) {
 
 export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapshot; accountName: string }) {
   const sport = findSport(snapshot.sportId);
+  const meta = getSportMeta(snapshot.sportId);
   const weather = snapshot.weather.value;
   const uv = snapshot.uv.value;
-  const noScore = snapshot.suitability.kind === "NO_SCORE";
+  const suitability = snapshot.suitability;
+  const noScore = suitability.kind === "NO_SCORE" ? suitability : null;
+  const scored = suitability.kind === "SCORED" ? suitability : null;
+  const nextSport = meta.nextSportId ? findSport(meta.nextSportId) : null;
 
   return (
     <>
@@ -57,23 +63,73 @@ export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapsh
             </div>
           </div>
           <p className={`moment-live-badge ${snapshot.weather.demo ? "is-demo" : "is-live"}`}>
-            {snapshot.weather.demo || snapshot.weather.status !== "READY"
-              ? "Geen live weerscore · bronstatus hieronder"
-              : "Live weeradapter · geen gevalideerde sportscore"}
+            {scored
+              ? `Live score · ${scored.modelVersion}`
+              : snapshot.weather.demo || snapshot.weather.status !== "READY"
+                ? "Geen live weerscore · bronstatus hieronder"
+                : "Live weeradapter · geen sportscore"}
           </p>
         </section>
 
         <div className="moment-grid">
-          <article className="moment-card">
-            <p className="eyebrow">{noScore ? "Sportgeschiktheid · NO_SCORE" : "Sportgeschiktheid · fase 04"}</p>
-            <h2>{noScore ? "NO_SCORE" : "Nog geen gevalideerde score"}</h2>
-            <p>{snapshot.suitability.reason}</p>
-            <div className="moment-note">
-              <strong>Broncontrole</strong>
-              <span>
-                Officiële waarschuwingen en UV staan los van elke score. Testdata wordt nooit als live getoond.
-              </span>
-            </div>
+          <article className="moment-card moment-score-card">
+            {scored ? (
+              <>
+                <p className="eyebrow">Sportgeschiktheid · {scored.modelVersion}</p>
+                <div className="score-headline">
+                  <div>
+                    <p className="score-value" aria-label={`Score ${scored.score} van 100`}>
+                      {scored.score}
+                      <span>/100</span>
+                    </p>
+                    <p className={`score-badge score-badge-${scored.badge.toLowerCase()}`}>{scored.badge}</p>
+                  </div>
+                  <div className="score-peak">
+                    <span>{scored.peakWindow.label}</span>
+                    <strong>{scored.peakWindow.peakScore} / 100</strong>
+                  </div>
+                </div>
+                <p className="score-tooltip" title={scored.tooltip}>
+                  {meta.tagline}. {scored.bestTimeLabel}.
+                </p>
+                <ScoreCurve
+                  hourly={scored.hourly}
+                  peakTime={scored.peakWindow.peakTime}
+                  tooltip={scored.tooltip}
+                />
+                <ul className="score-factors">
+                  {scored.factors.map((factor) => (
+                    <li key={factor.id}>
+                      <div>
+                        <strong>{factor.label}</strong>
+                        <span>{factor.explanation}</span>
+                      </div>
+                      <em>{factor.impact}</em>
+                    </li>
+                  ))}
+                </ul>
+                <p className="moment-rights">{scored.caveats} UV en officiële waarschuwingen blijven los van deze score.</p>
+              </>
+            ) : (
+              <>
+                <p className="eyebrow">Sportgeschiktheid · NO_SCORE</p>
+                <h2>NO_SCORE</h2>
+                <p>{noScore?.reason ?? "Geen score beschikbaar."}</p>
+                {noScore?.missing && noScore.missing.length > 0 ? (
+                  <ul className="score-missing">
+                    {noScore.missing.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="moment-note">
+                  <strong>Broncontrole</strong>
+                  <span>
+                    Officiële waarschuwingen en UV staan los van elke score. Testdata wordt nooit als live getoond.
+                  </span>
+                </div>
+              </>
+            )}
           </article>
 
           <aside className="moment-card moment-safety">
@@ -90,6 +146,11 @@ export function MomentView({ snapshot, accountName }: { snapshot: ForecastSnapsh
               <p>Officiële weerwaarschuwingen</p>
               <strong>{snapshot.warnings.message}</strong>
             </div>
+            {nextSport ? (
+              <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
+                Volgende sport · {nextSport.name}
+              </Link>
+            ) : null}
           </aside>
         </div>
 

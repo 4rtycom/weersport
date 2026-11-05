@@ -3,38 +3,10 @@ import { fetchOpenMeteoWeather } from "@/lib/data/adapters/open-meteo";
 import { lookupPlaceCoords } from "@/lib/data/adapters/pdok-geo";
 import { fetchRwsWater } from "@/lib/data/adapters/rws";
 import { fetchZwemwater } from "@/lib/data/adapters/zwemwater";
-import {
-  ICE_CRITICAL_SPORTS,
-  WATER_CRITICAL_SPORTS,
-  type ForecastSnapshot,
-  type SuitabilityOutcome,
-} from "@/lib/data/types";
+import type { ForecastSnapshot } from "@/lib/data/types";
 import type { SearchDraft } from "@/lib/draft";
+import { scoreSportHours } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
-
-function suitabilityFor(sportId: string, waterLinked: boolean, swimLinked: boolean): SuitabilityOutcome {
-  if (ICE_CRITICAL_SPORTS.has(sportId)) {
-    return {
-      kind: "NO_SCORE",
-      reason:
-        "Natuurijs wordt nooit veilig verklaard op basis van luchttemperatuur alleen. IJsdata ontbreekt → NO_SCORE.",
-    };
-  }
-  if (WATER_CRITICAL_SPORTS.has(sportId)) {
-    if (!waterLinked || (sportId === "openwaterzwemmen" && !swimLinked)) {
-      return {
-        kind: "NO_SCORE",
-        reason:
-          "Kritieke water- of zwemwaterdata ontbreekt. Er is geen geruststellende sportgeschiktheidsscore.",
-      };
-    }
-  }
-  return {
-    kind: "PENDING_PHASE_04",
-    reason:
-      "Weer- en veiligheidsbronnen zijn aangesloten of gemarkeerd. Gevalideerde sportscore 0–100 volgt in fase 04.",
-  };
-}
 
 export async function buildForecastSnapshot(draft: SearchDraft): Promise<ForecastSnapshot> {
   const sport = findSport(draft.sportId);
@@ -52,7 +24,12 @@ export async function buildForecastSnapshot(draft: SearchDraft): Promise<Forecas
 
   const waterLinked = water.status === "READY" || water.status === "PARTIAL";
   const swimLinked = swim.status === "READY" || swim.status === "PARTIAL";
-  const suitability = suitabilityFor(sport.id, waterLinked, swimLinked);
+  const suitability = scoreSportHours({
+    sportId: sport.id,
+    hours: weatherPair.weather.value?.hours ?? [],
+    waterLinked,
+    swimLinked,
+  });
 
   const sources = [
     weatherPair.weather,
