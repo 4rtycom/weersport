@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import type { ReactNode } from "react";
+import { ConsentRoot } from "@/components/consent-root";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -21,7 +22,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="nl" className={manrope.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ConsentRoot />
+      </body>
     </html>
   );
 }

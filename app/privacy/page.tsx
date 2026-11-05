@@ -19,7 +19,13 @@ export default function PrivacyPage() {
         </p>
         <p>
           Plaatsnamen worden gecontroleerd bij de publieke PDOK Locatieserver, zodat alleen Nederlandse woonplaatsen
-          gekozen kunnen worden. Er wordt geen weeranalyse opgevraagd.
+          gekozen kunnen worden.
+        </p>
+        <p>
+          Voor EER-gebruikers vragen we toestemming vóór AdSense. Zonder toestemming wordt geen advertentieverzoek
+          gedaan. Op Basis staat maximaal één handmatig slot ná sportweer en veiligheid. Homepage, auth, Mollie
+          checkout/facturering, kritieke NO_SCORE-schermen en Pro tonen geen advertenties. AdSense is geen
+          sport+radius-targetingengine van WeerSport.
         </p>
         <Link href="/auth/registreren">Terug naar registreren</Link>
       </main>
