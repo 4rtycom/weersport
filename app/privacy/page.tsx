@@ -14,8 +14,9 @@ export default function PrivacyPage() {
         <h1>Privacy</h1>
         <p>
           Een account bewaart je naam, e-mailadres, een gehasht wachtwoord en de zoekopdracht die je zelf hebt gekozen.
-          Het wachtwoord wordt niet leesbaar opgeslagen. Er is nog geen export, verwijdering of verwerkerovereenkomst
-          vastgesteld; die horen bij de releasefase.
+          Het wachtwoord wordt niet leesbaar opgeslagen. Je kunt je gegevens exporteren of je account verwijderen via{" "}
+          <Link href="/account/privacy">Privacy &amp; data</Link>. Een formele verwerkerovereenkomst volgt bij
+          productie-onboarding.
         </p>
         <p>
           Plaatsnamen worden gecontroleerd bij de publieke PDOK Locatieserver, zodat alleen Nederlandse woonplaatsen

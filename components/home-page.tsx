@@ -369,6 +369,11 @@ export function HomePage({
         </div>
         <p className="footer-tagline">Wat is jouw beste sportmoment?</p>
         <p className="footer-disclaimer">WeerSport-moment is een advies, geen veiligheidsgarantie.</p>
+        <nav className="footer-links" aria-label="Juridisch en support">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/voorwaarden">Voorwaarden</Link>
+          <Link href="/support">Support</Link>
+        </nav>
       </footer>
       </>
   );

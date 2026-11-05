@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountShell } from "@/components/account/account-shell";
+import { RefundButton } from "@/components/billing/refund-button";
 import { readSession } from "@/lib/auth/cookies";
 import { getEntitlement } from "@/lib/billing/entitlement";
 import { listInvoices, mollieMode } from "@/lib/billing/mollie";
@@ -54,10 +55,19 @@ export default async function FactureringPage() {
                   € {(invoice.amount_cents / 100).toFixed(2)} · {invoice.status}
                 </p>
                 <p className="account-age">{formatStamp(invoice.issued_at)}</p>
+                {invoice.status === "paid" && mollieMode() === "sandbox-local" ? (
+                  <RefundButton invoiceId={invoice.id} />
+                ) : null}
               </li>
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="account-panel">
+        <h2>Support & terugbetalingen</h2>
+        <p>Beleid en contactroutes voor refunds en geschillen staan op de supportpagina.</p>
+        <Link href="/support/terugbetaling">Bekijk terugbetalingsbeleid →</Link>
       </section>
     </AccountShell>
   );

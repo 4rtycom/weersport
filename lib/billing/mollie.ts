@@ -403,3 +403,61 @@ export function getCheckoutPublic(checkoutId: string, userId: string) {
   if (!row || row.user_id !== userId) return null;
   return row;
 }
+
+/**
+ * Sandbox/staging refund path. Marks the paid invoice as refunded and ends Pro immediately
+ * after the refund is recorded (no browser-only trust).
+ */
+export function applyRefund(input: { userId: string; invoiceId?: string }) {
+  ensureBillingSchema();
+  const invoice = input.invoiceId
+    ? (db()
+        .prepare("SELECT * FROM billing_invoices WHERE id = ? AND user_id = ?")
+        .get(input.invoiceId, input.userId) as
+        | { id: string; status: string; checkout_id: string | null }
+        | undefined)
+    : (db()
+        .prepare(
+          "SELECT * FROM billing_invoices WHERE user_id = ? AND status = 'paid' ORDER BY issued_at DESC LIMIT 1",
+        )
+        .get(input.userId) as { id: string; status: string; checkout_id: string | null } | undefined);
+
+  if (!invoice) {
+    return { ok: false as const, status: 404, error: "Geen betaalde factuur gevonden voor terugbetaling." };
+  }
+  if (invoice.status === "refunded") {
+    return {
+      ok: true as const,
+      duplicate: true,
+      invoiceId: invoice.id,
+      entitlement: getEntitlement(input.userId),
+    };
+  }
+  if (invoice.status !== "paid") {
+    return { ok: false as const, status: 400, error: "Alleen betaalde facturen kunnen worden terugbetaald." };
+  }
+
+  const stamp = nowIso();
+  db().prepare("UPDATE billing_invoices SET status = 'refunded' WHERE id = ?").run(invoice.id);
+  if (invoice.checkout_id) {
+    db()
+      .prepare("UPDATE billing_checkouts SET state = ?, raw_status = ?, updated_at = ? WHERE id = ?")
+      .run("refunded", "refunded", stamp, invoice.checkout_id);
+  }
+  db()
+    .prepare(
+      `UPDATE billing_subscriptions
+       SET plan = 'basis', state = 'refunded', current_period_end = ?, cancel_at_period_end = 0,
+           cancelled_at = ?, updated_at = ?
+       WHERE user_id = ?`,
+    )
+    .run(stamp, stamp, stamp, input.userId);
+
+  return {
+    ok: true as const,
+    duplicate: false,
+    invoiceId: invoice.id,
+    entitlement: getEntitlement(input.userId),
+    message: "Terugbetaling verwerkt. Pro-rechten zijn beëindigd.",
+  };
+}
