@@ -24,19 +24,27 @@ export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
       setPlaces([]);
       return;
     }
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/plaatsen?q=${encodeURIComponent(needle)}`);
+        const response = await fetch(`/api/plaatsen?q=${encodeURIComponent(needle)}`, {
+          signal: controller.signal,
+        });
         const data = (await response.json()) as { places?: Place[]; error?: string };
+        if (controller.signal.aborted) return;
         setPlaces(data.places ?? []);
         setActive(0);
         setStatus(data.error ?? "");
       } catch {
+        if (controller.signal.aborted) return;
         setPlaces([]);
         setStatus("De Nederlandse plaatscontrole is nu niet bereikbaar.");
       }
     }, 180);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [label]);
 
   useEffect(() => {

@@ -13,7 +13,5 @@ export async function GET(request: Request) {
   const session = accountFromSession(jar.get(SESSION_COOKIE)?.value);
   const destination =
     account && session?.id === account.id ? "/auth/hervat" : account ? "/auth/inloggen?bevestigd=1" : "/auth/verifieer?fout=link";
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "127.0.0.1:3000";
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
-  return Response.redirect(`${proto}://${host}${destination}`);
+  return Response.redirect(new URL(destination, request.url));
 }
