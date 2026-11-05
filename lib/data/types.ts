@@ -98,6 +98,7 @@ export type SuitabilityOutcome =
 export type ForecastSnapshot = {
   sportId: string;
   sportName: string;
+  placeId: string;
   placeLabel: string;
   period: string;
   generatedAt: string;

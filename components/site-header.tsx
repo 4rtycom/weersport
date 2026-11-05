@@ -28,6 +28,7 @@ export function SiteHeader({ account = false }: { account?: boolean }) {
             {link.label}
           </Link>
         ))}
+        {account ? <Link href="/account/momenten">Mijn momenten</Link> : null}
         {account ? <Link href="/account">Account</Link> : null}
         <Link className="button button-lime nav-cta" href="/#planner">
           Bekijk jouw moment →
