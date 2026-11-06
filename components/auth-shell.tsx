@@ -4,6 +4,9 @@ import type { ReactNode } from "react";
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <main className="auth-page" id="inhoud">
+      <a className="skip-link" href="#auth-form">
+        Naar formulier
+      </a>
       <section className="auth-shell">
         <aside className="auth-story">
           <Link className="auth-wordmark" href="/">
@@ -22,7 +25,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
         </aside>
         <div className="auth-canvas">
           <p className="auth-kicker">Alles begint met jouw sport</p>
-          <div className="auth-body">{children}</div>
+          <div className="auth-body" id="auth-form" tabIndex={-1}>
+            {children}
+          </div>
           <p className="auth-footnote">Je gegevens blijven privé. Geen zoekopdracht wordt uitgevoerd vóór je inlogt.</p>
         </div>
       </section>
