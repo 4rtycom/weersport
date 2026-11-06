@@ -14,7 +14,7 @@ export type SportScoreProfile = {
   caveats: string;
 };
 
-export const SCORE_MODEL_VERSION = "weersport-score-v0.1-provisional";
+export const SCORE_MODEL_VERSION = "weersport-score-v0.2-phase3";
 
 /**
  * Provisional sport weights for Phase 04.

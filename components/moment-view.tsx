@@ -105,15 +105,19 @@ export function MomentView({
                 <p className="eyebrow">Sportgeschiktheid · {scored.modelVersion}</p>
                 <div className="score-headline">
                   <div>
-                    <p className="score-value" aria-label={`Score ${scored.score} van 100`}>
+                    <p className="score-value" aria-label={`Score nu ${scored.score} van 100`}>
                       {scored.score}
                       <span>/100</span>
                     </p>
                     <p className={`score-badge score-badge-${scored.badge.toLowerCase()}`}>{scored.badge}</p>
+                    <p className="score-now-label">{scored.now?.label ?? "Nu"}</p>
                   </div>
                   <div className="score-peak">
-                    <span>{scored.peakWindow.label}</span>
-                    <strong>{scored.peakWindow.peakScore} / 100</strong>
+                    <span>{scored.recommendedWindow?.label ?? scored.peakWindow.label}</span>
+                    <strong>
+                      {(scored.recommendedWindow?.score ?? scored.peakWindow.peakScore)} / 100
+                    </strong>
+                    <em>{scored.peakHour?.label ?? scored.bestTimeLabel}</em>
                   </div>
                 </div>
                 <p className="score-tooltip" title={scored.tooltip}>
@@ -121,7 +125,7 @@ export function MomentView({
                 </p>
                 <ScoreCurve
                   hourly={scored.hourly}
-                  peakTime={scored.peakWindow.peakTime}
+                  peakTime={scored.recommendedWindow?.peakTime ?? scored.peakWindow.peakTime}
                   tooltip={scored.tooltip}
                 />
                 <ul className="score-factors">
