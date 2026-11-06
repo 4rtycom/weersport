@@ -25,7 +25,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         </aside>
         <div className="auth-canvas">
           <p className="auth-kicker">Alles begint met jouw sport</p>
-          <div className="auth-body" id="auth-form">
+          <div className="auth-body" id="auth-form" tabIndex={-1}>
             {children}
           </div>
           <p className="auth-footnote">Je gegevens blijven privé. Geen zoekopdracht wordt uitgevoerd vóór je inlogt.</p>

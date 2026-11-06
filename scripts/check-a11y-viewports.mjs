@@ -2,8 +2,16 @@
  * Keyboard, 320/390 overflow, and the Chrome accessibility tree.
  * This is not a VoiceOver or TalkBack pass.
  */
+import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+
+const shellSource = readFileSync(new URL("../components/auth-shell.tsx", import.meta.url), "utf8");
+const formAt = shellSource.indexOf('id="auth-form"');
+const formTarget = shellSource.slice(formAt, formAt + 80);
+if (formAt < 0 || !formTarget.includes("tabIndex={-1}")) {
+  throw new Error("Auth skip target #auth-form is not programmatically focusable");
+}
 
 const base = process.env.WEERSPORT_BASE_URL;
 if (!base) {
@@ -151,6 +159,50 @@ try {
   if (keyboard.first !== "Naar formulier") throw new Error(`Registration skip link was not focused (${keyboard.first})`);
   if (keyboard.unnamed.length) throw new Error(`Unnamed controls: ${keyboard.unnamed.join(" | ")}`);
   if (keyboard.count < 5) throw new Error("Registration form exposed too few keyboard controls");
+
+  await send("Target.activateTarget", { targetId: created.targetId });
+  const afterSkip = await evaluate(`(() => {
+    const skip = document.querySelector(".skip-link");
+    skip.focus();
+    skip.click();
+    const active = document.activeElement;
+    const form = document.getElementById("auth-form");
+    return {
+      id: active?.id || "",
+      onForm: active === form,
+      wordmark: active?.classList?.contains("auth-wordmark") || false,
+    };
+  })()`);
+  if (!afterSkip.onForm || afterSkip.wordmark) {
+    throw new Error(`Skip link left focus outside the form (${JSON.stringify(afterSkip)})`);
+  }
+  await send("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "Tab",
+    code: "Tab",
+    windowsVirtualKeyCode: 9,
+    nativeVirtualKeyCode: 9,
+  }, sessionId);
+  await send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "Tab",
+    code: "Tab",
+    windowsVirtualKeyCode: 9,
+    nativeVirtualKeyCode: 9,
+  }, sessionId);
+  const afterTab = await evaluate(`(() => {
+    const active = document.activeElement;
+    const form = document.getElementById("auth-form");
+    return {
+      id: active?.id || "",
+      tag: active?.tagName || "",
+      inside: Boolean(form && active && form.contains(active) && active !== form),
+      wordmark: active?.classList?.contains("auth-wordmark") || false,
+    };
+  })()`);
+  if (!afterTab.inside || afterTab.wordmark || afterTab.id !== "naam") {
+    throw new Error(`Tab after the skip link missed the first form control (${JSON.stringify(afterTab)})`);
+  }
 
   console.log(`a11y viewports ok (${keyboard.count} focusable controls on registration)`);
 } finally {
