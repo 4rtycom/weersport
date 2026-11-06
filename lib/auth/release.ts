@@ -1,28 +1,31 @@
 /**
- * Phase 0 — public release auth containment.
+ * Phase 0/1 — auth delivery modes.
  *
- * Until transactional inbox delivery exists (Phase 1), production and untrusted
- * preview targets must not expose recovery/verification credentials via HTML,
- * JSON, cookies or redirects. Local disposable tests may opt into a dev mailbox.
+ * - closed: no signup/recovery token delivery (public until inbox works)
+ * - inbox: transactional mail (Resend) or staging log driver — never browser cookies
+ * - mailbox: local disposable browser mailbox (WEERSPORT_ALLOW_DEV_AUTH), never production
  */
 
-export type AuthDeliveryMode = "closed" | "dev-mailbox";
+import { mailConfigured } from "@/lib/mail/send";
+
+export type AuthDeliveryMode = "closed" | "inbox" | "mailbox";
 
 export function isVercelProduction() {
   return process.env.VERCEL_ENV === "production";
 }
 
 export function authDeliveryMode(): AuthDeliveryMode {
-  if (isVercelProduction()) return "closed";
   if (process.env.WEERSPORT_FORCE_AUTH_CLOSED === "1") return "closed";
+  if (isVercelProduction()) {
+    return mailConfigured() ? "inbox" : "closed";
+  }
+  if (mailConfigured()) return "inbox";
   if (process.env.WEERSPORT_ALLOW_DEV_AUTH === "0") return "closed";
-  // Vercel preview: closed unless explicitly allowed for disposable staging UAT.
   if (process.env.VERCEL_ENV === "preview" && process.env.WEERSPORT_ALLOW_DEV_AUTH !== "1") {
     return "closed";
   }
-  if (process.env.WEERSPORT_ALLOW_DEV_AUTH === "1") return "dev-mailbox";
-  // Local / non-Vercel defaults to mailbox for engineering checks.
-  if (!process.env.VERCEL_ENV) return "dev-mailbox";
+  if (process.env.WEERSPORT_ALLOW_DEV_AUTH === "1") return "mailbox";
+  if (!process.env.VERCEL_ENV) return "mailbox";
   return "closed";
 }
 
@@ -30,15 +33,22 @@ export function authIsClosed() {
   return authDeliveryMode() === "closed";
 }
 
+export function authUsesInbox() {
+  return authDeliveryMode() === "inbox";
+}
+
+export function authUsesMailbox() {
+  return authDeliveryMode() === "mailbox";
+}
+
 export function assertDisposableCheckTarget(baseUrl: string | undefined) {
   if (!baseUrl) return;
   if (process.env.WEERSPORT_ALLOW_PROD_CHECK === "1") return;
   const host = new URL(baseUrl).hostname;
-  if (host === "weersport.vercel.app" || host.endsWith(".vercel.app") && !host.includes("-git-")) {
-    // Production alias and unmarked hosts must not run destructive check suites.
-    if (host === "weersport.vercel.app") {
-      throw new Error("Refusing destructive checks against production. Set WEERSPORT_ALLOW_PROD_CHECK=1 only with explicit review.");
-    }
+  if (host === "weersport.vercel.app") {
+    throw new Error(
+      "Refusing destructive checks against production. Set WEERSPORT_ALLOW_PROD_CHECK=1 only with explicit review.",
+    );
   }
 }
 

@@ -6,16 +6,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check": "node scripts/check-phase0.mjs && node scripts/check-phase01.mjs && node scripts/check-phase02.mjs && node scripts/check-phase03.mjs && node scripts/check-phase04.mjs && node scripts/check-phase05.mjs && node scripts/check-phase06.mjs && node scripts/check-phase07.mjs && node scripts/check-phase08.mjs"
+    "check": "node scripts/check-phase0.mjs && node scripts/check-phase1.mjs && node scripts/check-phase01.mjs && node scripts/check-phase02.mjs && node scripts/check-phase03.mjs && node scripts/check-phase04.mjs && node scripts/check-phase05.mjs && node scripts/check-phase06.mjs && node scripts/check-phase07.mjs && node scripts/check-phase08.mjs",
+    "migrate:postgres": "node scripts/migrate-sqlite-to-postgres.mjs"
   },
   "dependencies": {
     "next": "^15.5.6",
+    "pg": "^8.23.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@types/node": "^22.19.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "eslint": "^9.36.0",

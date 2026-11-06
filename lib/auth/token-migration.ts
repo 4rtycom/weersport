@@ -43,7 +43,18 @@ export function invalidateOutstandingAuthTokens(reason = MARKER) {
   }
 }
 
-/** Rollback helper for reviewed ops: remove the migration marker only. Does not restore tokens. */
 export function clearTokenInvalidationMarker() {
   db().prepare("DELETE FROM schema_migrations WHERE id = ?").run(MARKER);
+}
+
+/** Ensure Phase 0 migration runs once for SQLite processes. */
+let ran = false;
+export function ensurePhase0TokenMigration() {
+  if (ran) return;
+  ran = true;
+  try {
+    invalidateOutstandingAuthTokens();
+  } catch {
+    // Schema may not exist yet on first boot before tables are created.
+  }
 }
