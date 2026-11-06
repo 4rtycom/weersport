@@ -77,10 +77,10 @@ async function request(path, options = {}) {
   storeCookies(response);
   return response;
 }
-async function post(path, body) {
+async function post(path, body, headers = {}) {
   const response = await request(path, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
   return { status: response.status, data: await response.json().catch(() => ({})) };
@@ -117,6 +117,7 @@ const link = verifyHtml.match(/href="(\/auth\/verifieer\/bevestig\?token=[^"]+)"
 if (!link) throw new Error("Missing verify link");
 await request(link);
 
+await post("/api/moment", draft, { "idempotency-key": `ads-before-${email}` });
 const beforeConsent = await (await request("/moment")).text();
 if (!beforeConsent.includes('data-ad-state="blocked"')) {
   throw new Error("SCORED moment without cookie consent must block ads");
@@ -136,6 +137,7 @@ if (afterConsent.includes('data-ad-state="blocked"')) {
 
 const noScoreDraft = { ...draft, sportId: "schaatsen" };
 await post("/api/zoeken", noScoreDraft);
+await post("/api/moment", noScoreDraft, { "idempotency-key": `ads-noscore-${email}` });
 const noScorePage = await (await request("/moment")).text();
 if (!noScorePage.includes("NO_SCORE")) throw new Error("Expected NO_SCORE page");
 if (noScorePage.includes("Advertentie laden") || noScorePage.includes("Sandbox-advertentie")) {
@@ -148,6 +150,7 @@ if (!noScorePage.includes('data-ad-state="blocked"')) {
 const checkout = await post("/api/billing/checkout", { consent: true, idempotencyKey: `ads-${email}` });
 await post("/api/billing/simulate", { checkoutId: checkout.data.checkout.id, status: "paid" });
 await post("/api/zoeken", draft);
+await post("/api/moment", draft, { "idempotency-key": `ads-pro-${email}` });
 const proMoment = await (await request("/moment")).text();
 if (proMoment.includes("Advertentie laden") || proMoment.includes("Sandbox-advertentie")) {
   throw new Error("Pro must be ad-free");

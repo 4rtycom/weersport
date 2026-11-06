@@ -1,64 +1,89 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MomentView } from "@/components/moment-view";
+import { StartAnalysis } from "@/components/start-analysis";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
 import { resolveAdPlacement } from "@/lib/ads/server";
-import { runMeteredAnalysis } from "@/lib/billing/analysis";
+import { peekMeteredAnalysis, runMeteredAnalysis } from "@/lib/billing/analysis";
 import { saveDraft } from "@/lib/auth/service";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "WeerSport-moment" };
 
-export default async function MomentPage() {
+export default async function MomentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ start?: string }>;
+}) {
   const account = await readSession();
   if (!account) redirect("/auth/inloggen");
   if (!account.verified) redirect("/auth/verifieer");
   const draft = (await readDraftCookie()) ?? account.draft;
   if (!draft) redirect("/#planner");
 
-  const result = await runMeteredAnalysis({ userId: account.id, draft });
-  if (!result.ok) {
-    if (result.status === 402) {
+  const params = await searchParams;
+  // Optional one-shot server start for scripted checks: /moment?start=1
+  // Still goes through runMeteredAnalysis (POST semantics), not a silent GET book.
+  if (params.start === "1") {
+    const started = await runMeteredAnalysis({
+      userId: account.id,
+      draft,
+      idempotencyKey: `page-start:${account.id}:${draft.sportId}:${draft.placeId}:${draft.period}`,
+    });
+    if (started.ok) {
+      saveDraft(account.id, draft);
+      const ads = await resolveAdPlacement({
+        surface: "moment",
+        suitabilityKind: started.snapshot.suitability.kind,
+        userId: account.id,
+      });
+      return (
+        <MomentView
+          snapshot={started.snapshot}
+          accountName={account.name}
+          entitlement={started.entitlement}
+          booking={{
+            booked: started.booked,
+            consumed: started.consumed,
+            cacheHit: started.cacheHit,
+          }}
+          ads={ads}
+        />
+      );
+    }
+    if (started.status === 503) {
       return (
         <main className="moment" id="inhoud">
-          <p className="eyebrow">Quota</p>
-          <h1>Maandelijks analyselimiet bereikt</h1>
-          <p>{result.error}</p>
-          <p>
-            Gebruikt {result.entitlement.used}/{result.entitlement.limit}. Opgeslagen plannen blijven beschikbaar.
-          </p>
-          <div className="account-item-actions" style={{ marginTop: 18 }}>
-            <Link className="button button-lime" href="/checkout/pro">
-              Upgrade naar Pro
-            </Link>
-            <Link className="button button-dark" href="/account/momenten">
-              Bekijk opgeslagen momenten
-            </Link>
-          </div>
+          <h1>Bronnen niet bereikbaar</h1>
+          <p>{started.error}</p>
         </main>
       );
     }
+  }
+
+  const peeked = peekMeteredAnalysis({ userId: account.id, draft });
+  if (peeked.ok) {
+    const ads = await resolveAdPlacement({
+      surface: "moment",
+      suitabilityKind: peeked.snapshot.suitability.kind,
+      userId: account.id,
+    });
     return (
-      <main className="moment" id="inhoud">
-        <h1>Bronnen niet bereikbaar</h1>
-        <p>{result.error}</p>
-      </main>
+      <MomentView
+        snapshot={peeked.snapshot}
+        accountName={account.name}
+        entitlement={peeked.entitlement}
+        booking={{ booked: false, consumed: 0, cacheHit: true }}
+        ads={ads}
+      />
     );
   }
 
-  saveDraft(account.id, draft);
-  const ads = await resolveAdPlacement({
-    surface: "moment",
-    suitabilityKind: result.snapshot.suitability.kind,
-    userId: account.id,
-  });
+  // Exhausted users can still POST to load safety/UV without a scored charge.
   return (
-    <MomentView
-      snapshot={result.snapshot}
-      accountName={account.name}
-      entitlement={result.entitlement}
-      booking={{ booked: result.booked, consumed: result.consumed, cacheHit: result.cacheHit }}
-      ads={ads}
+    <StartAnalysis
+      draft={draft}
+      entitlement={peeked.entitlement}
+      quotaExhausted={peeked.quotaExhausted}
     />
   );
 }

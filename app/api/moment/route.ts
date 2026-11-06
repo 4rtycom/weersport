@@ -2,13 +2,45 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { accountFromSession, saveDraft } from "@/lib/auth/service";
 import { SESSION_COOKIE, writeDraft } from "@/lib/auth/cookies";
-import { runMeteredAnalysis } from "@/lib/billing/analysis";
+import { peekMeteredAnalysis, runMeteredAnalysis } from "@/lib/billing/analysis";
 import { prepareSearch } from "@/lib/search";
 import { parseDraft } from "@/lib/draft";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function jsonResult(result: Awaited<ReturnType<typeof runMeteredAnalysis>>) {
+  if (!result.ok) {
+    return NextResponse.json(
+      {
+        error: result.error,
+        booked: false,
+        consumed: 0,
+        analysis: false,
+        quotaExhausted: result.quotaExhausted,
+        readOnly: result.readOnly,
+        fingerprint: result.fingerprint,
+        entitlement: result.entitlement,
+        snapshot: result.snapshot,
+        next: result.next,
+      },
+      { status: result.status },
+    );
+  }
+  return NextResponse.json({
+    booked: result.booked,
+    consumed: result.consumed,
+    cacheHit: result.cacheHit,
+    analysis: result.booked,
+    quotaExhausted: result.quotaExhausted,
+    readOnly: result.readOnly,
+    fingerprint: result.fingerprint,
+    snapshot: result.snapshot,
+    entitlement: result.entitlement,
+  });
+}
+
+/** Explicit analysis start — only path that may book quota. */
 export async function POST(request: Request) {
   const jar = await cookies();
   const account = accountFromSession(jar.get(SESSION_COOKIE)?.value);
@@ -44,33 +76,17 @@ export async function POST(request: Request) {
   });
 
   if (!result.ok) {
-    return NextResponse.json(
-      {
-        error: result.error,
-        booked: false,
-        consumed: 0,
-        analysis: false,
-        entitlement: result.entitlement,
-        next: result.next,
-      },
-      { status: result.status },
-    );
+    return jsonResult(result);
   }
 
   saveDraft(account.id, prepared.draft);
-  const response = NextResponse.json({
-    booked: result.booked,
-    consumed: result.consumed,
-    cacheHit: result.cacheHit,
-    analysis: result.booked,
-    snapshot: result.snapshot,
-    entitlement: result.entitlement,
-  });
+  const response = jsonResult(result);
   writeDraft(response, request, prepared.draft);
   return response;
 }
 
-export async function GET(request: Request) {
+/** Read-only peek — never books quota. Refresh/revisit safe. */
+export async function GET() {
   const jar = await cookies();
   const account = accountFromSession(jar.get(SESSION_COOKIE)?.value);
   if (!account) return NextResponse.json({ error: "Niet ingelogd.", booked: false, consumed: 0 }, { status: 401 });
@@ -78,31 +94,6 @@ export async function GET(request: Request) {
   if (!draft || !parseDraft(draft)) {
     return NextResponse.json({ error: "Geen bewaarde zoekopdracht.", booked: false, consumed: 0 }, { status: 400 });
   }
-  const idempotencyKey = request.headers.get("idempotency-key");
-  const result = await runMeteredAnalysis({
-    userId: account.id,
-    draft,
-    idempotencyKey,
-  });
-  if (!result.ok) {
-    return NextResponse.json(
-      {
-        error: result.error,
-        booked: false,
-        consumed: 0,
-        analysis: false,
-        entitlement: result.entitlement,
-        next: result.next,
-      },
-      { status: result.status },
-    );
-  }
-  return NextResponse.json({
-    booked: result.booked,
-    consumed: result.consumed,
-    cacheHit: result.cacheHit,
-    analysis: result.booked,
-    snapshot: result.snapshot,
-    entitlement: result.entitlement,
-  });
+  const result = peekMeteredAnalysis({ userId: account.id, draft });
+  return jsonResult(result);
 }
