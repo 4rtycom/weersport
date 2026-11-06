@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { readSession } from "@/lib/auth/cookies";
 import { BILLING_DISCLOSURE } from "@/lib/billing/constants";
-import { getCheckoutPublic, mollieMode, verifyAndApplyPayment } from "@/lib/billing/mollie";
+import { getCheckoutPublic, verifyAndApplyPayment } from "@/lib/billing/mollie";
+import { usesMollieApi } from "@/lib/billing/mollie-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function PendingPage({
   const params = await searchParams;
   if (params.checkout) {
     const checkout = getCheckoutPublic(params.checkout, account.id);
-    if (checkout && mollieMode() === "live-api") {
+    if (checkout && usesMollieApi()) {
       const verified = await verifyAndApplyPayment({ checkoutId: checkout.id, expectedUserId: account.id });
       if (verified.ok && verified.state === "payment_paid") redirect("/checkout/succes");
       if (verified.ok && verified.state === "payment_failed") redirect("/checkout/mislukt");

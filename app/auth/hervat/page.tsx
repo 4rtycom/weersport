@@ -13,17 +13,23 @@ export default async function ResumePage() {
 
   return (
     <AuthShell>
-      <p className="auth-eyebrow">Account / resume</p>
-      <h1>Je bent ingelogd!</h1>
+      <p className="auth-eyebrow">Account</p>
+      <h1>Je zoekopdracht is bewaard</h1>
       <p className="auth-lead">
-        {draft ? "Je bewaarde zoekopdracht staat klaar." : "Er is nog geen bewaarde zoekopdracht."}
+        {draft
+          ? "Hieronder staan je drie keuzes. Bewerken of inloggen heeft nog geen analyse gestart."
+          : "Er is nog geen bewaarde zoekopdracht."}
       </p>
       <div className="auth-draft auth-draft-tall">
-        <p>Account geverifieerd · Basis</p>
+        <p>Account geverifieerd</p>
         {draft ? (
           <>
-            <strong>{`${draft.sportName} in ${draft.placeLabel}`}</strong>
-            <span>{draft.period} · bewaarde zoekvoorkeuren</span>
+            <strong>{draft.sportName}</strong>
+            <span>{draft.placeLabel}</span>
+            <span>{draft.period}</span>
+            <Link className="auth-edit-draft" href={`/?sport=${draft.sportId}&hervat=1#planner`}>
+              Bewerk zoekopdracht
+            </Link>
           </>
         ) : (
           <>
@@ -31,10 +37,10 @@ export default async function ResumePage() {
             <span>De planner op de homepage verbruikt nog niets.</span>
           </>
         )}
-        <small>Eén aanvraag wordt geboekt bij succesvolle nieuwe analyse. In deze fase start er geen analyse.</small>
+        <small>Een analyse start pas wanneer je dat expliciet bevestigt op het resultaatscherm.</small>
       </div>
       <Link className="button button-dark auth-button" href={draft ? "/moment" : "/#planner"}>
-        Bekijk mijn sportmoment →
+        {draft ? "Ga naar analyse-start →" : "Naar de planner →"}
       </Link>
       <Link className="button auth-button auth-button-soft" href="/account">
         Mijn account

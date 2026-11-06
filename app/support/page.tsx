@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { robotsDirective, supportEmail, supportMailto } from "@/lib/site";
 
-export const metadata = { title: "Support" };
+export const metadata: Metadata = {
+  title: "Support",
+  description: "Hulp bij WeerSport: account, privacy, terugbetalingen en partnerschap.",
+  robots: robotsDirective(),
+};
 
 export default function SupportPage() {
   return (
@@ -10,7 +16,7 @@ export default function SupportPage() {
         <SiteHeader />
       </section>
       <main className="legal" id="inhoud">
-        <p className="eyebrow">Hulp & monitoring</p>
+        <p className="eyebrow">Hulp</p>
         <h1>Support</h1>
         <p>
           WeerSport is een sportweer-advies, geen veiligheidsgarantie. Bij twijfel over weer, water of ijs raadpleeg
@@ -18,21 +24,26 @@ export default function SupportPage() {
         </p>
         <ul className="support-list">
           <li>
-            <Link href="/support/terugbetaling">Terugbetalingen & geschillen</Link> — Mollie Pro, refundpad en staging.
+            <a href={supportMailto("WeerSport support")}>Mail support</a> — {supportEmail()}
+          </li>
+          <li>
+            <Link href="/support/terugbetaling">Terugbetalingen &amp; geschillen</Link> — Pro via Mollie, refundpad en
+            contactroute.
           </li>
           <li>
             <Link href="/privacy">Privacy</Link> — cookies, AdSense en accountrechten.
           </li>
           <li>
-            <Link href="/account/privacy">Export & verwijdering</Link> — na inloggen.
+            <Link href="/account/privacy">Export &amp; verwijdering</Link> — na inloggen, inclusief cookiekeuze
+            intrekken.
           </li>
           <li>
-            <Link href="/release-gate">Release-gate (staging UAT)</Link> — P0-matrix en sign-off.
+            <Link href="/samenwerken">Samenwerken</Link> — sportpartnerschap zonder invloed op scores.
+          </li>
+          <li>
+            <Link href="/voorwaarden">Voorwaarden</Link> — abonnement, opzeggen en aansprakelijkheid.
           </li>
         </ul>
-        <p>
-          Productiestatus: <code>/api/health</code> voor databasebereikbaarheid en latency.
-        </p>
         <Link href="/">Terug naar homepage</Link>
       </main>
     </>

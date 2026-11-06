@@ -8,8 +8,27 @@ export function PrivacyActions() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
+  const [consentPending, setConsentPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  async function withdrawConsent() {
+    setConsentPending(true);
+    setError(null);
+    setMessage(null);
+    const response = await fetch("/api/consent", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reset: true }),
+    });
+    setConsentPending(false);
+    if (!response.ok) {
+      setError("Cookiekeuze intrekken mislukt.");
+      return;
+    }
+    setMessage("Optionele cookies uitgeschakeld. De cookiebanner verschijnt opnieuw zodat je opnieuw kunt kiezen.");
+    window.location.assign("/?consent=review#planner");
+  }
 
   async function onDelete() {
     setPending(true);
@@ -33,6 +52,17 @@ export function PrivacyActions() {
 
   return (
     <div className="privacy-actions">
+      <section className="account-panel" aria-labelledby="consent-title">
+        <h2 id="consent-title">Cookiekeuze</h2>
+        <p>
+          Noodzakelijke cookies blijven actief voor account en sessie. Optionele cookies (zoals AdSense op Basis) kun je
+          hier intrekken. Pro blijft advertentievrij.
+        </p>
+        <button className="button button-dark" type="button" disabled={consentPending} onClick={withdrawConsent}>
+          {consentPending ? "Bezig…" : "Trek optionele cookies in"}
+        </button>
+      </section>
+
       <section className="account-panel" aria-labelledby="export-title">
         <h2 id="export-title">Gegevensexport</h2>
         <p>Download een JSON-export van account, momenten, filters, favorieten, voorkeuren en factuurstatus.</p>

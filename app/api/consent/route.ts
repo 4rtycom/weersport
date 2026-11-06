@@ -5,6 +5,13 @@ import { CONSENT_COOKIE, CONSENT_VERSION, parseConsentCookie } from "@/lib/ads/p
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function cookieSecurity(request: Request) {
+  const url = new URL(request.url);
+  const forwarded = request.headers.get("x-forwarded-proto");
+  const secure = forwarded === "https" || url.protocol === "https:";
+  return secure;
+}
+
 export async function GET() {
   const jar = await cookies();
   const consent = parseConsentCookie(jar.get(CONSENT_COOKIE)?.value);
@@ -12,7 +19,30 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as { granted?: boolean } | null;
+  const body = (await request.json().catch(() => null)) as {
+    granted?: boolean;
+    reset?: boolean;
+  } | null;
+
+  // Withdrawal / review: clear cookie so the compact banner returns without a full product reload race.
+  if (body?.reset === true) {
+    const response = NextResponse.json({
+      consent: { granted: false, version: CONSENT_VERSION, decidedAt: null },
+      reset: true,
+    });
+    response.headers.append(
+      "set-cookie",
+      [
+        `${CONSENT_COOKIE}=`,
+        "Path=/",
+        "Max-Age=0",
+        "SameSite=Lax",
+        ...(cookieSecurity(request) ? ["Secure"] : []),
+      ].join("; "),
+    );
+    return response;
+  }
+
   if (typeof body?.granted !== "boolean") {
     return NextResponse.json({ error: "Consentkeuze ontbreekt." }, { status: 400 });
   }
@@ -24,9 +54,6 @@ export async function POST(request: Request) {
   const response = NextResponse.json({
     consent: parseConsentCookie(payload),
   });
-  const url = new URL(request.url);
-  const forwarded = request.headers.get("x-forwarded-proto");
-  const secure = forwarded === "https" || url.protocol === "https:";
   response.headers.append(
     "set-cookie",
     [
@@ -34,7 +61,7 @@ export async function POST(request: Request) {
       "Path=/",
       `Max-Age=${60 * 60 * 24 * 180}`,
       "SameSite=Lax",
-      ...(secure ? ["Secure"] : []),
+      ...(cookieSecurity(request) ? ["Secure"] : []),
     ].join("; "),
   );
   return response;

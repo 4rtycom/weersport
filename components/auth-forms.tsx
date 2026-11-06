@@ -19,7 +19,6 @@ export function LoginForm({ confirmed = false, restored = false }: { confirmed?:
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [googleNote, setGoogleNote] = useState("");
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent) {
@@ -85,14 +84,6 @@ export function LoginForm({ confirmed = false, restored = false }: { confirmed?:
       <button className="button button-dark auth-button" type="submit" disabled={pending}>
         Inloggen
       </button>
-      <button
-        className="button auth-button auth-button-soft"
-        type="button"
-        onClick={() => setGoogleNote("Doorgaan met Google is een concept en is nog niet gekoppeld.")}
-      >
-        Doorgaan met Google (optioneel)
-      </button>
-      {googleNote ? <p className="auth-inline-note">{googleNote}</p> : null}
       <p className="auth-switch">
         Nog geen account? <Link href="/auth/registreren">Gratis registreren</Link>
       </p>

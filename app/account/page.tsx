@@ -33,7 +33,7 @@ export default async function AccountPage() {
         <div>
           <h1>Mijn omgeving</h1>
           <p className="account-lead">
-            Plannen en filters bewaren kost geen aanvraag. Opnieuw berekenen volgt in een latere fase.
+            Plannen en filters bewaren kost geen analyse. Een nieuwe score start pas wanneer jij dat vraagt.
           </p>
         </div>
         <Link className="button button-dark" href="/#planner">

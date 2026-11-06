@@ -544,8 +544,70 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   padding: 16px;
   min-height: 148px;
 }
+.catalog-card-link {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 148px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.catalog-card-link:hover,
+.catalog-card-link:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(11, 37, 48, 0.12);
+}
+.catalog-card-action {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-text-primary);
+}
 .catalog-card h3 { margin-top: 12px; font-size: 18px; }
 .catalog-card p { margin-top: 6px; font-size: 13px; }
+.planner-period-fixed {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+}
+.planner-period-fixed strong { font-size: 16px; }
+.linkish {
+  background: none;
+  border: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  min-height: 44px;
+}
+.weather-sample { display: grid; gap: 2px; }
+.weather-sample .weather-note { margin: 0; }
+.quota-exhausted-panel {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--ws-surface-base);
+}
+.consent-reserve {
+  height: 0;
+}
+body:has(.consent-banner) .consent-reserve {
+  /* Reserve space so the fixed banner does not cover planner fields on first visit. */
+  height: clamp(140px, 28vh, 220px);
+}
+.auth-edit-draft {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 8px;
+  font-weight: 700;
+  color: var(--ws-accent-action);
+}
 
 @media (max-width: 767px) {
   .hours li:not(.hour-keep) { display: none; }
