@@ -4,6 +4,7 @@ import { StartAnalysis } from "@/components/start-analysis";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
 import { resolveAdPlacement } from "@/lib/ads/server";
 import { peekMeteredAnalysis, runMeteredAnalysis } from "@/lib/billing/analysis";
+import { hourBucketKey } from "@/lib/billing/period";
 import { saveDraft } from "@/lib/auth/service";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +24,12 @@ export default async function MomentPage({
   const params = await searchParams;
   // Optional one-shot server start for scripted checks: /moment?start=1
   // Still goes through runMeteredAnalysis (POST semantics), not a silent GET book.
+  // The hour bucket matches the analysis fingerprint, so the next Amsterdam hour books again.
   if (params.start === "1") {
     const started = await runMeteredAnalysis({
       userId: account.id,
       draft,
-      idempotencyKey: `page-start:${account.id}:${draft.sportId}:${draft.placeId}:${draft.period}`,
+      idempotencyKey: `page-start:${account.id}:${draft.sportId}:${draft.placeId}:${draft.period}:${hourBucketKey()}`,
     });
     if (started.ok) {
       saveDraft(account.id, draft);

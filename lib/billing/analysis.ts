@@ -6,7 +6,6 @@ import type { SearchDraft } from "@/lib/draft";
 import { CACHE_TTL_MS } from "@/lib/billing/constants";
 import { ensureBasisSubscription, getEntitlement } from "@/lib/billing/entitlement";
 import { analysisFingerprint, calendarPeriodKey } from "@/lib/billing/period";
-import { QUOTA_POLICY_SUMMARY } from "@/lib/billing/quota-policy";
 import { ensureBillingSchema } from "@/lib/billing/schema";
 
 export type AnalysisResult =
@@ -62,6 +61,55 @@ function downgradeForQuota(snapshot: ForecastSnapshot): ForecastSnapshot {
   };
 }
 
+function isQuotaDowngrade(snapshot: ForecastSnapshot) {
+  return (
+    snapshot.suitability.kind === "NO_SCORE" &&
+    snapshot.suitability.missing?.includes("analysesquota") === true
+  );
+}
+
+/**
+ * A downgraded safety snapshot shares the scored fingerprint for the rest of the hour.
+ * Once allowance returns (upgrade, or any other remaining-quota change) it must not count as a hit.
+ */
+function blocksScoredRetry(snapshot: ForecastSnapshot, remaining: number) {
+  return isQuotaDowngrade(snapshot) && remaining > 0;
+}
+
+function freshCachedSnapshot(userId: string, cacheKey: string, remaining: number) {
+  const cached = readCache(userId, cacheKey);
+  if (!cached || blocksScoredRetry(cached, remaining)) return null;
+  return cached;
+}
+
+/** Fingerprints end with the Amsterdam hour bucket (`user:sport:place:period:YYYY-MM-DDTHH`). */
+function fingerprintHour(cacheKey: string) {
+  const index = cacheKey.lastIndexOf(":");
+  return index === -1 ? cacheKey : cacheKey.slice(index + 1);
+}
+
+/** One charge per idempotency key per Amsterdam hour — a later hour is a new metered analysis. */
+function hourScopedIdempotencyKey(idempotencyKey: string, cacheKey: string) {
+  return `${fingerprintHour(cacheKey)}:${idempotencyKey}`;
+}
+
+function ledgerChargeForHour(userId: string, idempotencyKey: string, cacheKey: string) {
+  const hour = fingerprintHour(cacheKey);
+  const scoped = hourScopedIdempotencyKey(idempotencyKey, cacheKey);
+  // Hour-scoped rows are current. A legacy raw key counts only when its fingerprint hour still matches,
+  // so a key reused after the hour rolls cannot replay or block a new booking.
+  for (const key of [scoped, idempotencyKey]) {
+    const row = db()
+      .prepare("SELECT id, cache_key FROM analysis_ledger WHERE user_id = ? AND idempotency_key = ?")
+      .get(userId, key) as { id: string; cache_key: string } | undefined;
+    if (row && fingerprintHour(row.cache_key) === hour) return row;
+  }
+  return null;
+}
+
+const PROVIDER_UNAVAILABLE =
+  "De bronketen is niet volledig bereikbaar. Er is geen score of veiligheidsclaim gemaakt en er is niets verbruikt.";
+
 function readCache(userId: string, cacheKey: string) {
   const row = db()
     .prepare("SELECT snapshot_json, expires_at FROM analysis_cache WHERE cache_key = ? AND user_id = ?")
@@ -108,7 +156,7 @@ export function peekMeteredAnalysis(input: {
   ensureBasisSubscription(input.userId);
   const fingerprint = cacheKeyFor(input.userId, input.draft);
   const entitlement = getEntitlement(input.userId);
-  const cached = readCache(input.userId, fingerprint);
+  const cached = freshCachedSnapshot(input.userId, fingerprint, entitlement.remaining);
   if (cached) {
     return {
       ok: true,
@@ -139,6 +187,8 @@ export function peekMeteredAnalysis(input: {
  * Explicit metered analysis (POST only).
  * Cache is written only after a successful free NO_SCORE path or after ledger commit.
  * A rolled-back quota race must not leave a chargeable SCORED cache behind.
+ * Quota safety snapshots are ignored once allowance returns.
+ * Idempotency replays only inside the fingerprint's Amsterdam hour.
  */
 export async function runMeteredAnalysis(input: {
   userId: string;
@@ -152,11 +202,12 @@ export async function runMeteredAnalysis(input: {
   const cacheKey = fingerprint;
 
   if (input.idempotencyKey) {
-    const prior = db()
-      .prepare("SELECT cache_key FROM analysis_ledger WHERE user_id = ? AND idempotency_key = ?")
-      .get(input.userId, input.idempotencyKey) as { cache_key: string } | undefined;
+    const prior = ledgerChargeForHour(input.userId, input.idempotencyKey, cacheKey);
     if (prior) {
-      const cached = readCache(input.userId, prior.cache_key) ?? readCache(input.userId, cacheKey);
+      // Current fingerprint first — never prefer a previous hour's snapshot for this key.
+      const cached =
+        freshCachedSnapshot(input.userId, cacheKey, entitlement.remaining) ??
+        freshCachedSnapshot(input.userId, prior.cache_key, entitlement.remaining);
       if (cached) {
         return {
           ok: true,
@@ -173,7 +224,7 @@ export async function runMeteredAnalysis(input: {
     }
   }
 
-  const cached = readCache(input.userId, cacheKey);
+  const cached = freshCachedSnapshot(input.userId, cacheKey, entitlement.remaining);
   if (cached) {
     return {
       ok: true,
@@ -195,15 +246,14 @@ export async function runMeteredAnalysis(input: {
     } catch {
       return {
         ok: false,
-        status: 402,
-        error: `Maandelijks analyselimiet bereikt. ${QUOTA_POLICY_SUMMARY}`,
+        status: 503,
+        error: PROVIDER_UNAVAILABLE,
         booked: false,
         consumed: 0,
         quotaExhausted: true,
         readOnly: false,
         fingerprint,
         entitlement,
-        next: "/account/abonnement",
       };
     }
     // Cache only the downgraded (non-SCORED) safety view — never a free scored result.
@@ -228,8 +278,7 @@ export async function runMeteredAnalysis(input: {
     return {
       ok: false,
       status: 503,
-      error:
-        "De bronketen is niet volledig bereikbaar. Er is geen score of veiligheidsclaim gemaakt en er is niets verbruikt.",
+      error: PROVIDER_UNAVAILABLE,
       booked: false,
       consumed: 0,
       quotaExhausted: false,
@@ -295,11 +344,10 @@ export async function runMeteredAnalysis(input: {
       };
     }
     if (input.idempotencyKey) {
-      const sameKey = db()
-        .prepare("SELECT id, cache_key FROM analysis_ledger WHERE user_id = ? AND idempotency_key = ?")
-        .get(input.userId, input.idempotencyKey) as { id: string; cache_key: string } | undefined;
+      const sameKey = ledgerChargeForHour(input.userId, input.idempotencyKey, cacheKey);
       if (sameKey) {
-        const priorSnap = readCache(input.userId, sameKey.cache_key) ?? snapshot;
+        // Same hour only. A missing cache rebuilds this request; it must not republish another hour.
+        const priorSnap = freshCachedSnapshot(input.userId, sameKey.cache_key, latest.remaining) ?? snapshot;
         writeCache(input.userId, cacheKey, priorSnap);
         db().exec("COMMIT");
         return {
@@ -326,7 +374,7 @@ export async function runMeteredAnalysis(input: {
         input.userId,
         periodKey,
         cacheKey,
-        input.idempotencyKey ?? null,
+        input.idempotencyKey ? hourScopedIdempotencyKey(input.idempotencyKey, cacheKey) : null,
         input.draft.sportId,
         input.draft.placeId,
         input.draft.placeLabel,
