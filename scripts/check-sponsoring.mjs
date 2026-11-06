@@ -13,11 +13,26 @@ const route = read("app/api/sponsoring/route.ts");
 if (home.includes('href="#planner">Samenwerken')) throw new Error("Samenwerken still points at the planner");
 if (!home.includes('href="/sponsoring"')) throw new Error("Homepage CTA does not link to /sponsoring");
 if (!home.includes('href="/sponsoring">Samenwerken')) throw new Error("Footer does not link to /sponsoring");
-if (!page.includes("beïnvloedt nooit") && !page.includes("staat los van het sportadvies")) {
-  throw new Error("Sponsoring page missing independence explanation");
+for (const token of [
+  "Stel je campagne samen",
+  "Verder naar contactgegevens",
+  "Controleer je aanvraag",
+  "Keuzes wijzigen",
+  "Sponsoraanvraag versturen",
+  "Aanvraag ontvangen",
+  "htmlFor",
+  "aria-invalid",
+  "role=\"alert\"",
+  "role=\"status\"",
+]) {
+  if (!`${page}\n${form}`.includes(token)) throw new Error(`Sponsoring screen missing ${token}`);
 }
-for (const token of ["htmlFor", "aria-invalid", "role=\"alert\"", "role=\"status\"", "Aanvraag ontvangen"]) {
-  if (!form.includes(token)) throw new Error(`Form missing ${token}`);
+if (!read("lib/sponsoring/campaign.ts").includes("campaign_v1")) throw new Error("Campaign request type missing");
+for (const banned of ["€99", "Vraag een pilot aan", "Bespreek maatwerk"]) {
+  if (page.includes(banned) || form.includes(banned)) throw new Error(`Public sponsoring still shows ${banned}`);
+}
+if (!store.includes("idempotency_key") || !store.includes("message: null")) {
+  throw new Error("Campaign requests are not stored idempotently without a fake message");
 }
 if (store.includes("nodemailer") || store.includes("resend") || route.includes("mailto:")) {
   throw new Error("Sponsoring path must not send mail");
@@ -37,9 +52,10 @@ if (!homeHtml.includes('href="/sponsoring"')) throw new Error("Live homepage mis
 const sponsoring = await fetch(new URL("/sponsoring", base));
 if (sponsoring.status !== 200) throw new Error(`/sponsoring returned ${sponsoring.status}`);
 const html = await sponsoring.text();
-for (const token of ["Sponsoring", "staat los van het sportadvies", "sponsor-message", "Verstuur aanvraag"]) {
+for (const token of ["Stel je campagne samen", "Sponsoraanvraag versturen", "Je ochtendrun", "hardlopen-heide.webp"]) {
   if (!html.includes(token)) throw new Error(`Sponsoring HTML missing ${token}`);
 }
+if (html.includes("€99") || html.includes("Vraag een pilot aan")) throw new Error("Sponsoring HTML still shows the pilot price");
 
 const bad = await fetch(new URL("/api/sponsoring", base), {
   method: "POST",

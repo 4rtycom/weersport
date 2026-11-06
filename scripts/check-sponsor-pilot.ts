@@ -14,25 +14,38 @@ const form = readFileSync(new URL("../components/sponsoring-form.tsx", import.me
 const preview = readFileSync(new URL("../components/sponsoring-running-preview.tsx", import.meta.url), "utf8");
 const momentPage = readFileSync(new URL("../app/moment/page.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
+const screen = `${page}\n${form}\n${preview}`;
 for (const token of [
-  "In beeld vóór de eerste kilometer.",
-  "Vraag een pilot aan",
-  "Bekijk de voorbeeldplaatsing",
-  "Zo ziet een hardloper jouw merk",
-  "Vier weken zichtbaar bij jouw sport",
-  "€99 excl. btw",
-  "Bespreek maatwerk",
-  "Je aanvraag is vrijblijvend. We stemmen de plek en startdatum eerst met je af.",
-  "staat los van het sportadvies",
+  "Stel je campagne samen",
+  "Verder naar contactgegevens",
+  "Controleer je aanvraag",
+  "Keuzes wijzigen",
+  "Sponsoraanvraag versturen",
+  "Aanvraag ontvangen",
+  "Aanvraagnummer",
+  "Voorbeeld met demogegevens",
+  "Je ochtendrun",
+  "hardlopen-heide.webp",
+  "trailschoen.webp",
+  "Loopatelier Ede",
+  "Fictieve partner",
+  "role=\"alert\"",
+  "role=\"status\"",
 ]) {
-  if (!page.includes(token)) throw new Error(`Sponsoring page missing ${token}`);
+  if (!screen.includes(token)) throw new Error(`Sponsoring screen missing ${token}`);
 }
-if (page.includes("gratis")) throw new Error("Public page must not offer a free price");
-if (!form.includes("Verstuur aanvraag") || !form.includes('role="alert"') || !form.includes('role="status"')) {
-  throw new Error("Form lost its accessible contract");
+const campaignSource = readFileSync(new URL("../lib/sponsoring/campaign.ts", import.meta.url), "utf8");
+const storeSource = readFileSync(new URL("../lib/sponsoring/store.ts", import.meta.url), "utf8");
+if (!campaignSource.includes("campaign_v1") || !storeSource.includes("idempotency_key") || !storeSource.includes("message: null")) {
+  throw new Error("Campaign storage lost its type, idempotency key or empty message");
 }
-if (preview.includes("https://") || preview.includes("meet") || preview.includes("forecast")) {
-  throw new Error("Running preview must stay a fixed fixture without a shop link");
+for (const banned of ["€99", "Vraag een pilot aan", "Vraag informatie over de pilot", "Bespreek maatwerk", "gratis"]) {
+  if (page.includes(banned) || form.includes(banned) || preview.includes(banned)) {
+    throw new Error(`Public sponsoring still shows ${banned}`);
+  }
+}
+if (preview.includes("https://") || preview.includes("meet") || preview.includes("forecast") || preview.includes("scoreSportHours")) {
+  throw new Error("Running preview must stay a fixed fixture without a forecast or shop link");
 }
 if (!momentPage.includes("try {") || !momentPage.includes("resolveSponsorSlot")) {
   throw new Error("Moment page must isolate sponsor selection");
@@ -73,6 +86,15 @@ assert(period.effectiveCpmCents(9900, 0) === null, "zero impressions have no CPM
 assert(period.formatEuroCents(3960) === "€39,60", period.formatEuroCents(3960));
 assert(period.formatEuroCents(9900) === "€99,00", "price format");
 assert(period.formatEuroDot(3960) === "39.60", "csv cpm");
+const campaignLib = await import(pathToFileURL(path.join(root, "lib/sponsoring/campaign.ts")).href);
+assert(campaignLib.inclusiveCampaignEnd("2027-03-01", 6) === "2027-04-11", "six weeks from 1 March");
+assert(campaignLib.inclusiveCampaignEnd("2026-03-28", 1) === "2026-04-03", "one week across spring DST");
+assert(campaignLib.inclusiveCampaignEnd("2026-10-24", 2) === "2026-11-06", "two weeks across autumn DST");
+assert(campaignLib.formatPeriod("2027-03-01", "2027-04-11") === "1 maart t/m 11 april 2027", campaignLib.formatPeriod("2027-03-01", "2027-04-11"));
+assert(
+  campaignLib.formatPeriod("2027-12-20", "2028-01-09") === "20 december 2027 t/m 9 januari 2028",
+  campaignLib.formatPeriod("2027-12-20", "2028-01-09"),
+);
 
 assert(validate.validateDestination("https://example.com/schoenen") === "https://example.com/schoenen", "https allowed");
 for (const bad of ["http://example.com", "javascript:alert(1)", "//example.com", "https://user:pass@example.com/x", "/api/sponsoring/events?url=https://evil.test"]) {
@@ -94,7 +116,7 @@ const places = new Map([
 ]);
 async function resolvePlace(id: string) {
   const label = places.get(id);
-  return label ? { id, label } : null;
+  return label ? { id, label, detail: `${label}, Gelderland` } : null;
 }
 
 const raw = new DatabaseSync(dbFile);
@@ -226,6 +248,118 @@ const honeypot = await store.saveSponsorship({
   wsHp: "https://example.nl",
 });
 assert(!honeypot.ok, "honeypot rejected");
+
+const campaignKey = "11111111-1111-4111-8111-111111111111";
+const campaignBody = {
+  requestType: "campaign_v1",
+  name: "Sam Jansen",
+  organisation: "Noordkade Wielers",
+  email: "Sam@Wieler.test",
+  sportId: "wielrennen",
+  placeId: "wpl-ben",
+  placeLabel: "Bennekom",
+  areaKind: "radius",
+  radiusKm: 10,
+  desiredStart: "2027-03-01",
+  durationWeeks: 8,
+  idempotencyKey: campaignKey,
+  message: "Dit vrije bericht hoort niet bij een campagneaanvraag.",
+  status: "agreed",
+  priceCents: 0,
+  quotedPriceCents: 0,
+};
+const campaignSaved = await store.saveSponsorship(campaignBody, { resolvePlace });
+assert(campaignSaved.ok, "campaign request stored");
+if (!campaignSaved.ok) throw new Error("campaign");
+assert(campaignSaved.request.status === "ontvangen", "campaign stays ontvangen");
+assert(campaignSaved.request.quotedPriceCents === null, "client price is ignored");
+assert(campaignSaved.request.message === null, "campaign does not invent a message");
+assert(campaignSaved.request.email === "sam@wieler.test", "email normalised");
+const campaignRow = admin.getRequest(campaignSaved.request.id);
+assert(campaignRow?.request_type === "campaign_v1", "request type stored");
+assert(campaignRow?.sport_id === "wielrennen" && campaignRow.place_id === "wpl-ben", "sport and place stored");
+assert(campaignRow?.place_label === "Bennekom" && campaignRow.province === "Gelderland", "place and province stored");
+assert(campaignRow?.area_kind === "radius" && campaignRow.radius_km === 10, "radius stored");
+assert(campaignRow?.desired_start === "2027-03-01" && campaignRow.end_date === "2027-04-25", `end ${campaignRow?.end_date}`);
+assert(campaignRow?.duration_weeks === 8, "weeks stored");
+assert(campaignRow?.name === "Sam Jansen" && campaignRow.organisation === "Noordkade Wielers", "contact stored");
+assert(campaignRow?.message == null, "message column stays empty");
+const campaignAgain = await store.saveSponsorship(campaignBody, { resolvePlace });
+assert(campaignAgain.ok && campaignAgain.request.id === campaignSaved.request.id, "retry reuses the request");
+const campaignCount = dbModule.db().prepare("SELECT COUNT(*) AS count FROM sponsorship_requests WHERE idempotency_key = ?").get(campaignKey) as { count: number };
+assert(campaignCount.count === 1, "retry does not insert a second row");
+const [raceOne, raceTwo] = await Promise.all([
+  store.saveSponsorship({ ...campaignBody, idempotencyKey: "22222222-2222-4222-8222-222222222222", email: "race@wieler.test" }, { resolvePlace }),
+  store.saveSponsorship({ ...campaignBody, idempotencyKey: "22222222-2222-4222-8222-222222222222", email: "race@wieler.test" }, { resolvePlace }),
+]);
+assert(raceOne.ok && raceTwo.ok && raceOne.request.id === raceTwo.request.id, "parallel retry is one request");
+const changed = await store.saveSponsorship({ ...campaignBody, durationWeeks: 9 }, { resolvePlace });
+assert(!changed.ok && changed.status === 409, "same key with other content conflicts");
+const afterConflict = dbModule.db().prepare("SELECT duration_weeks AS weeks FROM sponsorship_requests WHERE idempotency_key = ?").get(campaignKey) as { weeks: number };
+assert(afterConflict.weeks === 8, "conflict keeps the original row");
+const unknownType = await store.saveSponsorship({ requestType: "banner_v9", name: "A", organisation: "B", email: "a@b.nl" });
+assert(!unknownType.ok && unknownType.status === 400, "unknown request type rejected");
+const pastCampaign = await store.saveSponsorship(
+  { ...campaignBody, idempotencyKey: "33333333-3333-4333-8333-333333333333", email: "verleden@wieler.test", desiredStart: "2026-01-02" },
+  { resolvePlace },
+);
+assert(!pastCampaign.ok && pastCampaign.errors.start, "past start rejected");
+for (const weeks of [0, 1.5, 53, "6.0"]) {
+  const badWeeks = await store.saveSponsorship(
+    { ...campaignBody, idempotencyKey: "44444444-4444-4444-8444-444444444444", email: "weken@wieler.test", durationWeeks: weeks },
+    { resolvePlace },
+  );
+  assert(!badWeeks.ok && badWeeks.errors.weeks, `weeks rejected: ${weeks}`);
+}
+const badMail = await store.saveSponsorship(
+  { ...campaignBody, idempotencyKey: "55555555-5555-4555-8555-555555555555", email: "geen-adres" },
+  { resolvePlace },
+);
+assert(!badMail.ok && badMail.errors.email, "campaign email rejected");
+const typedOnly = await store.saveSponsorship(
+  { ...campaignBody, idempotencyKey: "66666666-6666-4666-8666-666666666666", email: "typed@wieler.test", placeId: "", placeLabel: "Bennekom" },
+  { resolvePlace },
+);
+assert(!typedOnly.ok && typedOnly.errors.region, "unselected place rejected");
+const campaignHoney = await store.saveSponsorship({ ...campaignBody, idempotencyKey: "77777777-7777-4777-8777-777777777777", email: "honey@wieler.test", wsHp: "https://example.nl" }, { resolvePlace });
+assert(!campaignHoney.ok, "campaign honeypot rejected");
+const honeyRows = dbModule.db().prepare("SELECT COUNT(*) AS count FROM sponsorship_requests WHERE email = ?").get("honey@wieler.test") as { count: number };
+assert(honeyRows.count === 0, "honeypot stored nothing");
+const placeOnly = await store.saveSponsorship(
+  {
+    ...campaignBody,
+    idempotencyKey: "88888888-8888-4888-8888-888888888888",
+    email: "plaats@wieler.test",
+    areaKind: "place",
+    radiusKm: null,
+    durationWeeks: 1,
+  },
+  { resolvePlace },
+);
+assert(placeOnly.ok && placeOnly.request.areaKind === "place" && placeOnly.request.endDate === "2027-03-07", "place-only week");
+let limited = false;
+for (let index = 0; index < 6; index += 1) {
+  const result = await store.saveSponsorship(
+    {
+      ...campaignBody,
+      idempotencyKey: `99999999-9999-4999-8999-99999999999${index}`,
+      email: "limiet@wieler.test",
+      durationWeeks: index + 1,
+    },
+    { resolvePlace },
+  );
+  if (!result.ok && result.status === 429) limited = true;
+}
+assert(limited, "campaign rate limit");
+const limitedRetry = await store.saveSponsorship(
+  { ...campaignBody, idempotencyKey: "99999999-9999-4999-8999-999999999990", email: "limiet@wieler.test", durationWeeks: 1 },
+  { resolvePlace },
+);
+assert(limitedRetry.ok, "stored retry still succeeds when the hour is full");
+const listedCampaign = admin.formatRequestList(admin.listRequests());
+assert(listedCampaign.includes("Wielrennen") && listedCampaign.includes("Bennekom, Gelderland"), "list shows campaign place");
+assert(listedCampaign.includes("straal 10 km") && listedCampaign.includes("2027-03-01") && listedCampaign.includes("2027-04-25"), "list shows radius and period");
+assert(listedCampaign.includes("sam@wieler.test") && listedCampaign.includes("Noordkade Wielers"), "list shows contact");
 
 if (!pilot.ok) throw new Error("pilot missing");
 const early = await admin.scheduleCampaign(
@@ -723,24 +857,22 @@ async function post(pathname: string, body: unknown) {
 
 const html = await (await request("/sponsoring")).text();
 for (const token of [
-  "In beeld vóór de eerste kilometer.",
-  "Vraag een pilot aan",
-  "Bekijk de voorbeeldplaatsing",
-  "Zo ziet een hardloper jouw merk",
+  "Stel je campagne samen",
+  "Verder naar contactgegevens",
+  "Sponsoraanvraag versturen",
   "Voorbeeld met demogegevens",
-  "Vier weken zichtbaar bij jouw sport",
-  "€99 excl. btw",
-  "Vraag informatie over de pilot",
-  "Bespreek maatwerk",
-  "Je aanvraag is vrijblijvend. We stemmen de plek en startdatum eerst met je af.",
-  "hardlopen-heide.png",
+  "Je ochtendrun",
+  "hardlopen-heide.webp",
+  "trailschoen.webp",
   "Loopatelier Ede",
   "Fictieve partner",
-  "Verstuur aanvraag",
+  "Kies een sport",
 ]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
-if (html.includes("adsbygoogle") || html.includes(">Gratis<")) throw new Error("Sponsoring page leaked ads or a free offer");
+for (const banned of ["€99", "Vraag een pilot aan", "Bespreek maatwerk", "adsbygoogle"]) {
+  if (html.includes(banned)) throw new Error(`Live sponsoring HTML still shows ${banned}`);
+}
 const reportRoute = await request("/api/sponsoring/report");
 if (reportRoute.status !== 404) throw new Error("Public report route must stay closed");
 const eventsGet = await request("/api/sponsoring/events");

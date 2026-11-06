@@ -1,119 +1,61 @@
-import Link from "next/link";
-import { ScoreCurve } from "@/components/score-curve";
-import { SponsorCard } from "@/components/sponsor-card";
-import { SportIcon } from "@/components/sport-icon";
+import Image from "next/image";
 import styles from "@/app/sponsoring/partners.module.css";
-import type { WeatherHour } from "@/lib/data/types";
-import { getSportMeta, scoreSportHours } from "@/lib/scoring/engine";
-import { getScoreProfile } from "@/lib/scoring/profiles";
-import { findSport, periods } from "@/lib/sports";
 
 /**
- * Fixed hardlopen hours. Temperatures, wind and rain follow the land-guide
- * fixture in lib/sport-guide-examples.ts (favorable morning, warmer afternoon).
- * Scores and factor text come from scoreSportHours, not from hand-written numbers.
- * Timestamps are in the past so the scorer keeps the whole sample and never
- * calls a weather, place or quota API.
+ * One fixed hardlopen illustration. The copy and both photos are local.
+ * Nothing here calls the weather service, a place lookup, a quota or an ad network.
+ * The partner block is not a link.
  */
-const FIXTURE_DAY = "2024-06-12";
-
-function fixtureHour(utcHour: string, temperatureC: number, windKmh: number, rainPct: number): WeatherHour {
-  return {
-    time: `${FIXTURE_DAY}T${utcHour}:00.000Z`,
-    temperatureC,
-    windKmh,
-    precipitationProbability: rainPct,
-    uvIndex: null,
-  };
-}
-
-function buildRunningFixture() {
-  const profile = getScoreProfile("hardlopen");
-  const midTemp = Math.round((profile.idealTempC[0] + profile.idealTempC[1]) / 2);
-  const midWind = Math.round((profile.idealWindKmh[0] + profile.idealWindKmh[1]) / 2);
-  const calmRain = 5;
-  const warmTemp = Math.min(34, profile.idealTempC[1] + 8);
-  const suitability = scoreSportHours({
-    sportId: "hardlopen",
-    waterLinked: false,
-    swimLinked: false,
-    hours: [
-      fixtureHour("07:00", midTemp, midWind, calmRain),
-      fixtureHour("08:00", midTemp + 1, midWind, calmRain),
-      fixtureHour("09:00", Math.min(profile.idealTempC[1], midTemp + 3), midWind, calmRain),
-      fixtureHour("12:00", warmTemp, midWind, calmRain),
-    ],
-  });
-  if (suitability.kind !== "SCORED") {
-    throw new Error("Hardlopen preview fixture did not score");
-  }
-  return suitability;
-}
-
-const scored = buildRunningFixture();
-
-export function SponsoringRunningPreview() {
-  const sport = findSport("hardlopen");
-  const meta = getSportMeta(sport.id);
+export function SponsoringRunningPreview({ sportName }: { sportName: string }) {
+  const otherSport = sportName !== "" && sportName !== "Hardlopen";
 
   return (
-    <figure className={styles.preview}>
-      <div className={styles.result}>
-        <p className="eyebrow">Sportmoment · {sport.name}</p>
-        <header className="moment-hero">
-          <div className="moment-hero-copy">
-            <span className="icon-badge icon-badge-lg moment-icon">
-              <SportIcon src={sport.icon} size={32} />
-            </span>
-            <div>
-              <h3>{sport.name}</h3>
-              <Link href={`/sporten/${sport.id}`}>Hoe werkt het advies voor {sport.name.toLowerCase()}?</Link>
-              <p>
-                Ede, Nederland · {periods[0]}
-              </p>
+    <div className={styles.aside}>
+      <h2>Zo ziet een sporter je merk</h2>
+      {otherSport ? (
+        <p className={styles.exampleNote}>Dit is een hardloopvoorbeeld. Je aanvraag blijft voor {sportName}.</p>
+      ) : null}
+      <figure className={styles.example} aria-label="Voorbeeldplaatsing voor hardlopen, met demogegevens">
+        <div className={styles.heroPhoto}>
+          <Image
+            src="/sponsoring/hardlopen-heide.webp"
+            alt="Twee hardlopers op een nat zandpad door de heide."
+            fill
+            priority
+            sizes="(max-width: 899px) calc(100vw - 40px), 514px"
+            style={{ objectFit: "cover", objectPosition: "center 32%" }}
+          />
+          <div className={styles.overlay} aria-hidden="true" />
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}>Hardlopen / Ede</p>
+            <h3 className={styles.heroTitle}>Je ochtendrun</h3>
+            <p className={styles.demo}>Voorbeeld met demogegevens</p>
+          </div>
+        </div>
+        <div className={styles.exampleBody}>
+          <p className={styles.bestLabel}>Beste moment</p>
+          <p className={styles.bestTime}>09:00 – 10:00</p>
+          <p className={styles.conditions}>Droog · 12 °C · Zwakke wind</p>
+          <div className={styles.rule} />
+          <div className={styles.partner}>
+            <div className={styles.shoe}>
+              <Image
+                src="/sponsoring/trailschoen.webp"
+                alt="Groene trailschoen op de bosgrond."
+                fill
+                sizes="143px"
+                style={{ objectFit: "cover", objectPosition: "62% 42%" }}
+              />
+            </div>
+            <div className={styles.partnerCopy}>
+              <p className={styles.sponsored}>Gesponsord</p>
+              <p className={styles.shop}>Loopatelier Ede</p>
+              <p className={styles.shopLine}>Vind de trailschoen die bij je past.</p>
+              <p className={styles.fictional}>Fictieve partner</p>
             </div>
           </div>
-        </header>
-        <article className={`moment-card ${styles.advice}`} aria-label="Sportadvies">
-          <p className={styles.demoLabel}>Voorbeeld met demogegevens</p>
-          <p className="eyebrow">Sportgeschiktheid · {scored.modelVersion}</p>
-          <div className="score-headline">
-            <div>
-              <p className="score-value" aria-label={`Score ${scored.score} van 100`}>
-                {scored.score}
-                <span>/100</span>
-              </p>
-              <p className={`score-badge score-badge-${scored.badge.toLowerCase()}`}>{scored.badge}</p>
-            </div>
-            <div className="score-peak">
-              <span>{scored.peakWindow.label}</span>
-              <strong>{scored.peakWindow.peakScore} / 100</strong>
-            </div>
-          </div>
-          <p className="score-tooltip" title={scored.tooltip}>
-            {meta.tagline}. {scored.bestTimeLabel}.
-          </p>
-          <ScoreCurve hourly={scored.hourly} peakTime={scored.peakWindow.peakTime} tooltip={scored.tooltip} />
-          <ul className="score-factors">
-            {scored.factors.map((factor) => (
-              <li key={factor.id}>
-                <div>
-                  <strong>{factor.label}</strong>
-                  <span>{factor.explanation}</span>
-                </div>
-                <em>{factor.impact}</em>
-              </li>
-            ))}
-          </ul>
-          <p className="moment-rights">{scored.caveats} UV en officiële waarschuwingen blijven los van deze score.</p>
-        </article>
-      </div>
-      <SponsorCard
-        partner="Loopatelier Ede"
-        headline="Welke schoen past bij jouw rondje?"
-        body="Van asfalt tot heidepad. In onze winkel in Ede kun je verschillende hardloopschoenen passen en vergelijken."
-        fictional
-      />
-    </figure>
+        </div>
+      </figure>
+    </div>
   );
 }

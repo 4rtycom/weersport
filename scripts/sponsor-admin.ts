@@ -1,6 +1,7 @@
 import {
   agreeRequest,
   campaignReport,
+  formatCampaignRequest,
   formatReport,
   formatReportCsv,
   formatRequestList,
@@ -54,6 +55,10 @@ async function main() {
   if (command === "show") {
     const request = getRequest(id);
     if (!request) fail("Aanvraag niet gevonden.");
+    if (request.request_type === "campaign_v1") {
+      console.log(formatCampaignRequest(request));
+      console.log("");
+    }
     console.log(JSON.stringify(request, null, 2));
     return;
   }

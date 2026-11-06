@@ -1,293 +1,521 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { PlaceField } from "@/components/place-field";
+import { SponsoringRunningPreview } from "@/components/sponsoring-running-preview";
+import { placeSelectionLabel } from "@/lib/place-label";
+import {
+  AREA_CHOICES,
+  CAMPAIGN_REQUEST_TYPE,
+  areaFromChoice,
+  formatDutchDate,
+  formatPeriod,
+  inclusiveCampaignEnd,
+  isEmailAddress,
+  parseCampaignStart,
+  parseWeeks,
+  plainLine,
+  summaryTitle,
+  weeksLabel,
+  type AreaKind,
+} from "@/lib/sponsoring/campaign";
+import { amsterdamToday } from "@/lib/sponsoring/period";
+import styles from "@/app/sponsoring/partners.module.css";
 
-type Field = "name" | "organisation" | "email" | "message" | "sport" | "region" | "start" | "intent";
-type Errors = Partial<Record<Field | "form", string>>;
-type Intent = "pilot" | "custom";
+type Step = "campaign" | "contact" | "received";
+type Errors = Partial<
+  Record<"sport" | "region" | "area" | "start" | "weeks" | "organisation" | "name" | "email" | "form", string>
+>;
 
-const fields: { id: "name" | "organisation" | "email"; label: string; autoComplete: string }[] = [
-  { id: "name", label: "Naam", autoComplete: "name" },
-  { id: "organisation", label: "Organisatie", autoComplete: "organization" },
-  { id: "email", label: "E-mailadres", autoComplete: "email" },
-];
+type Receipt = {
+  id: string;
+  sportName: string;
+  placeLabel: string;
+  areaKind: AreaKind;
+  radiusKm: number | null;
+  startDate: string;
+  endDate: string;
+  title: string;
+  detail: string;
+};
 
-export function SponsoringForm({
-  initialIntent,
-  sports,
-}: {
-  initialIntent: Intent;
-  sports: { id: string; name: string }[];
-}) {
-  const [values, setValues] = useState({
-    name: "",
-    organisation: "",
-    email: "",
-    message: "",
-    wsHp: "",
-    intent: initialIntent,
-    sportId: "",
-    placeId: "",
-    placeLabel: "",
-    desiredStart: "",
-  });
+const fieldOrder = ["sport", "region", "area", "start", "weeks", "organisation", "name", "email", "form"] as const;
+
+const fieldIds: Record<(typeof fieldOrder)[number], string> = {
+  sport: "sponsor-sport",
+  region: "sponsor-region",
+  area: "sponsor-area",
+  start: "sponsor-start",
+  weeks: "sponsor-weeks",
+  organisation: "sponsor-organisation",
+  name: "sponsor-name",
+  email: "sponsor-email",
+  form: "sponsor-form-alert",
+};
+
+export function SponsoringForm({ sports }: { sports: { id: string; name: string }[] }) {
+  const [step, setStep] = useState<Step>("campaign");
+  const [sportId, setSportId] = useState("");
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [placeId, setPlaceId] = useState("");
+  const [placeLabel, setPlaceLabel] = useState("");
+  const [areaChoice, setAreaChoice] = useState("");
+  const [start, setStart] = useState("");
+  const [weeks, setWeeks] = useState("");
+  const [organisation, setOrganisation] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
-  const [receivedId, setReceivedId] = useState<string | null>(null);
-  const successRef = useRef<HTMLHeadingElement>(null);
-  const summaryRef = useRef<HTMLDivElement>(null);
+  const [retryable, setRetryable] = useState(false);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
   const lock = useRef(false);
+  const attempt = useRef<{ key: string; body: string } | null>(null);
+  const mounted = useRef(false);
+  const statusId = useId();
+  const today = amsterdamToday();
+  const sportName = sports.find((sport) => sport.id === sportId)?.name ?? "";
+  const area = areaFromChoice(areaChoice);
+  const parsedWeeks = parseWeeks(weeks);
+  const summary =
+    sportName && placeLabel && area && parsedWeeks && parseCampaignStart(start, today).ok
+      ? {
+          title: summaryTitle(sportName, placeLabel, area.areaKind, area.radiusKm),
+          period: `${formatPeriod(start, inclusiveCampaignEnd(start, parsedWeeks))} · ${weeksLabel(parsedWeeks)}`,
+        }
+      : null;
+
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    titleRef.current?.focus();
+  }, [step]);
+
+  function focusError(next: Errors) {
+    const key = fieldOrder.find((item) => next[item]);
+    if (!key) return;
+    requestAnimationFrame(() => {
+      if (key === "form") {
+        alertRef.current?.focus();
+        return;
+      }
+      document.getElementById(fieldIds[key])?.focus();
+    });
+  }
+
+  function campaignErrors(): Errors {
+    const next: Errors = {};
+    if (!sports.some((sport) => sport.id === sportId)) next.sport = "Kies een sport.";
+    if (!placeId || !placeLabel) next.region = "Kies een plaats uit de lijst.";
+    if (!area) next.area = "Kies het bereik rondom de plaats.";
+    if (!parseCampaignStart(start, today).ok) next.start = "Kies vandaag of een latere datum.";
+    if (parsedWeeks == null) next.weeks = "Vul een geheel aantal weken in, van 1 tot en met 52.";
+    return next;
+  }
+
+  function contactErrors(): Errors {
+    const next: Errors = {};
+    const organisationName = plainLine(organisation);
+    const contactName = plainLine(name);
+    if (organisationName.length < 2 || organisationName.length > 120) {
+      next.organisation = "Vul de organisatienaam in (2–120 tekens).";
+    }
+    if (contactName.length < 2 || contactName.length > 80) next.name = "Vul de contactpersoon in (2–80 tekens).";
+    if (!isEmailAddress(email)) next.email = "Vul een geldig zakelijk e-mailadres in.";
+    return next;
+  }
+
+  function goNext() {
+    const next = campaignErrors();
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      focusError(next);
+      return;
+    }
+    setErrors({});
+    setStep("contact");
+  }
+
+  function payloadBody() {
+    return JSON.stringify({
+      requestType: CAMPAIGN_REQUEST_TYPE,
+      name: plainLine(name),
+      organisation: plainLine(organisation),
+      email: email.trim(),
+      sportId,
+      placeId,
+      placeLabel,
+      areaKind: area?.areaKind,
+      radiusKm: area?.radiusKm ?? null,
+      desiredStart: start,
+      durationWeeks: parsedWeeks,
+      wsHp: honeypot,
+    });
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (lock.current) return;
+    if (step === "campaign") {
+      goNext();
+      return;
+    }
+    if (step !== "contact" || lock.current) return;
+    const next = { ...campaignErrors(), ...contactErrors() };
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
+      if (next.sport || next.region || next.area || next.start || next.weeks) setStep("campaign");
+      focusError(next);
+      return;
+    }
+    const body = payloadBody();
+    if (!attempt.current || attempt.current.body !== body) {
+      attempt.current = { key: crypto.randomUUID(), body };
+    }
     lock.current = true;
     setPending(true);
     setErrors({});
+    setRetryable(false);
     try {
       const response = await fetch("/api/sponsoring", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name: values.name,
-          organisation: values.organisation,
-          email: values.email,
-          message: values.message,
-          wsHp: values.wsHp,
-          intent: values.intent,
-          sportId: values.intent === "pilot" ? values.sportId : undefined,
-          placeId: values.intent === "pilot" ? values.placeId : undefined,
-          placeLabel: values.intent === "pilot" ? values.placeLabel : undefined,
-          desiredStart: values.intent === "pilot" ? values.desiredStart : undefined,
-        }),
+        body: JSON.stringify({ ...JSON.parse(body), idempotencyKey: attempt.current.key }),
       });
       const data = (await response.json().catch(() => ({}))) as {
         ok?: boolean;
         id?: string;
         errors?: Errors;
+        receipt?: Receipt;
       };
-      if (!response.ok || !data.ok || !data.id) {
-        setErrors(data.errors ?? { form: "De aanvraag is niet ontvangen. Probeer het opnieuw." });
+      if (!response.ok || !data.ok || !data.id || !data.receipt) {
+        const serverErrors = data.errors ?? { form: "De aanvraag is niet ontvangen. Probeer het opnieuw." };
+        if (response.status === 409) attempt.current = null;
+        setRetryable(response.status >= 500 || response.status === 0);
+        setErrors(serverErrors);
         setPending(false);
         lock.current = false;
-        requestAnimationFrame(() => summaryRef.current?.focus());
+        if (serverErrors.sport || serverErrors.region || serverErrors.area || serverErrors.start || serverErrors.weeks) {
+          setStep("campaign");
+        }
+        focusError(serverErrors);
         return;
       }
-      setReceivedId(data.id);
+      setReceipt(data.receipt);
       setPending(false);
-      requestAnimationFrame(() => successRef.current?.focus());
+      setStep("received");
     } catch {
-      setErrors({ form: "De aanvraag is niet ontvangen. Probeer het opnieuw." });
+      setErrors({ form: "De aanvraag is niet ontvangen. Je gegevens blijven staan." });
+      setRetryable(true);
       setPending(false);
       lock.current = false;
-      requestAnimationFrame(() => summaryRef.current?.focus());
+      focusError({ form: "netwerk" });
     }
   }
 
-  if (receivedId) {
-    return (
-      <div className="sponsor-success" role="status">
-        <h2 id="sponsoring-ontvangen" tabIndex={-1} ref={successRef}>
-          Aanvraag ontvangen
-        </h2>
-        <p>
-          Bewaar je aanvraagnummer <strong>{receivedId}</strong>. Er wordt geen bevestigingsmail verstuurd.
-        </p>
-      </div>
-    );
-  }
-
-  const errorEntries = (Object.keys(errors) as (keyof Errors)[]).filter((key) => errors[key]);
-  const pilot = values.intent === "pilot";
+  const title =
+    step === "received" ? "Aanvraag ontvangen" : step === "contact" ? "Controleer je aanvraag" : "Stel je campagne samen";
+  const lead =
+    step === "received"
+      ? "We hebben je wensen voor de sponsorplaatsing ontvangen."
+      : step === "contact"
+        ? "Vul je gegevens in en bekijk je campagnekeuzes."
+        : "Kies waar en wanneer je merk zichtbaar wordt.";
+  const errorEntries = fieldOrder.filter((key) => errors[key]);
 
   return (
-    <form className="sponsor-form" onSubmit={onSubmit} noValidate>
-      {errorEntries.length > 0 ? (
-        <div className="sponsor-errors" role="alert" tabIndex={-1} ref={summaryRef}>
-          <p>Controleer de aanvraag.</p>
-          <ul>
-            {errorEntries.map((key) => (
-              <li key={key}>
-                {key === "form" ? (
-                  errors[key]
-                ) : (
-                  <a href={`#sponsor-${key === "region" ? "region" : key}`}>{errors[key]}</a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <fieldset className="sponsor-intent">
-        <legend>Type aanvraag</legend>
-        <label htmlFor="sponsor-intent-pilot">
-          <input
-            id="sponsor-intent-pilot"
-            type="radio"
-            name="intent"
-            value="pilot"
-            checked={values.intent === "pilot"}
-            onChange={() => setValues((current) => ({ ...current, intent: "pilot" }))}
-          />
-          Pilot, één sport en één regio
-        </label>
-        <label htmlFor="sponsor-intent-custom">
-          <input
-            id="sponsor-intent-custom"
-            type="radio"
-            name="intent"
-            value="custom"
-            checked={values.intent === "custom"}
-            onChange={() => setValues((current) => ({ ...current, intent: "custom" }))}
-          />
-          Maatwerk
-        </label>
-      </fieldset>
-      {fields.map((field) => {
-        const errorId = `sponsor-${field.id}-error`;
-        return (
-          <div key={field.id}>
-            <label className="auth-label" htmlFor={`sponsor-${field.id}`}>
-              {field.label}
-            </label>
-            <input
-              id={`sponsor-${field.id}`}
-              className="auth-input"
-              name={field.id}
-              type={field.id === "email" ? "email" : "text"}
-              autoComplete={field.autoComplete}
-              required
-              aria-invalid={Boolean(errors[field.id])}
-              aria-describedby={errors[field.id] ? errorId : undefined}
-              value={values[field.id]}
-              onChange={(event) => setValues((current) => ({ ...current, [field.id]: event.target.value }))}
-            />
-            {errors[field.id] ? (
-              <p className="sponsor-field-error" id={errorId}>
-                {errors[field.id]}
-              </p>
-            ) : null}
-          </div>
-        );
-      })}
-      {pilot ? (
-        <>
-          <div>
-            <label className="auth-label" htmlFor="sponsor-sport">
-              Sport
-            </label>
-            <select
-              id="sponsor-sport"
-              className="auth-input"
-              name="sportId"
-              value={values.sportId}
-              aria-invalid={Boolean(errors.sport)}
-              aria-describedby={errors.sport ? "sponsor-sport-error" : undefined}
-              onChange={(event) => setValues((current) => ({ ...current, sportId: event.target.value }))}
-            >
-              <option value="">Kies een sport</option>
-              {sports.map((sport) => (
-                <option key={sport.id} value={sport.id}>
-                  {sport.name}
-                </option>
-              ))}
-            </select>
-            {errors.sport ? (
-              <p className="sponsor-field-error" id="sponsor-sport-error">
-                {errors.sport}
-              </p>
-            ) : null}
-          </div>
-          <div>
-            <label className="auth-label" htmlFor="sponsor-region">
-              Regio
-            </label>
-            <PlaceField
-              inputId="sponsor-region"
-              label={values.placeLabel}
-              placeId={values.placeId}
-              invalid={Boolean(errors.region)}
-              describedBy={errors.region ? "sponsor-region-error" : "sponsor-region-hint"}
-              onChange={(next) => setValues((current) => ({ ...current, placeId: next.placeId, placeLabel: next.label }))}
-            />
-            <p className="sponsor-hint" id="sponsor-region-hint">
-              Eén Nederlandse plaats, bijvoorbeeld Ede.
-            </p>
-            {errors.region ? (
-              <p className="sponsor-field-error" id="sponsor-region-error">
-                {errors.region}
-              </p>
-            ) : null}
-          </div>
-          <div>
-            <label className="auth-label" htmlFor="sponsor-start">
-              Gewenste startdatum (optioneel)
-            </label>
-            <input
-              id="sponsor-start"
-              className="auth-input"
-              name="desiredStart"
-              type="date"
-              value={values.desiredStart}
-              aria-invalid={Boolean(errors.start)}
-              aria-describedby={errors.start ? "sponsor-start-error" : "sponsor-start-hint"}
-              onChange={(event) => setValues((current) => ({ ...current, desiredStart: event.target.value }))}
-            />
-            <p className="sponsor-hint" id="sponsor-start-hint">
-              We leggen de startdatum pas vast na akkoord. Dit veld is een wens.
-            </p>
-            {errors.start ? (
-              <p className="sponsor-field-error" id="sponsor-start-error">
-                {errors.start}
-              </p>
-            ) : null}
-          </div>
-        </>
-      ) : null}
-      <div>
-        <label className="auth-label" htmlFor="sponsor-message">
-          Wat heb je in gedachten?
-        </label>
-        <textarea
-          id="sponsor-message"
-          className="auth-input sponsor-textarea"
-          name="message"
-          required
-          rows={5}
-          aria-invalid={Boolean(errors.message)}
-          aria-describedby={errors.message ? "sponsor-message-error" : "sponsor-message-hint"}
-          value={values.message}
-          onChange={(event) => setValues((current) => ({ ...current, message: event.target.value }))}
-        />
-        <p className="sponsor-hint" id="sponsor-message-hint">
-          {pilot
-            ? "Beschrijf de vermelding die je voor ogen hebt. Minimaal 20 tekens."
-            : "Je kunt meerdere sporten, regio's of een seizoen in dit bericht beschrijven. Minimaal 20 tekens."}
-        </p>
-        {errors.message ? (
-          <p className="sponsor-field-error" id="sponsor-message-error">
-            {errors.message}
+    <>
+      <h1 id="aanvraag" tabIndex={-1} ref={titleRef}>
+        {title}
+      </h1>
+      <p className={styles.lead}>{lead}</p>
+      {step === "received" && receipt ? (
+        <div className={styles.receipt} role="status">
+          <p className={styles.receiptLabel}>Je aangevraagde plaatsing</p>
+          <p className={styles.receiptTitle}>{receipt.title}</p>
+          <p className={styles.receiptDetail}>{receipt.detail}</p>
+          <p className={styles.reference}>
+            Aanvraagnummer <strong>{receipt.id}</strong>
           </p>
-        ) : null}
-      </div>
-      <div className="sponsor-honeypot" aria-hidden="true">
-        <label htmlFor="sponsor-ws-hp">Leeg laten</label>
-        <input
-          id="sponsor-ws-hp"
-          name="wsHp"
-          tabIndex={-1}
-          autoComplete="off"
-          data-1p-ignore="true"
-          data-lpignore="true"
-          data-bwignore="true"
-          value={values.wsHp}
-          onChange={(event) => setValues((current) => ({ ...current, wsHp: event.target.value }))}
-        />
-      </div>
-      <button className="button button-dark" type="submit" disabled={pending}>
-        {pending ? "Versturen…" : "Verstuur aanvraag"}
-      </button>
-    </form>
+          <p className={styles.receiptNote}>
+            We bekijken de beschikbaarheid en nemen via je zakelijke e-mailadres contact op over de plaatsing en de
+            prijs. Er wordt niets ingepland of afgeschreven, en er gaat geen automatische bevestigingsmail uit.
+          </p>
+        </div>
+      ) : (
+        <form className={styles.layout} data-step={step} onSubmit={onSubmit} noValidate>
+          <div className={styles.card} data-step={step}>
+            <div className={styles.steps}>
+              <ol>
+                <li aria-current={step === "campaign" ? "step" : undefined}>Campagne</li>
+                <li aria-hidden="true" className={styles.slash}>
+                  /
+                </li>
+                <li aria-current={step === "contact" ? "step" : undefined}>Contact en controle</li>
+              </ol>
+            </div>
+            <div className={styles.track} aria-hidden="true">
+              <div className={styles.bar} />
+            </div>
+            {errorEntries.length > 0 ? (
+              <div className={styles.alert} id="sponsor-form-alert" role="alert" tabIndex={-1} ref={alertRef}>
+                <p>Controleer de aanvraag.</p>
+                <ul>
+                  {errorEntries.map((key) => (
+                    <li key={key}>{errors[key]}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {step === "campaign" ? (
+              <div className={styles.fields}>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-sport">Sport</label>
+                  <select
+                    id="sponsor-sport"
+                    className={`${styles.control} ${styles.select} ${sportId ? "" : styles.placeholder}`}
+                    value={sportId}
+                    aria-invalid={Boolean(errors.sport)}
+                    aria-describedby={errors.sport ? "sponsor-sport-error" : undefined}
+                    onChange={(event) => setSportId(event.target.value)}
+                  >
+                    <option value="">Kies een sport</option>
+                    {sports.map((sport) => (
+                      <option key={sport.id} value={sport.id}>
+                        {sport.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.sport ? (
+                    <p className={styles.error} id="sponsor-sport-error">
+                      {errors.sport}
+                    </p>
+                  ) : null}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-region">Omgeving</label>
+                  <PlaceField
+                    variant="plain"
+                    inputId="sponsor-region"
+                    label={placeQuery}
+                    placeId={placeId}
+                    invalid={Boolean(errors.region)}
+                    describedBy={[errors.region ? "sponsor-region-error" : "", statusId].filter(Boolean).join(" ")}
+                    statusId={statusId}
+                    onChange={(next) => {
+                      if (next.placeId) {
+                        setPlaceQuery(placeSelectionLabel(next.label, next.detail ?? ""));
+                        setPlaceId(next.placeId);
+                        setPlaceLabel(next.label);
+                      } else {
+                        setPlaceQuery(next.label);
+                        setPlaceId("");
+                        setPlaceLabel("");
+                      }
+                    }}
+                  />
+                  {errors.region ? (
+                    <p className={styles.error} id="sponsor-region-error">
+                      {errors.region}
+                    </p>
+                  ) : null}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-area">Bereik rondom plaats</label>
+                  <select
+                    id="sponsor-area"
+                    className={`${styles.control} ${styles.select} ${areaChoice ? "" : styles.placeholder}`}
+                    value={areaChoice}
+                    aria-invalid={Boolean(errors.area)}
+                    aria-describedby={errors.area ? "sponsor-area-error" : undefined}
+                    onChange={(event) => setAreaChoice(event.target.value)}
+                  >
+                    <option value="">Kies een bereik</option>
+                    {AREA_CHOICES.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.area ? (
+                    <p className={styles.error} id="sponsor-area-error">
+                      {errors.area}
+                    </p>
+                  ) : null}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-start">Gewenste startdatum</label>
+                  <div className={styles.date}>
+                    <input
+                      id="sponsor-start"
+                      className={styles.control}
+                      type="date"
+                      lang="nl-NL"
+                      min={today}
+                      max="2100-12-31"
+                      value={start}
+                      aria-invalid={Boolean(errors.start)}
+                      aria-describedby={errors.start ? "sponsor-start-error" : "sponsor-start-hint"}
+                      onChange={(event) => setStart(event.target.value)}
+                    />
+                    <span className={`${styles.dateFace} ${start ? "" : styles.dateFaceEmpty}`} aria-hidden="true">
+                      {start ? formatDutchDate(start, true) : "Kies een datum"}
+                    </span>
+                    <span className={styles.dateChevron} aria-hidden="true">
+                      ⌄
+                    </span>
+                  </div>
+                  <span className="visually-hidden" id="sponsor-start-hint">
+                    Vandaag of een latere dag. De datum wordt als kalenderdatum bewaard.
+                  </span>
+                  {errors.start ? (
+                    <p className={styles.error} id="sponsor-start-error">
+                      {errors.start}
+                    </p>
+                  ) : null}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-weeks">Looptijd</label>
+                  <div className={styles.affix}>
+                    <input
+                      id="sponsor-weeks"
+                      className={styles.control}
+                      inputMode="decimal"
+                      autoComplete="off"
+                      value={weeks}
+                      aria-invalid={Boolean(errors.weeks)}
+                      aria-describedby={errors.weeks ? "sponsor-weeks-error" : "sponsor-weeks-hint"}
+                      onChange={(event) => setWeeks(event.target.value)}
+                    />
+                    <span className={styles.suffix} aria-hidden="true">
+                      weken
+                    </span>
+                  </div>
+                  <span className="visually-hidden" id="sponsor-weeks-hint">
+                    Een geheel aantal weken, van 1 tot en met 52.
+                  </span>
+                  {errors.weeks ? (
+                    <p className={styles.error} id="sponsor-weeks-error">
+                      {errors.weeks}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <div className={styles.fields}>
+                {summary ? (
+                  <div className={styles.summary}>
+                    <p className={styles.summaryLabel}>Je campagne</p>
+                    <p className={styles.summaryTitle}>{summary.title}</p>
+                    <p className={styles.summaryMeta}>{summary.period}</p>
+                    <button
+                      type="button"
+                      className={styles.change}
+                      disabled={pending}
+                      onClick={() => {
+                        setErrors({});
+                        setStep("campaign");
+                      }}
+                    >
+                      Keuzes wijzigen
+                    </button>
+                  </div>
+                ) : null}
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-organisation">Organisatie</label>
+                  <input
+                    id="sponsor-organisation"
+                    className={styles.control}
+                    name="organization"
+                    autoComplete="organization"
+                    value={organisation}
+                    aria-invalid={Boolean(errors.organisation)}
+                    aria-describedby={errors.organisation ? "sponsor-organisation-error" : undefined}
+                    onChange={(event) => setOrganisation(event.target.value)}
+                  />
+                  {errors.organisation ? (
+                    <p className={styles.error} id="sponsor-organisation-error">
+                      {errors.organisation}
+                    </p>
+                  ) : null}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-name">Contactpersoon</label>
+                  <input
+                    id="sponsor-name"
+                    className={styles.control}
+                    name="name"
+                    autoComplete="name"
+                    value={name}
+                    aria-invalid={Boolean(errors.name)}
+                    aria-describedby={errors.name ? "sponsor-name-error" : undefined}
+                    onChange={(event) => setName(event.target.value)}
+                  />
+                  {errors.name ? (
+                    <p className={styles.error} id="sponsor-name-error">
+                      {errors.name}
+                    </p>
+                  ) : null}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="sponsor-email">Zakelijk e-mailadres</label>
+                  <input
+                    id="sponsor-email"
+                    className={styles.control}
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    spellCheck={false}
+                    value={email}
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? "sponsor-email-error" : undefined}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
+                  {errors.email ? (
+                    <p className={styles.error} id="sponsor-email-error">
+                      {errors.email}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            )}
+            {step === "contact" ? (
+              <p className={styles.note}>Je vraagt een voorstel aan. We stemmen beschikbaarheid en prijs met je af.</p>
+            ) : null}
+            <div className="sponsor-honeypot" aria-hidden="true">
+              <label htmlFor="sponsor-ws-hp">Leeg laten</label>
+              <input
+                id="sponsor-ws-hp"
+                name="wsHp"
+                tabIndex={-1}
+                autoComplete="off"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                value={honeypot}
+                onChange={(event) => setHoneypot(event.target.value)}
+              />
+            </div>
+            {step === "campaign" ? (
+              <button className={styles.primary} type="submit">
+                <span>Verder naar contactgegevens</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            ) : (
+              <button className={styles.primary} type="submit" disabled={pending} aria-busy={pending}>
+                <span>{pending ? "Versturen…" : retryable ? "Opnieuw proberen" : "Sponsoraanvraag versturen"}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            )}
+          </div>
+          <SponsoringRunningPreview sportName={sportName} />
+        </form>
+      )}
+    </>
   );
 }
