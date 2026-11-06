@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { PlaceField } from "@/components/place-field";
+import { FietsMomentPage } from "@/components/fiets-moment-page";
 import { SponsoringRunningPreview } from "@/components/sponsoring-running-preview";
 import { placeSelectionLabel } from "@/lib/place-label";
 import {
@@ -658,7 +659,10 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
               </button>
             )}
           </div>
-          <SponsoringRunningPreview sportName={sportName} />
+          <div className={styles.showcase}>
+            <SponsoringRunningPreview sportName={sportName} />
+            <FietsMomentPage embedded />
+          </div>
         </form>
       )}
     </>

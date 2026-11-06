@@ -8,7 +8,7 @@
   width: min(1088px, calc(100% - 40px));
   margin: 24px auto 64px;
 }
-.main h1 {
+.main > h1 {
   margin: 0;
   font-size: 30px;
   font-weight: 800;
@@ -38,6 +38,15 @@
   gap: 28px;
   margin-top: 22px;
   align-items: flex-start;
+}
+.showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  min-width: 0;
+}
+.showcase > * {
+  min-width: 0;
 }
 .card {
   background: white;
@@ -378,17 +387,19 @@
 
 @media (min-width: 900px) {
   .main {
-    width: min(1088px, calc(100% - 112px));
+    width: min(1160px, calc(100% - 40px));
     margin-top: 27px;
   }
-  .main h1 { font-size: 50px; }
+  .main > h1 { font-size: 50px; }
   .lead { font-size: 18px; }
   .layout {
-    grid-template-columns: minmax(0, 536px) minmax(0, 1fr);
-    gap: 38px;
+    gap: 32px;
     margin-top: 28px;
   }
-  .card { padding: 22px 28px 28px; }
+  .card {
+    max-width: 536px;
+    padding: 22px 28px 28px;
+  }
   .aside h2 { font-size: 28px; }
   .heroTitle { font-size: 38px; }
   .partner { grid-template-columns: 143px minmax(0, 1fr); min-height: 147px; }
@@ -397,8 +408,15 @@
   .shopLine { font-size: 16px; }
   .fictional { margin-top: auto; padding-top: 12px; }
 }
+@media (min-width: 1100px) {
+  .showcase {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+}
 @media (max-width: 899px) {
-  .layout[data-step="contact"] .aside { display: none; }
+  .layout[data-step="contact"] .showcase { display: none; }
 }
 @media (max-width: 359px) {
   .main { width: min(1088px, calc(100% - 32px)); }

@@ -5,37 +5,11 @@ import { SponsorCard } from "@/components/sponsor-card";
 import { fietsVoorbeeld } from "@/lib/sponsoring/fiets-voorbeeld";
 import styles from "@/app/sponsoring/voorbeeld/moment.module.css";
 
-export function FietsMomentPage() {
+function FietsMomentContent() {
   const moment = fietsVoorbeeld;
 
   return (
-    <div className={styles.page}>
-      <a className="skip-link" href="#inhoud">
-        Naar inhoud
-      </a>
-      <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="WeerSport, naar de homepage">
-          <span className={styles.logo}>
-            <BrandMark size={32} />
-          </span>
-          <span>WeerSport.</span>
-        </Link>
-        <nav aria-label="Plaats in de site">
-          <ol className={styles.crumbs}>
-            <li>
-              <Link href="/sporten">Sporten</Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <Link href="/sporten/fietsen">Fietsen</Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li aria-current="page">Amsterdam</li>
-          </ol>
-          <p className={styles.mobileCrumb}>Sportmoment</p>
-        </nav>
-      </header>
-      <main id="inhoud" className={styles.main}>
+    <>
         <article className={styles.hero}>
           <div className={styles.heroTop}>
             <p className={styles.badge}>{moment.badge}</p>
@@ -107,6 +81,48 @@ export function FietsMomentPage() {
           fictional
           media={{ src: moment.sponsor.image, alt: moment.sponsor.imageAlt }}
         />
+    </>
+  );
+}
+
+export function FietsMomentPage({ embedded = false }: { embedded?: boolean }) {
+  if (embedded) {
+    return (
+      <div className={`${styles.embed} ${styles.shell}`}>
+        <FietsMomentContent />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${styles.page} ${styles.shell}`}>
+      <a className="skip-link" href="#inhoud">
+        Naar inhoud
+      </a>
+      <header className={styles.header}>
+        <Link className={styles.brand} href="/" aria-label="WeerSport, naar de homepage">
+          <span className={styles.logo}>
+            <BrandMark size={32} />
+          </span>
+          <span>WeerSport.</span>
+        </Link>
+        <nav aria-label="Plaats in de site">
+          <ol className={styles.crumbs}>
+            <li>
+              <Link href="/sporten">Sporten</Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <Link href="/sporten/fietsen">Fietsen</Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">Amsterdam</li>
+          </ol>
+          <p className={styles.mobileCrumb}>Sportmoment</p>
+        </nav>
+      </header>
+      <main id="inhoud" className={styles.main}>
+        <FietsMomentContent />
       </main>
     </div>
   );
