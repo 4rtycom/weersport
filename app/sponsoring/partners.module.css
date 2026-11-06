@@ -396,11 +396,12 @@
   .main > h1 { font-size: 50px; }
   .lead { font-size: 18px; }
   .layout {
+    grid-template-columns: minmax(0, 536px) minmax(420px, 1fr);
     gap: 32px;
     margin-top: 28px;
   }
   .card {
-    max-width: 536px;
+    min-width: 0;
     padding: 22px 28px 28px;
   }
   .aside h2 { font-size: 28px; }
