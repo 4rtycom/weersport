@@ -78,7 +78,7 @@ function usableHours(hours: WeatherHour[]) {
     }));
 }
 
-function scoreHour(
+export function scoreHour(
   profile: SportScoreProfile,
   hour: {
     time: string;

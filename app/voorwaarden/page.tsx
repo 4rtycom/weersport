@@ -13,9 +13,9 @@ export default function TermsPage() {
         <p className="eyebrow">WeerSport</p>
         <h1>Voorwaarden</h1>
         <p>
-          De abonnementsvoorwaarden, de fiscale presentatie en de betaalvoorwaarden zijn nog niet vastgesteld. Een
-          Basis-account is in deze fase gratis. Er wordt nog geen betaling gestart en er wordt nog geen analyse
-          geboekt.
+          Basis is gratis (5 analyses/maand). Pro kost € 4,95/maand (100 analyses, advertentievrij) via Mollie.
+          Browserredirect is geen betaalbewijs. Zie <Link href="/support/terugbetaling">terugbetalingsbeleid</Link> en{" "}
+          <Link href="/support">support</Link>.
         </p>
         <p>
           WeerSport is bedoeld voor locaties in Nederland. Een WeerSport-moment is een advies, geen veiligheidsgarantie.

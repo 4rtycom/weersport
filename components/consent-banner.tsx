@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
   const [visible, setVisible] = useState(!initialDecided);
   const [pending, setPending] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     setVisible(!initialDecided);
   }, [initialDecided]);
+
+  useEffect(() => {
+    if (visible) titleRef.current?.focus();
+  }, [visible]);
 
   async function choose(granted: boolean) {
     setPending(true);
@@ -30,7 +35,9 @@ export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
     <div className="consent-banner" role="dialog" aria-labelledby="consent-title" aria-describedby="consent-copy">
       <div className="consent-banner-inner">
         <p className="eyebrow">Privacy · cookies</p>
-        <h2 id="consent-title">Cookies alleen met jouw toestemming</h2>
+        <h2 id="consent-title" tabIndex={-1} ref={titleRef}>
+          Cookies alleen met jouw toestemming
+        </h2>
         <p id="consent-copy">
           We gebruiken noodzakelijke cookies voor account en sessie. Optionele cookies (zoals voor AdSense op Basis)
           zetten we pas na jouw keuze. Pro blijft advertentievrij. Meer in het{" "}

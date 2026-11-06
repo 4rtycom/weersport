@@ -17,20 +17,27 @@ export function HomePage({
   viewerName = null,
   draft = null,
   resumed = false,
+  preselectedSportId = null,
 }: {
   viewerName?: string | null;
   draft?: SearchDraft | null;
   resumed?: boolean;
+  /** Validated sport from /?sport= — wins over an older draft sport. */
+  preselectedSportId?: string | null;
 }) {
   const [sportId, setSportId] = useState(draft?.sportId ?? "fietsen");
   const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
   const [placeId, setPlaceId] = useState(draft?.placeId ?? "");
   const [period, setPeriod] = useState<(typeof periods)[number]>(draft?.period ?? "Komende 48 uur");
-  const [notice, setNotice] = useState(
-    resumed && draft
-      ? `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`
-      : "",
-  );
+  const [notice, setNotice] = useState(() => {
+    if (resumed && draft) {
+      return `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`;
+    }
+    if (preselectedSportId) {
+      return `Sport voorgeselecteerd: ${findSport(preselectedSportId).name}. Kies je plek en zoek je sportmoment — er start nog geen analyse.`;
+    }
+    return "";
+  });
   const [pending, setPending] = useState(false);
 
   async function onSearch(event: FormEvent) {
@@ -369,6 +376,11 @@ export function HomePage({
         </div>
         <p className="footer-tagline">Wat is jouw beste sportmoment?</p>
         <p className="footer-disclaimer">WeerSport-moment is een advies, geen veiligheidsgarantie.</p>
+        <nav className="footer-links" aria-label="Juridisch en support">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/voorwaarden">Voorwaarden</Link>
+          <Link href="/support">Support</Link>
+        </nav>
       </footer>
       </>
   );

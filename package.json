@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check": "node scripts/check-phase01.mjs && node scripts/check-phase02.mjs && node scripts/check-phase03.mjs && node scripts/check-phase04.mjs && node scripts/check-phase05.mjs && node scripts/check-phase06.mjs && node scripts/check-phase07.mjs"
+    "check": "node scripts/check-phase01.mjs && node scripts/check-phase02.mjs && node scripts/check-phase03.mjs && node scripts/check-phase04.mjs && node scripts/check-phase05.mjs && node scripts/check-phase06.mjs && node scripts/check-phase07.mjs && node scripts/check-phase08.mjs",
+    "check:guides": "node scripts/check-sport-guides.mjs"
   },
   "dependencies": {
     "next": "^15.5.6",
