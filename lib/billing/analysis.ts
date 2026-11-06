@@ -77,6 +77,16 @@ function downgradeForRecommendationsDisabled(snapshot: ForecastSnapshot): Foreca
   };
 }
 
+/**
+ * Cache keys do not include the capability flag. Downgrade a stored SCORED
+ * snapshot on the way out so the kill switch applies before TTL, and leave
+ * the row itself unchanged so turning the switch off restores the score.
+ */
+function cachedSnapshotRespectingCapabilities(snapshot: ForecastSnapshot): ForecastSnapshot {
+  if (recommendationsEnabled() || snapshot.suitability.kind !== "SCORED") return snapshot;
+  return downgradeForRecommendationsDisabled(snapshot);
+}
+
 async function buildSnapshotRespectingCapabilities(draft: SearchDraft) {
   const snapshot = await buildSnapshot(draft);
   if (!recommendationsEnabled()) {
@@ -141,7 +151,7 @@ export function peekMeteredAnalysis(input: {
       quotaExhausted: entitlement.remaining <= 0,
       readOnly: true,
       fingerprint,
-      snapshot: cached,
+      snapshot: cachedSnapshotRespectingCapabilities(cached),
       entitlement,
     };
   }
@@ -189,7 +199,7 @@ export async function runMeteredAnalysis(input: {
           quotaExhausted: false,
           readOnly: false,
           fingerprint,
-          snapshot: cached,
+          snapshot: cachedSnapshotRespectingCapabilities(cached),
           entitlement: getEntitlement(input.userId),
         };
       }
@@ -206,7 +216,7 @@ export async function runMeteredAnalysis(input: {
       quotaExhausted: entitlement.remaining <= 0,
       readOnly: false,
       fingerprint,
-      snapshot: cached,
+      snapshot: cachedSnapshotRespectingCapabilities(cached),
       entitlement,
     };
   }
@@ -333,7 +343,7 @@ export async function runMeteredAnalysis(input: {
           quotaExhausted: false,
           readOnly: false,
           fingerprint,
-          snapshot: priorSnap,
+          snapshot: cachedSnapshotRespectingCapabilities(priorSnap),
           entitlement: getEntitlement(input.userId),
         };
       }
