@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
 import { getScoreProfile } from "@/lib/scoring/profiles";
@@ -48,9 +48,7 @@ export default async function SportGuide({ params }: Props) {
 
   return (
     <>
-      <div className="catalog-hero">
-        <SiteHeader />
-      </div>
+      <SiteHeaderBar />
       <main id="inhoud" className={styles.page}>
         <Link href={`/sporten#${sport.familyId}`}>← Alle sporten</Link>
         <header className={styles.intro}>

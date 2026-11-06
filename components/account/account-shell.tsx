@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 
 const links = [
   { href: "/account", label: "Overzicht", match: "overview" as const },
@@ -27,38 +28,41 @@ export function AccountShell({
   children: ReactNode;
 }) {
   return (
-    <div className="account-app">
-      <a className="skip-link" href="#inhoud">
-        Naar inhoud
-      </a>
-      <aside className="account-sidebar" aria-label="Accountnavigatie">
-        <Link className="account-brand" href="/" aria-label="WeerSport, naar de homepage">
-          <BrandMark size={36} />
-          <span>WeerSport.</span>
-        </Link>
-        <p className="account-sidebar-label">Mijn omgeving</p>
-        <nav className="account-side-nav">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={active === link.match ? "is-active" : undefined}
-              aria-current={active === link.match ? "page" : undefined}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <p className="account-sidebar-foot">Sportweer voor Nederland</p>
-      </aside>
-      <div className="account-main">
-        <header className="account-topbar">
-          <p>{breadcrumb}</p>
-          <span className="account-badge">{planLabel}</span>
-          <span className="account-user">{accountName}</span>
-        </header>
-        <div className="account-content" id="inhoud">
-          {children}
+    <div className="account-frame">
+      <SiteHeaderBar account />
+      <div className="account-app">
+        <a className="skip-link" href="#inhoud">
+          Naar inhoud
+        </a>
+        <aside className="account-sidebar" aria-label="Accountnavigatie">
+          <Link className="account-brand" href="/" aria-label="WeerSport, naar de homepage">
+            <BrandMark size={36} />
+            <span>WeerSport.</span>
+          </Link>
+          <p className="account-sidebar-label">Mijn omgeving</p>
+          <nav className="account-side-nav">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={active === link.match ? "is-active" : undefined}
+                aria-current={active === link.match ? "page" : undefined}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <p className="account-sidebar-foot">Sportweer voor Nederland</p>
+        </aside>
+        <div className="account-main">
+          <header className="account-topbar">
+            <p>{breadcrumb}</p>
+            <span className="account-badge">{planLabel}</span>
+            <span className="account-user">{accountName}</span>
+          </header>
+          <div className="account-content" id="inhoud">
+            {children}
+          </div>
         </div>
       </div>
     </div>

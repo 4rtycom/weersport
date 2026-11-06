@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { BrandMark } from "@/components/brand-mark";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { readSession } from "@/lib/auth/cookies";
 import { families, sportsInFamily } from "@/lib/sports";
@@ -17,8 +17,8 @@ export default async function SportenPage() {
   const account = await readSession();
   return (
     <>
+      <SiteHeaderBar account={Boolean(account)} />
       <div className="catalog-hero">
-        <SiteHeader account={Boolean(account)} />
         <div className="catalog-intro">
           <p className="eyebrow eyebrow-lime">Buitensporten in Nederland</p>
           <h1>Alle 24 sporten</h1>

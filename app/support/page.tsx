@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 
 export const metadata = { title: "Support" };
 
 export default function SupportPage() {
   return (
     <>
-      <section className="legal-hero">
-        <SiteHeader />
-      </section>
+      <SiteHeaderBar />
       <main className="legal" id="inhoud">
         <p className="eyebrow">Hulp & monitoring</p>
         <h1>Support</h1>

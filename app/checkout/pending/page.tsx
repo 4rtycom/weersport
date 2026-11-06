@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BrandMark } from "@/components/brand-mark";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { readSession } from "@/lib/auth/cookies";
 import { BILLING_DISCLOSURE } from "@/lib/billing/constants";
 import { getCheckoutPublic, mollieMode, verifyAndApplyPayment } from "@/lib/billing/mollie";
@@ -26,30 +26,27 @@ export default async function PendingPage({
   }
 
   return (
-    <main className="billing-page">
-      <header className="billing-nav">
-        <Link className="account-brand" href="/">
-          <BrandMark size={34} />
-          <span>WeerSport.</span>
-        </Link>
-        <span className="account-badge">Betaling pending</span>
-      </header>
-      <p className="eyebrow">Mollie</p>
-      <h1>Betaling wordt gecontroleerd</h1>
-      <p className="account-lead">{BILLING_DISCLOSURE}</p>
-      <section className="account-panel">
-        <p className="account-tag">Pending</p>
-        <h2>Nog geen Pro-activatie</h2>
-        <p>We wachten op de geverifieerde Mollie-status. Je Basis-account blijft actief.</p>
-      </section>
-      <div className="account-item-actions">
-        <Link className="button button-dark" href="/account/facturering">
-          Naar facturering
-        </Link>
-        <Link className="button button-lime" href="/">
-          Terug naar home
-        </Link>
-      </div>
-    </main>
+    <>
+      <SiteHeaderBar account />
+      <main className="billing-page" id="inhoud">
+        <p className="account-tag">Betaling pending</p>
+        <p className="eyebrow">Mollie</p>
+        <h1>Betaling wordt gecontroleerd</h1>
+        <p className="account-lead">{BILLING_DISCLOSURE}</p>
+        <section className="account-panel">
+          <p className="account-tag">Pending</p>
+          <h2>Nog geen Pro-activatie</h2>
+          <p>We wachten op de geverifieerde Mollie-status. Je Basis-account blijft actief.</p>
+        </section>
+        <div className="account-item-actions">
+          <Link className="button button-dark" href="/account/facturering">
+            Naar facturering
+          </Link>
+          <Link className="button button-lime" href="/">
+            Terug naar home
+          </Link>
+        </div>
+      </main>
+    </>
   );
 }
