@@ -30,11 +30,23 @@ export type WeatherHour = {
   uvIndex: number | null;
 };
 
+export type WeatherTimeline = {
+  /** Wall-clock receipt on our servers (UTC ISO). */
+  receivedAt: string;
+  /** Provider model publication / generation time when known (UTC ISO). */
+  modelPublishedAt: string | null;
+  /** First forecast-valid instant retained (UTC ISO). */
+  forecastValidFrom: string | null;
+  /** Last forecast-valid instant retained (UTC ISO). */
+  forecastValidUntil: string | null;
+};
+
 export type WeatherBundle = {
   temperatureC: number | null;
   windKmh: number | null;
   precipitationProbability: number | null;
   hours: WeatherHour[];
+  timeline: WeatherTimeline;
 };
 
 export type UvBundle = {
@@ -91,7 +103,8 @@ export type HourlyScorePoint = {
   temperatureC: number;
   windKmh: number;
   precipitationProbability: number;
-  uvIndex: number;
+  /** Missing UV stays unknown — never coerced to 0. */
+  uvIndex: number | null;
 };
 
 export type SuitabilityOutcome =
@@ -99,8 +112,20 @@ export type SuitabilityOutcome =
   | {
       kind: "SCORED";
       modelVersion: string;
+      /** Headline = “nu” (current/next upcoming hour). */
       score: number;
       badge: "GOED" | "MATIG" | "SLECHT";
+      now: { time: string; score: number; label: string };
+      peakHour: { time: string; score: number; label: string };
+      recommendedWindow: {
+        start: string;
+        end: string;
+        score: number;
+        peakTime: string;
+        peakScore: number;
+        label: string;
+      };
+      /** @deprecated alias of recommendedWindow for existing UI bindings */
       peakWindow: {
         start: string;
         end: string;

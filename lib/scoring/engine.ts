@@ -6,6 +6,13 @@ import {
   sportProfiles,
   type SportScoreProfile,
 } from "@/lib/scoring/profiles";
+import { formatAmsterdamClock, formatAmsterdamWindow } from "@/lib/scoring/time";
+import {
+  findPeakHour,
+  rankTwoHourWindows,
+  selectFutureHours,
+  type ScoredInstant,
+} from "@/lib/scoring/windows";
 
 export type HourlyScorePoint = {
   time: string;
@@ -13,7 +20,7 @@ export type HourlyScorePoint = {
   temperatureC: number;
   windKmh: number;
   precipitationProbability: number;
-  uvIndex: number;
+  uvIndex: number | null;
 };
 
 export type ScoredSuitability = Extract<SuitabilityOutcome, { kind: "SCORED" }>;
@@ -54,27 +61,22 @@ function rainScore(probability: number, sensitivity: SportScoreProfile["rainSens
   return clamp(18 - (probability - 45) * 0.35);
 }
 
-function usableHours(hours: WeatherHour[]) {
-  const now = Date.now();
-  const upcoming = hours.filter((hour) => {
-    const stamp = new Date(hour.time).getTime();
-    return stamp >= now - 60 * 60 * 1000;
-  });
-  const source = upcoming.length > 0 ? upcoming : hours;
-  return source
+function prepareFutureHours(hours: WeatherHour[], nowMs: number) {
+  const future = selectFutureHours(hours, nowMs);
+  return future
     .filter(
       (hour) =>
         hour.temperatureC !== null &&
         hour.windKmh !== null &&
         hour.precipitationProbability !== null,
     )
-    .slice(0, 24)
     .map((hour) => ({
       time: hour.time,
       temperatureC: hour.temperatureC as number,
       windKmh: hour.windKmh as number,
       precipitationProbability: hour.precipitationProbability as number,
-      uvIndex: hour.uvIndex ?? 0,
+      // Keep missing UV unknown — do not coerce to 0.
+      uvIndex: hour.uvIndex,
     }));
 }
 
@@ -85,7 +87,7 @@ function scoreHour(
     temperatureC: number;
     windKmh: number;
     precipitationProbability: number;
-    uvIndex: number;
+    uvIndex: number | null;
   },
 ) {
   const temperature = scoreBand(hour.temperatureC, profile.idealTempC, 10);
@@ -136,34 +138,6 @@ function buildFactors(
     .slice(0, 3);
 }
 
-function findPeak(points: HourlyScorePoint[]) {
-  let best = points[0];
-  for (const point of points) {
-    if (point.score > best.score) best = point;
-  }
-  const idx = points.findIndex((point) => point.time === best.time);
-  const startIdx = Math.max(0, idx - 1);
-  const endIdx = Math.min(points.length - 1, idx + 1);
-  return {
-    start: points[startIdx].time,
-    end: points[endIdx].time,
-    peakScore: best.score,
-    peakTime: best.time,
-  };
-}
-
-function formatClock(iso: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Amsterdam",
-  }).format(new Date(iso));
-}
-
-function formatWindow(start: string, end: string) {
-  return `${formatClock(start)}–${formatClock(end)}`;
-}
-
 export function scoreSportHours(input: {
   sportId: string;
   hours: WeatherHour[];
@@ -172,9 +146,12 @@ export function scoreSportHours(input: {
   /** Phase 2: town centroids cannot satisfy water/ice site claims. */
   siteSpecificCoverage?: boolean;
   coverageNote?: string;
+  /** Injectable clock for fixtures / DST cases (epoch ms). */
+  nowMs?: number;
 }): SuitabilityOutcome {
   const profile = getScoreProfile(input.sportId);
   const siteOk = input.siteSpecificCoverage === true;
+  const nowMs = input.nowMs ?? Date.now();
 
   if (ICE_CRITICAL_SPORTS.has(input.sportId)) {
     return {
@@ -210,17 +187,18 @@ export function scoreSportHours(input: {
     }
   }
 
-  const hours = usableHours(input.hours);
-  if (hours.length === 0) {
+  const prepared = prepareFutureHours(input.hours, nowMs);
+  if (prepared.length === 0) {
     return {
       kind: "NO_SCORE",
-      reason: "Geen bruikbare uurlijkse weerdata beschikbaar voor scoring.",
-      missing: ["uurlijkse weerdata"],
+      reason:
+        "Geen toekomstige uurlijkse weerdata binnen 48 uur. Verlopen uren worden niet hergebruikt.",
+      missing: ["toekomstige uurlijkse weerdata"],
     };
   }
 
-  const scoredHours = hours.map((hour) => scoreHour(profile, hour));
-  const curve: HourlyScorePoint[] = scoredHours.map((point) => ({
+  const scoredHours = prepared.map((hour) => scoreHour(profile, hour));
+  const curve: ScoredInstant[] = scoredHours.map((point) => ({
     time: point.time,
     score: point.score,
     temperatureC: point.temperatureC,
@@ -228,28 +206,55 @@ export function scoreSportHours(input: {
     precipitationProbability: point.precipitationProbability,
     uvIndex: point.uvIndex,
   }));
-  const nowScore = scoredHours[0];
-  const peak = findPeak(curve);
-  const badge = badgeFor(nowScore.score);
-  const factors = buildFactors(profile, nowScore.parts);
+
+  const windows = rankTwoHourWindows(curve);
+  if (windows.length === 0) {
+    return {
+      kind: "NO_SCORE",
+      reason:
+        "Geen volledig aaneengesloten 2-uursvenster in de komende 48 uur (gaten of te weinig uren).",
+      missing: ["aaneengesloten 2-uursvenster"],
+    };
+  }
+
+  const nowHour = scoredHours[0];
+  const peak = findPeakHour(curve)!;
+  const recommended = windows[0];
+  const badge = badgeFor(nowHour.score);
+  const factors = buildFactors(profile, nowHour.parts);
+  const peakWindow = {
+    start: recommended.start,
+    end: recommended.end,
+    peakTime: recommended.peakTime,
+    peakScore: recommended.peakScore,
+    label: `Aanbevolen venster · ${formatAmsterdamWindow(recommended.start, recommended.end)} · ${recommended.score}/100`,
+  };
 
   return {
     kind: "SCORED",
     modelVersion: SCORE_MODEL_VERSION,
-    score: nowScore.score,
+    score: nowHour.score,
     badge,
-    peakWindow: {
-      start: peak.start,
-      end: peak.end,
-      peakTime: peak.peakTime,
-      peakScore: peak.peakScore,
-      label: `Beste moment · ${formatWindow(peak.start, peak.end)}`,
+    now: {
+      time: nowHour.time,
+      score: nowHour.score,
+      label: `Nu · ${formatAmsterdamClock(nowHour.time)} · ${nowHour.score}/100`,
     },
-    bestTimeLabel: `Beste moment rond ${formatClock(peak.peakTime)}`,
+    peakHour: {
+      time: peak.time,
+      score: peak.score,
+      label: `Piek-uur · ${formatAmsterdamClock(peak.time)} · ${peak.score}/100`,
+    },
+    recommendedWindow: {
+      ...peakWindow,
+      score: recommended.score,
+    },
+    peakWindow,
+    bestTimeLabel: `Aanbevolen venster ${formatAmsterdamWindow(recommended.start, recommended.end)}`,
     hourly: curve,
     factors,
-    tooltip: `${profile.tagline}. Score ${nowScore.score}/100 (${badge.toLowerCase()}). Model ${SCORE_MODEL_VERSION}.`,
-    caveats: profile.caveats,
+    tooltip: `${profile.tagline}. Nu ${nowHour.score}/100, piek-uur ${peak.score}/100, venster ${recommended.score}/100. Model ${SCORE_MODEL_VERSION}.`,
+    caveats: `${profile.caveats} Gewichten zijn voorlopig tot onafhankelijke review.`,
   };
 }
 
@@ -267,4 +272,20 @@ export function getSportMeta(sportId: string) {
 
 export function listScoredSportIds() {
   return Object.keys(sportProfiles);
+}
+
+/** Test helper: score land sports without safety gates. */
+export function scoreLandHoursForTests(
+  sportId: string,
+  hours: WeatherHour[],
+  nowMs: number,
+): SuitabilityOutcome {
+  return scoreSportHours({
+    sportId,
+    hours,
+    waterLinked: false,
+    swimLinked: false,
+    siteSpecificCoverage: false,
+    nowMs,
+  });
 }
