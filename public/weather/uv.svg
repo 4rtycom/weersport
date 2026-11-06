@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="UV / Sun exposure vector" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M24 17C24 20.866 20.866 24 17 24C13.134 24 10 20.866 10 17C10 13.134 13.134 10 17 10C20.866 10 24 13.134 24 17Z" stroke-width="2.6" stroke="#9C6100"/>
+<path id="Vector_2" d="M17 1V6M17 28V33M1 17H6M28 17H33M5.7 5.7L9.2 9.2M24.8 24.8L28.3 28.3M28.3 5.7L24.8 9.2M9.2 24.8L5.7 28.3" stroke-width="2.3" stroke-linecap="round" stroke="#9C6100"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="34" height="34" fill="white"/>
+</clipPath>
+</defs>
+</svg>

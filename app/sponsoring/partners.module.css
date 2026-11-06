@@ -1,0 +1,159 @@
+.top, .hero, .footer {
+  background: var(--ws-surface-dark);
+  color: white;
+}
+.wrap, .split {
+  width: min(calc(100% - 40px), 1160px);
+  margin-inline: auto;
+}
+.top { padding-block: 10px; }
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(32px, 7vw, 100px);
+  align-items: center;
+  padding-block: clamp(48px, 7vw, 96px);
+}
+.hero .split { padding-top: clamp(20px, 4vw, 64px); }
+.page h1, .page h2 {
+  text-wrap: balance;
+  line-height: 1.03;
+  letter-spacing: -.055em;
+}
+.page h1 { font-size: clamp(48px, 6vw, 88px); margin-block: 20px; }
+.page h2 { font-size: clamp(34px, 4vw, 58px); margin-block: 12px 20px; }
+.form :global(.sponsor-success) h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  letter-spacing: 0;
+  font-weight: 800;
+  margin-block: 0 8px;
+}
+.split p { line-height: 1.65; }
+.split p + p { margin-top: 14px; }
+.lead { color: #d9e8e7; max-width: 48ch; margin-bottom: 30px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
+.actions a { gap: 14px; }
+.textLink {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+.photo { margin: 0; min-width: 0; }
+.photo img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1536 / 1024;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 20px;
+}
+.example, .price, .split {
+  scroll-margin-top: 24px;
+}
+.example {
+  width: min(calc(100% - 40px), 1160px);
+  margin-inline: auto;
+  padding-block: clamp(48px, 7vw, 96px);
+}
+.exampleIntro { max-width: 40rem; margin-bottom: 28px; }
+.exampleIntro p { line-height: 1.65; margin-top: 8px; }
+.preview {
+  margin: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  padding: 12px;
+  background: #e7f0ec;
+  border-radius: 28px;
+}
+.preview > :global(.sponsor-placement) { min-width: 0; }
+.result { display: grid; gap: 12px; min-width: 0; }
+.preview :global(.moment-hero) h3 {
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.preview :global(.moment-hero) a {
+  display: inline-block;
+  margin-top: 8px;
+  color: white;
+  font-weight: 700;
+}
+.preview :global(.moment-card) .demoLabel {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff2ce;
+  color: #72540e;
+  font-size: 14px;
+  font-weight: 800;
+}
+.preview :global(.score-value) { color: var(--ws-text-primary); }
+.preview :global(.score-badge-goed) { color: #165730; }
+.preview :global(.score-badge-matig) { color: #72540e; }
+.preview :global(.score-badge-slecht) { color: #8e3427; }
+.preview :global(.score-peak) strong { color: var(--ws-text-primary); font-size: 22px; }
+.advice { min-width: 0; }
+.price {
+  width: min(calc(100% - 40px), 1160px);
+  margin-inline: auto;
+  padding-bottom: clamp(24px, 5vw, 64px);
+}
+.priceCard {
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: 28px;
+  background: white;
+  border: 1px solid var(--ws-line);
+  color: var(--ws-text-primary);
+}
+.priceCard h2 { max-width: 16ch; }
+.priceAmount {
+  margin: 8px 0 16px;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ws-text-primary);
+}
+.priceCard ul {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+.priceCard li { font-weight: 700; }
+.priceCard p { max-width: 62ch; line-height: 1.6; }
+.priceActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 22px;
+  margin-top: 22px;
+}
+.priceLink {
+  color: var(--ws-text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+.priceNote { margin-top: 14px; font-size: 14px; }
+.rules { background: var(--ws-accent-mint); }
+.form { min-width: 0; padding: clamp(20px, 3vw, 40px); border: 1px solid var(--ws-line); border-radius: 20px; background: white; }
+.form form { gap: 16px; margin: 0 0 16px; }
+.form textarea { font: inherit; }
+.form > a { font-size: 14px; }
+.form :focus-visible { outline-color: #126369; }
+.footer .wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding-block: 28px; }
+.footer a:first-child { margin-right: auto; font-weight: 800; }
+@media (max-width: 760px) {
+  .split, .preview { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .preview { gap: 16px; }
+}
