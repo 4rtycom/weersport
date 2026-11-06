@@ -1706,3 +1706,23 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   text-transform: uppercase;
   margin: 16px 0 10px;
 }
+
+.pwa-banner {
+  position: fixed;
+  z-index: 30;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+  margin-left: auto;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: white;
+  color: var(--ws-text-primary);
+  border: 1px solid var(--ws-border);
+}
+.pwa-banner p { font-size: 14px; line-height: 1.4; }
+.pwa-banner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pwa-banner .button { min-height: 44px; }
