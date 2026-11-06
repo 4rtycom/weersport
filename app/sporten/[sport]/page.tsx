@@ -111,6 +111,29 @@ export default async function SportGuide({ params }: Props) {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <h3>Benodigde bronvelden</h3>
+          <ul>
+            {guide.requiredFields.map((field) => (
+              <li key={field.id}>
+                <strong>{field.label}.</strong>{" "}
+                {field.measurable
+                  ? "Dit veld bestaat op een bron in deze versie. Zonder geldige meting blijft het geblokkeerd, en een geldige meting is nog geen score."
+                  : field.field
+                    ? "Dit veld staat op een bron, maar het is voor deze sport geen meting van de ontbrekende factor. Het advies blijft geblokkeerd."
+                    : "Dit veld zit niet in de gekoppelde bronnen. Het advies blijft daarom geblokkeerd."}
+              </li>
+            ))}
+          </ul>
+          {guide.blocks.length > 0 ? (
+            <>
+              <h3>Blokkades</h3>
+              <ul>
+                {guide.blocks.map((block) => (
+                  <li key={block.id}>{block.explanation}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </section>
 
         <section aria-labelledby="howto-title">

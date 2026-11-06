@@ -40,6 +40,13 @@ export async function buildForecastSnapshot(draft: SearchDraft): Promise<Forecas
             now: new Date(),
           }
         : null,
+    sources: {
+      weather: weatherPair.weather,
+      water,
+      swim,
+      warnings,
+      linkedStationId: null,
+    },
   });
 
   const sources = [
