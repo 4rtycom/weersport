@@ -24,7 +24,7 @@ export async function GET() {
     {
       status: database === "ok" ? "ok" : "degraded",
       service: "weersport",
-      phase: "3",
+      phase: "4",
       checks: {
         database,
         store: storeMode(),
@@ -32,6 +32,7 @@ export async function GET() {
         authDelivery: authDeliveryMode(),
         mailDriver: mailDriver(),
         sourcesStatusPath: "/api/sources/status",
+        quotaTimezone: "Europe/Amsterdam",
       },
       time: new Date().toISOString(),
       latencyMs: Date.now() - started,

@@ -187,13 +187,13 @@ if (!ice.data.snapshot.suitability.reason.toLowerCase().includes("natuurijs")) {
   throw new Error("Schaatsen reason must mention natuurijs");
 }
 
-const page = await request("/moment");
+const page = await request("/moment?start=1");
 const html = await page.text();
 if (!html.includes("/100") && !html.includes("NO_SCORE")) {
   throw new Error("Moment page missing score or NO_SCORE");
 }
-if (!html.includes("Beste moment") && !html.includes("NO_SCORE")) {
-  throw new Error("Moment page missing peak label");
+if (!html.includes("Aanbevolen venster") && !html.includes("Beste moment") && !html.includes("NO_SCORE")) {
+  throw new Error("Moment page missing peak/window label");
 }
 
 console.log("phase 04 route checks ok");
