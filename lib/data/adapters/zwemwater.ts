@@ -1,5 +1,10 @@
 import { SWIM_STALE_AFTER_MS, isStale } from "@/lib/data/contracts";
-import { fixtureName, fixturesEnabled, loadFixtureJson } from "@/lib/data/fixtures";
+import {
+  fixtureName,
+  fixturesEnabled,
+  loadFixtureJson,
+  stableFixtureInstant,
+} from "@/lib/data/fixtures";
 import { rightsFor } from "@/lib/data/sources";
 import type { SourceObservation, SwimBundle } from "@/lib/data/types";
 
@@ -18,14 +23,20 @@ export async function fetchZwemwater(placeLabel: string): Promise<SourceObservat
   if (fixturesEnabled()) {
     const name = fixtureName("WEERSPORT_SWIM_FIXTURE", "ready");
     const fixture = loadFixtureJson<SwimFixture>(`swim-${name}`);
-    const stale = fixture.publishedAt ? isStale(fixture.publishedAt, SWIM_STALE_AFTER_MS) : false;
+    const staleScenario = fixture.status === "STALE";
+    const publishedAt = stableFixtureInstant(
+      fixture.publishedAt,
+      SWIM_STALE_AFTER_MS,
+      staleScenario,
+    );
+    const stale = publishedAt ? isStale(publishedAt, SWIM_STALE_AFTER_MS) : false;
     return {
       sourceId: "zwemwater-bij12",
       sourceLabel: rights.sourceLabel,
       status: stale ? "STALE" : fixture.status,
       rightsNote: `${rights.usageNote} · TEST_ONLY fixture`,
       coverageNote: "Officiële zwemlocatie vereist; niet afleidbaar uit alleen een stadnaam.",
-      publishedAt: fixture.publishedAt,
+      publishedAt,
       receivedAt: new Date().toISOString(),
       validUntil: null,
       locationLabel: fixture.siteLabel ?? placeLabel,

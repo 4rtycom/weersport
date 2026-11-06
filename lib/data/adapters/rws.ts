@@ -1,5 +1,10 @@
 import { WATER_STALE_AFTER_MS, isStale } from "@/lib/data/contracts";
-import { fixtureName, fixturesEnabled, loadFixtureJson } from "@/lib/data/fixtures";
+import {
+  fixtureName,
+  fixturesEnabled,
+  loadFixtureJson,
+  stableFixtureInstant,
+} from "@/lib/data/fixtures";
 import { rightsFor } from "@/lib/data/sources";
 import type { SourceObservation, WaterBundle } from "@/lib/data/types";
 
@@ -20,7 +25,13 @@ export async function fetchRwsWater(placeLabel: string): Promise<SourceObservati
   if (fixturesEnabled()) {
     const name = fixtureName("WEERSPORT_WATER_FIXTURE", "ready-town");
     const fixture = loadFixtureJson<WaterFixture>(`water-${name}`);
-    const stale = fixture.publishedAt ? isStale(fixture.publishedAt, WATER_STALE_AFTER_MS) : false;
+    const staleScenario = fixture.status === "STALE";
+    const publishedAt = stableFixtureInstant(
+      fixture.publishedAt,
+      WATER_STALE_AFTER_MS,
+      staleScenario,
+    );
+    const stale = publishedAt ? isStale(publishedAt, WATER_STALE_AFTER_MS) : false;
     return {
       sourceId: "rws-wadar",
       sourceLabel: rights.sourceLabel,
@@ -29,7 +40,7 @@ export async function fetchRwsWater(placeLabel: string): Promise<SourceObservati
       coverageNote:
         fixture.note ??
         "Meetpunt is niet representatief voor elk watergebied of voor een woonplaatscentroïde.",
-      publishedAt: fixture.publishedAt,
+      publishedAt,
       receivedAt: new Date().toISOString(),
       validUntil: null,
       locationLabel: fixture.stationLabel ?? placeLabel,

@@ -3,7 +3,12 @@ import {
   isStale,
   type WarningLifecycle,
 } from "@/lib/data/contracts";
-import { fixtureName, fixturesEnabled, loadFixtureJson } from "@/lib/data/fixtures";
+import {
+  fixtureName,
+  fixturesEnabled,
+  loadFixtureJson,
+  stableFixtureInstant,
+} from "@/lib/data/fixtures";
 import { rightsFor } from "@/lib/data/sources";
 import type { SourceObservation, WarningBundle } from "@/lib/data/types";
 
@@ -50,9 +55,15 @@ function fromFixture(placeLabel: string, fixture: KnmiFixture): SourceObservatio
   const receivedAt = new Date().toISOString();
   let status = fixture.status;
   let lifecycle = fixture.lifecycle;
+  const staleScenario = lifecycle === "stale" || status === "STALE";
+  const lastSuccessAt = stableFixtureInstant(
+    fixture.lastSuccessAt,
+    WARNING_STALE_AFTER_MS,
+    staleScenario,
+  );
   if (
-    fixture.lastSuccessAt &&
-    isStale(fixture.lastSuccessAt, WARNING_STALE_AFTER_MS) &&
+    lastSuccessAt &&
+    isStale(lastSuccessAt, WARNING_STALE_AFTER_MS) &&
     lifecycle !== "provider-failure" &&
     lifecycle !== "not-linked"
   ) {
@@ -86,7 +97,7 @@ function fromFixture(placeLabel: string, fixture: KnmiFixture): SourceObservatio
     value: {
       lifecycle,
       spatialCoverage: fixture.spatialCoverage,
-      lastSuccessAt: fixture.lastSuccessAt,
+      lastSuccessAt,
       items: fixture.items,
     },
     message,

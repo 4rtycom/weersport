@@ -6,6 +6,8 @@ import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
 import type { AdDecision } from "@/lib/ads/policy";
+import { townCentroidCoverage } from "@/lib/data/contracts";
+import { sportDependency } from "@/lib/data/sport-dependencies";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { getSportMeta } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
@@ -50,6 +52,12 @@ export function MomentView({
 }) {
   const sport = findSport(snapshot.sportId);
   const meta = getSportMeta(snapshot.sportId);
+  // Phase 1 cache rows predate coverage and dependencies. Derive the same fields a new snapshot would.
+  const coverageNote =
+    snapshot.coverage?.note ?? townCentroidCoverage(snapshot.placeId, snapshot.placeLabel).note;
+  const dependencies = snapshot.dependencies?.scoreBlocking
+    ? snapshot.dependencies
+    : sportDependency(snapshot.sportId);
   const weather = snapshot.weather.value;
   const uv = snapshot.uv.value;
   const suitability = snapshot.suitability;
@@ -195,7 +203,7 @@ export function MomentView({
                   ))}
                 </ul>
               ) : null}
-              <p className="moment-coverage-note">{snapshot.coverage.note}</p>
+              <p className="moment-coverage-note">{coverageNote}</p>
             </div>
             {nextSport ? (
               <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
@@ -274,8 +282,8 @@ export function MomentView({
           <p className="eyebrow">Officiële bronnen en coverage</p>
           <h2 id="bronnen-title">Bronstatus</h2>
           <p className="moment-source-line">
-            Terreintype: {snapshot.dependencies.terrain}. Score blokkeert op:{" "}
-            {snapshot.dependencies.scoreBlocking.join(", ")}. {snapshot.dependencies.coverageNote}
+            Terreintype: {dependencies.terrain}. Score blokkeert op:{" "}
+            {dependencies.scoreBlocking.join(", ")}. {dependencies.coverageNote}
           </p>
           <ul className="source-list">
             {snapshot.sources.map((source) => (

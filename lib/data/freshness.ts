@@ -29,7 +29,7 @@ function row(
     "lastSuccessAt" in observation.value
       ? ((observation.value as { lastSuccessAt?: string | null }).lastSuccessAt ?? null)
       : null) ?? observation.publishedAt;
-  const age = ageSeconds(lastSuccessAt ?? observation.receivedAt);
+  const age = ageSeconds(lastSuccessAt);
   const linked = observation.status !== "NOT_LINKED";
   const fresh = !linked
     ? null
@@ -43,7 +43,7 @@ function row(
     sourceLabel: observation.sourceLabel,
     status: observation.status,
     lifecycle,
-    lastSuccessAt: lastSuccessAt ?? observation.receivedAt,
+    lastSuccessAt,
     ageSeconds: age,
     thresholdSeconds: Math.round(thresholdMs / 1000),
     fresh,
