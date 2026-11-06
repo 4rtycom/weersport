@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { SponsoringForm } from "@/components/sponsoring-form";
 import { sports } from "@/lib/sports";
@@ -20,7 +21,7 @@ export default function SponsoringPage() {
           Naar inhoud
         </a>
         <Link className={styles.wordmark} href="/">
-          WeerSport.
+          <Image src="/brand/symbol.svg" alt="" width={32} height={32} /> WeerSport.
         </Link>
         <p className={styles.partnerLabel}>Voor sportpartners</p>
       </header>

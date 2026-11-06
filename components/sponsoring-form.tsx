@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import Image from "next/image";
 import { PlaceField } from "@/components/place-field";
 import { SponsoringRunningPreview } from "@/components/sponsoring-running-preview";
 import { placeSelectionLabel } from "@/lib/place-label";
@@ -229,10 +230,23 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
 
   return (
     <>
-      <h1 id="aanvraag" tabIndex={-1} ref={titleRef}>
-        {title}
-      </h1>
-      <p className={styles.lead}>{lead}</p>
+      {step === "campaign" ? (
+        <section className={styles.intro} aria-labelledby="partner-title">
+          <Image src="/sponsoring/hardlopen-heide.webp" alt="" fill priority
+            sizes="(max-width: 760px) 100vw, 65vw" className={styles.introPhoto} />
+          <div className={styles.introCopy}>
+            <p className={styles.introLabel}>Sponsoring op WeerSport</p>
+            <h1 id="partner-title">Jouw merk bij het lokale sportweer.</h1>
+            <p>Bereik sporters terwijl ze hun training plannen. Jouw vermelding verschijnt onder het weeradvies voor de sport en omgeving die je kiest.</p>
+            <div className={styles.actions}>
+              <a href="#aanvraag" className={styles.startLink}>Stel je campagne samen ↓</a>
+              <a href="#plaatsing">Bekijk de plaatsing</a>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <><h1 tabIndex={-1} ref={titleRef}>{title}</h1><p className={styles.lead}>{lead}</p></>
+      )}
       {step === "received" && receipt ? (
         <div className={styles.receipt} role="status">
           <p className={styles.receiptLabel}>Je aangevraagde plaatsing</p>
@@ -243,12 +257,16 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
           </p>
           <p className={styles.receiptNote}>
             We bekijken de beschikbaarheid en nemen via je zakelijke e-mailadres contact op over de plaatsing en de
-            prijs. Er wordt niets ingepland of afgeschreven, en er gaat geen automatische bevestigingsmail uit.
+            prijs. Bewaar je aanvraagnummer voor vragen.
           </p>
         </div>
       ) : (
         <form className={styles.layout} data-step={step} onSubmit={onSubmit} noValidate>
           <div className={styles.card} data-step={step}>
+            {step === "campaign" && <div className={styles.formIntro}>
+              <h2 id="aanvraag" ref={titleRef} tabIndex={-1}>Stel je campagne samen</h2>
+              <p>Kies je doelgroep en periode. Je ontvangt een voorstel met prijs en beschikbaarheid.</p>
+            </div>}
             <div className={styles.steps}>
               <ol>
                 <li aria-current={step === "campaign" ? "step" : undefined}>Campagne</li>
@@ -370,7 +388,7 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
                     </span>
                   </div>
                   <span className="visually-hidden" id="sponsor-start-hint">
-                    Vandaag of een latere dag. De datum wordt als kalenderdatum bewaard.
+                    Vandaag of een latere dag.
                   </span>
                   {errors.start ? (
                     <p className={styles.error} id="sponsor-start-error">
@@ -384,7 +402,8 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
                     <input
                       id="sponsor-weeks"
                       className={styles.control}
-                      inputMode="decimal"
+                      inputMode="numeric"
+                      placeholder="Bijv. 6"
                       autoComplete="off"
                       value={weeks}
                       aria-invalid={Boolean(errors.weeks)}
