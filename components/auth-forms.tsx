@@ -189,7 +189,15 @@ export function RegisterForm() {
   );
 }
 
-export function VerifyActions({ email, mailPath }: { email: string; mailPath: string | null }) {
+export function VerifyActions({
+  email,
+  mailPath,
+  authClosed = false,
+}: {
+  email: string;
+  mailPath: string | null;
+  authClosed?: boolean;
+}) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -253,39 +261,52 @@ export function VerifyActions({ email, mailPath }: { email: string; mailPath: st
         </p>
       ) : null}
       {message ? <p className="auth-inline-note">{message}</p> : null}
-      <button className="button button-dark auth-button" type="button" onClick={resend}>
-        Verificatiemail opnieuw sturen
-      </button>
-      <button className="button auth-button auth-button-soft" type="button" onClick={() => setChanging((value) => !value)}>
-        Ander e-mailadres gebruiken
-      </button>
-      {changing ? (
-        <form className="auth-inline-form" onSubmit={changeEmail}>
-          <label className="auth-label" htmlFor="nieuw-email">
-            Nieuw e-mailadres
-          </label>
-          <input
-            id="nieuw-email"
-            className="auth-input"
-            type="email"
-            required
-            value={nextEmail}
-            onChange={(event) => setNextEmail(event.target.value)}
-          />
-          <button className="button button-dark auth-button" type="submit">
-            Adres opslaan
-          </button>
-        </form>
-      ) : null}
-      <button className="button button-lime auth-button" type="button" onClick={prototype}>
-        Prototype: e-mailverificatie voltooid →
-      </button>
-      {mailPath ? (
-        <p className="auth-dev-mail">
-          Er is geen mailserver gekoppeld. Dezelfde verificatie staat in deze ontwikkelmailbox:{" "}
-          <Link href={mailPath}>Open de verificatielink</Link>
+      {authClosed ? (
+        <p className="auth-inline-note">
+          Browserverificatie en prototype-bypass zijn uitgeschakeld op deze omgeving totdat beveiligde
+          e-mailbezorging beschikbaar is.
         </p>
-      ) : null}
+      ) : (
+        <>
+          <button className="button button-dark auth-button" type="button" onClick={resend}>
+            Verificatiemail opnieuw sturen
+          </button>
+          <button
+            className="button auth-button auth-button-soft"
+            type="button"
+            onClick={() => setChanging((value) => !value)}
+          >
+            Ander e-mailadres gebruiken
+          </button>
+          {changing ? (
+            <form className="auth-inline-form" onSubmit={changeEmail}>
+              <label className="auth-label" htmlFor="nieuw-email">
+                Nieuw e-mailadres
+              </label>
+              <input
+                id="nieuw-email"
+                className="auth-input"
+                type="email"
+                required
+                value={nextEmail}
+                onChange={(event) => setNextEmail(event.target.value)}
+              />
+              <button className="button button-dark auth-button" type="submit">
+                Adres opslaan
+              </button>
+            </form>
+          ) : null}
+          <button className="button button-lime auth-button" type="button" onClick={prototype}>
+            Prototype: e-mailverificatie voltooid →
+          </button>
+          {mailPath ? (
+            <p className="auth-dev-mail">
+              Er is geen mailserver gekoppeld. Dezelfde verificatie staat in deze ontwikkelmailbox:{" "}
+              <Link href={mailPath}>Open de verificatielink</Link>
+            </p>
+          ) : null}
+        </>
+      )}
     </>
   );
 }

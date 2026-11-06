@@ -1,8 +1,9 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { invalidateOutstandingAuthTokens } from "@/lib/auth/token-migration";
 
-const globalStore = globalThis as unknown as { weersportDb?: DatabaseSync };
+const globalStore = globalThis as unknown as { weersportDb?: DatabaseSync; weersportTokenMigration?: boolean };
 
 export function db() {
   if (!globalStore.weersportDb) {
@@ -39,6 +40,11 @@ export function db() {
       );
     `);
     globalStore.weersportDb = database;
+  }
+  if (!globalStore.weersportTokenMigration) {
+    // Set before running to avoid re-entry while invalidateOutstandingAuthTokens calls db().
+    globalStore.weersportTokenMigration = true;
+    invalidateOutstandingAuthTokens();
   }
   return globalStore.weersportDb;
 }
