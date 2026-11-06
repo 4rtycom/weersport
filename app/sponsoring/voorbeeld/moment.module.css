@@ -492,11 +492,20 @@
      Below 800px the base sizes stay, so a stacked phone card is not enlarged. */
   @container (max-width: 740px) {
     .embed .hero { padding: 18px 16px 14px; }
-    .embed .window { font-size: 42px; }
+    .embed .heroMain { grid-template-columns: minmax(0, 1fr) 92px; }
+    .embed .window { font-size: 40px; white-space: nowrap; }
     .embed .hero h1 { font-size: 22px; }
-    .embed .reason { font-size: 15px; }
+    .embed .reason { font-size: 15px; max-width: none; }
+    .embed .score { min-height: 96px; padding: 6px 8px 8px; }
+    .embed .score strong { font-size: 40px; }
     .embed .hours li { font-size: 11px; }
-    .embed.shell :global(.sponsor-moment) h3 { font-size: 24px; }
+    .embed .hours li:first-child { transform: translateX(0); }
+    .embed .hours li:last-child { transform: translateX(-100%); }
+    .embed.shell :global(.sponsor-moment) {
+      grid-template-columns: minmax(132px, 34%) minmax(0, 1fr);
+    }
+    .embed.shell :global(.sponsor-moment) h3 { font-size: 22px; }
+    .embed.shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) { font-size: 14px; }
   }
 }
 
