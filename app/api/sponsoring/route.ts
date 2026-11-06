@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     organisation?: unknown;
     email?: unknown;
     message?: unknown;
-    companyWebsite?: unknown;
+    wsHp?: unknown;
   } | null;
   if (!body) {
     return NextResponse.json({ ok: false, errors: { form: "De aanvraag is onleesbaar." } }, { status: 400 });

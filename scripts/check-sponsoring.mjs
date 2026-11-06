@@ -72,7 +72,7 @@ const honeypot = await fetch(new URL("/api/sponsoring", base), {
     organisation: "Duinclub",
     email: "nora@example.nl",
     message: "We willen een herkenbare vermelding bij fietsen, zonder invloed op de score.",
-    companyWebsite: "https://example.nl",
+    wsHp: "https://example.nl",
   }),
 });
 if (honeypot.status !== 400) throw new Error("Honeypot submission was stored");

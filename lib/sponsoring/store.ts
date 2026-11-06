@@ -14,8 +14,11 @@ export type SponsorshipInput = {
   organisation?: unknown;
   email?: unknown;
   message?: unknown;
-  /** Honeypot. A filled value is rejected without storage. */
-  companyWebsite?: unknown;
+  /**
+   * Honeypot. A filled value is rejected without storage.
+   * Must not resemble a website or company field: browsers autofill those and drop real requests.
+   */
+  wsHp?: unknown;
 };
 
 export type SponsorshipErrors = Partial<Record<"name" | "organisation" | "email" | "message" | "form", string>>;
@@ -60,7 +63,7 @@ function cleanText(value: unknown) {
 }
 
 export function validateSponsorship(input: SponsorshipInput): { ok: true; value: Omit<SponsorshipRequest, "id" | "createdAt" | "inbox"> } | { ok: false; errors: SponsorshipErrors } {
-  if (typeof input.companyWebsite === "string" && input.companyWebsite.trim()) {
+  if (typeof input.wsHp === "string" && input.wsHp.trim()) {
     return { ok: false, errors: { form: "De aanvraag kon niet worden verwerkt." } };
   }
   const name = cleanText(input.name);

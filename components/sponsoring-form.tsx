@@ -12,7 +12,7 @@ const fields: { id: Field; label: string; autoComplete: string }[] = [
 ];
 
 export function SponsoringForm() {
-  const [values, setValues] = useState({ name: "", organisation: "", email: "", message: "", companyWebsite: "" });
+  const [values, setValues] = useState({ name: "", organisation: "", email: "", message: "", wsHp: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
   const [receivedId, setReceivedId] = useState<string | null>(null);
@@ -135,14 +135,17 @@ export function SponsoringForm() {
         ) : null}
       </div>
       <div className="sponsor-honeypot" aria-hidden="true">
-        <label htmlFor="sponsor-company-website">Website</label>
+        <label htmlFor="sponsor-ws-hp">Leeg laten</label>
         <input
-          id="sponsor-company-website"
-          name="companyWebsite"
+          id="sponsor-ws-hp"
+          name="wsHp"
           tabIndex={-1}
           autoComplete="off"
-          value={values.companyWebsite}
-          onChange={(event) => setValues((current) => ({ ...current, companyWebsite: event.target.value }))}
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          value={values.wsHp}
+          onChange={(event) => setValues((current) => ({ ...current, wsHp: event.target.value }))}
         />
       </div>
       <button className="button button-dark" type="submit" disabled={pending}>
