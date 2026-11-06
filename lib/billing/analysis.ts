@@ -51,6 +51,11 @@ export function snapshotConsumesQuota(snapshot: ForecastSnapshot) {
   return snapshot.suitability.kind === "SCORED";
 }
 
+/** A free result is never blocked by a used allowance. Only a snapshot that would book can 402. */
+export function quotaBlocksSnapshot(remaining: number, consumesQuota: boolean) {
+  return consumesQuota && remaining <= 0;
+}
+
 function readCache(userId: string, cacheKey: string, draft: SearchDraft) {
   const row = db()
     .prepare("SELECT snapshot_json, expires_at FROM analysis_cache WHERE cache_key = ? AND user_id = ?")
@@ -124,18 +129,6 @@ export async function runMeteredAnalysis(input: {
     };
   }
 
-  if (entitlement.remaining <= 0) {
-    return {
-      ok: false,
-      status: 402,
-      error: "Maandelijks analyselimiet bereikt. Opgeslagen plannen blijven beschikbaar; upgrade naar Pro voor meer analyses.",
-      booked: false,
-      consumed: 0,
-      entitlement,
-      next: "/account/abonnement",
-    };
-  }
-
   let snapshot: ForecastSnapshot;
   try {
     snapshot = await buildForecastSnapshot(input.draft);
@@ -150,9 +143,8 @@ export async function runMeteredAnalysis(input: {
     };
   }
 
-  writeCache(input.userId, cacheKey, snapshot);
-
   if (!snapshotConsumesQuota(snapshot)) {
+    writeCache(input.userId, cacheKey, snapshot);
     return {
       ok: true,
       booked: false,
@@ -162,6 +154,20 @@ export async function runMeteredAnalysis(input: {
       entitlement: getEntitlement(input.userId),
     };
   }
+
+  if (quotaBlocksSnapshot(entitlement.remaining, true)) {
+    return {
+      ok: false,
+      status: 402,
+      error: "Maandelijks analyselimiet bereikt. Opgeslagen plannen blijven beschikbaar; upgrade naar Pro voor meer analyses.",
+      booked: false,
+      consumed: 0,
+      entitlement,
+      next: "/account/abonnement",
+    };
+  }
+
+  writeCache(input.userId, cacheKey, snapshot);
 
   const periodKey = calendarPeriodKey();
   const stamp = nowIso();

@@ -144,7 +144,6 @@ export function createPlannedMoment(
     lastSnapshotAt?: string | null;
     lastScoreLabel?: string | null;
     modelVersion?: string | null;
-    spotId?: string | null;
   },
 ) {
   ensureMomentsSchema();
@@ -172,7 +171,7 @@ export function createPlannedMoment(
       input.lastSnapshotAt ?? null,
       input.lastScoreLabel ?? null,
       input.modelVersion ?? getScoreProfile(input.draft.sportId).modelVersion,
-      input.spotId ?? input.draft.spotId,
+      input.draft.spotId,
       stamp,
       stamp,
     );

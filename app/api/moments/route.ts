@@ -52,7 +52,6 @@ export async function POST(request: Request) {
     lastSnapshotAt: typeof body?.lastSnapshotAt === "string" ? body.lastSnapshotAt : null,
     lastScoreLabel: typeof body?.lastScoreLabel === "string" ? body.lastScoreLabel : null,
     modelVersion: typeof body?.modelVersion === "string" ? body.modelVersion : null,
-    spotId: typeof body?.spotId === "string" ? body.spotId : draft.spotId,
   });
   return NextResponse.json({ moment, ...PHASE05_BOOKING });
 }

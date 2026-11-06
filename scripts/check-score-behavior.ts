@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { decideAdPlacement } from "@/lib/ads/policy";
-import { analysisCacheIdentity, snapshotConsumesQuota, snapshotIsCurrent } from "@/lib/billing/analysis";
+import { analysisCacheIdentity, quotaBlocksSnapshot, snapshotConsumesQuota, snapshotIsCurrent } from "@/lib/billing/analysis";
 import type { ForecastSnapshot, WeatherHour } from "@/lib/data/types";
 import { parseDraft } from "@/lib/draft";
+import { createPlannedMoment } from "@/lib/moments/store";
 import { scoreSportHours } from "@/lib/scoring/engine";
 import { FIXTURE_LABEL, FIXTURE_MODEL_VERSION, scoreFixtureWindow } from "@/lib/scoring/fixture-window";
 import { getScoreProfile, sportProfiles } from "@/lib/scoring/profiles";
@@ -13,7 +16,7 @@ import {
   assessOpenWater,
   type SwimReading,
 } from "@/lib/scoring/swim";
-import { HOUR_MS, formatClock } from "@/lib/scoring/windows";
+import { HOUR_MS, formatClock, horizonFor, selectUsableHours } from "@/lib/scoring/windows";
 import { sports } from "@/lib/sports";
 
 const NOW = new Date("2026-06-15T08:00:00.000Z");
@@ -448,6 +451,30 @@ if (shortHorizon.kind === "SCORED") {
   assert.equal(shortHorizon.horizon?.shortened, true);
 }
 
+const midNow = new Date(NOW.getTime() + 30 * 60 * 1000);
+const openHour = weather(NOW, 49);
+const capped = selectUsableHours(openHour, midNow);
+assert.equal(capped.length, 48);
+assert.equal(capped[0]?.time, NOW.toISOString());
+assert.equal(capped.at(-1)?.time, new Date(NOW.getTime() + 47 * HOUR_MS).toISOString());
+assert.equal(
+  capped.some((hour) => hour.time === new Date(NOW.getTime() + 48 * HOUR_MS).toISOString()),
+  false,
+);
+const cappedHorizon = horizonFor(capped.length);
+assert.equal(cappedHorizon.usableHours, 48);
+assert.equal(cappedHorizon.shortened, false);
+assert.doesNotMatch(cappedHorizon.note, /49/);
+assert.equal(selectUsableHours(weather(NOW, 49), NOW).length, 48);
+const midShort = horizonFor(selectUsableHours(weather(NOW, 6), midNow).length);
+assert.equal(midShort.usableHours, 6);
+assert.equal(midShort.shortened, true);
+assert.match(midShort.note, /6 geldige uren/);
+const overReported = horizonFor(49);
+assert.equal(overReported.usableHours, 48);
+assert.equal(overReported.shortened, false);
+assert.doesNotMatch(overReported.note, /49/);
+
 const expiredForecast = scoreFixtureWindow({
   now: NOW,
   hours: weather(NOW, 48),
@@ -521,6 +548,15 @@ const scoredSnapshot = fakeSnapshot(
 );
 assert.equal(snapshotConsumesQuota(scoredSnapshot), true);
 assert.equal(scoredSnapshot.suitability.kind === "SCORED" && scoredSnapshot.suitability.score, 85);
+assert.equal(quotaBlocksSnapshot(0, false), false);
+assert.equal(quotaBlocksSnapshot(0, true), true);
+assert.equal(quotaBlocksSnapshot(1, false), false);
+const analysisSource = readFileSync(new URL("../lib/billing/analysis.ts", import.meta.url), "utf8");
+const buildAt = analysisSource.indexOf("await buildForecastSnapshot");
+const freeAt = analysisSource.indexOf("if (!snapshotConsumesQuota(snapshot))");
+const blockAt = analysisSource.indexOf("quotaBlocksSnapshot(entitlement.remaining, true)");
+const cacheAfterBlock = analysisSource.indexOf("writeCache(input.userId, cacheKey, snapshot)", blockAt);
+assert.ok(buildAt >= 0 && freeAt > buildAt && blockAt > freeAt && cacheAfterBlock > blockAt);
 
 const scoredDecision = decideAdPlacement({
   surface: "moment",
@@ -536,6 +572,29 @@ const blockedDecision = decideAdPlacement({
   suitabilityKind: "NO_SCORE",
 });
 assert.equal(blockedDecision.allowed, false);
+
+process.env.WEERSPORT_DB = path.join(mkdtempSync(path.join(tmpdir(), "weersport-moments-")), "moments.sqlite");
+const rejectedDraft = parseDraft({ ...draft, spotId: "spot-rejected" });
+assert.equal(rejectedDraft?.spotId, null);
+const rejectedMoment = createPlannedMoment("user-rejected-spot", {
+  draft: rejectedDraft!,
+  windowLabel: "plan",
+  plannedStart: NOW.toISOString(),
+  plannedEnd: new Date(NOW.getTime() + HOUR_MS).toISOString(),
+});
+assert.equal(rejectedMoment.spotId, null);
+const keptMoment = createPlannedMoment("user-kept-spot", {
+  draft: kept!,
+  windowLabel: "plan",
+  plannedStart: NOW.toISOString(),
+  plannedEnd: new Date(NOW.getTime() + HOUR_MS).toISOString(),
+});
+assert.equal(keptMoment.spotId, SPOT);
+const momentsRoute = readFileSync(new URL("../app/api/moments/route.ts", import.meta.url), "utf8");
+const momentsStore = readFileSync(new URL("../lib/moments/store.ts", import.meta.url), "utf8");
+assert.doesNotMatch(momentsRoute, /body\?\.spotId|body\.spotId/);
+assert.doesNotMatch(momentsStore, /input\.spotId/);
+assert.match(momentsStore, /input\.draft\.spotId/);
 
 const momentsPage = readFileSync(new URL("../app/account/momenten/page.tsx", import.meta.url), "utf8");
 assert.equal(momentsPage.includes("runMeteredAnalysis"), false);

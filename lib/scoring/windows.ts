@@ -9,6 +9,8 @@ export const HOUR_MS = 60 * 60 * 1000;
  * Aggregation: arithmetic mean of the hour scores in the window, then Math.round (half away from zero for positives).
  * Tie-break: earliest window start in UTC. Presentation is Europe/Amsterdam; contiguity uses UTC epoch spacing.
  * A gap is any step that is not exactly one hour. Past hours and expired forecast hours are dropped, never backfilled.
+ * The usable set is at most 48 hour-starts, beginning at the clock hour that contains `now`.
+ * The hour that starts exactly 48 hours after that clock hour is outside the request.
  */
 export const WINDOW_AGGREGATION = "gemiddelde van de uurscores in het aaneengesloten venster, afgerond";
 export const WINDOW_TIE_BREAK = "vroegste start";
@@ -32,7 +34,8 @@ export function selectUsableHours(
 ): UsableHour[] {
   if (options?.forecastExpired) return [];
   const nowMs = now.getTime();
-  const horizonEnd = nowMs + REQUESTED_HORIZON_HOURS * HOUR_MS;
+  const windowStart = Math.floor(nowMs / HOUR_MS) * HOUR_MS;
+  const horizonEnd = windowStart + REQUESTED_HORIZON_HOURS * HOUR_MS;
   const validUntilMs = options?.validUntil ? new Date(options.validUntil).getTime() : null;
   const usable: UsableHour[] = [];
   for (const hour of hours) {
@@ -40,7 +43,7 @@ export function selectUsableHours(
     if (!Number.isFinite(start)) continue;
     const end = start + HOUR_MS;
     if (end <= nowMs) continue;
-    if (start >= horizonEnd) continue;
+    if (start < windowStart || start >= horizonEnd) continue;
     if (validUntilMs !== null && Number.isFinite(validUntilMs) && start > validUntilMs) continue;
     if (!finite(hour.temperatureC) || !finite(hour.windKmh) || !finite(hour.precipitationProbability)) continue;
     usable.push({
@@ -57,17 +60,18 @@ export function selectUsableHours(
     if (deduped.at(-1)?.time === hour.time) continue;
     deduped.push(hour);
   }
-  return deduped;
+  return deduped.slice(0, REQUESTED_HORIZON_HOURS);
 }
 
 export function horizonFor(usableCount: number): ScoreHorizon {
+  const usableHours = Math.min(Math.max(0, usableCount), REQUESTED_HORIZON_HOURS);
   const shortened = usableCount < REQUESTED_HORIZON_HOURS;
   return {
     requestedHours: REQUESTED_HORIZON_HOURS,
-    usableHours: usableCount,
+    usableHours,
     shortened,
     note: shortened
-      ? `Er zijn ${usableCount} geldige uren van de gevraagde ${REQUESTED_HORIZON_HOURS}. Het kortere bereik is de hele beschikbare horizon.`
+      ? `Er zijn ${usableHours} geldige uren van de gevraagde ${REQUESTED_HORIZON_HOURS}. Het kortere bereik is de hele beschikbare horizon.`
       : `Alle ${REQUESTED_HORIZON_HOURS} gevraagde uren zijn geldig.`,
   };
 }

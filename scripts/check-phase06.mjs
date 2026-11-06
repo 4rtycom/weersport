@@ -21,6 +21,12 @@ const analysis = readFileSync(new URL("../lib/billing/analysis.ts", import.meta.
 if (!analysis.includes("BEGIN IMMEDIATE") || !analysis.includes("idempotency")) {
   throw new Error("Quota ledger must be atomic and idempotent");
 }
+const buildAt = analysis.indexOf("await buildForecastSnapshot");
+const freeAt = analysis.indexOf("if (!snapshotConsumesQuota(snapshot))");
+const blockAt = analysis.indexOf("quotaBlocksSnapshot(entitlement.remaining, true)");
+if (buildAt < 0 || freeAt < buildAt || blockAt < freeAt) {
+  throw new Error("A free NO_SCORE must be built and returned before a used quota can block the request");
+}
 
 const mollie = readFileSync(new URL("../lib/billing/mollie.ts", import.meta.url), "utf8");
 const constants = readFileSync(new URL("../lib/billing/constants.ts", import.meta.url), "utf8");
