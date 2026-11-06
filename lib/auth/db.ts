@@ -43,8 +43,14 @@ export function db() {
   }
   if (!globalStore.weersportTokenMigration) {
     // Set before running to avoid re-entry while invalidateOutstandingAuthTokens calls db().
+    // Clear on failure so a later db() retries; leaving it set would skip token invalidation.
     globalStore.weersportTokenMigration = true;
-    invalidateOutstandingAuthTokens();
+    try {
+      invalidateOutstandingAuthTokens();
+    } catch (error) {
+      globalStore.weersportTokenMigration = false;
+      throw error;
+    }
   }
   return globalStore.weersportDb;
 }

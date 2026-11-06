@@ -15,16 +15,17 @@ export function invalidateOutstandingAuthTokens(reason = MARKER) {
       note TEXT
     );
   `);
-  const existing = database.prepare("SELECT id FROM schema_migrations WHERE id = ?").get(MARKER) as
-    | { id: string }
-    | undefined;
-  if (existing) {
-    return { applied: false, alreadyApplied: true, invalidated: 0 };
-  }
-
   const stamp = new Date().toISOString();
   database.exec("BEGIN IMMEDIATE");
   try {
+    const existing = database.prepare("SELECT id FROM schema_migrations WHERE id = ?").get(MARKER) as
+      | { id: string }
+      | undefined;
+    if (existing) {
+      database.exec("COMMIT");
+      return { applied: false, alreadyApplied: true, invalidated: 0 };
+    }
+
     const result = database
       .prepare(
         `UPDATE tokens
