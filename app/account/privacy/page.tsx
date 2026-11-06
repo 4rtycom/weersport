@@ -25,8 +25,7 @@ export default async function AccountPrivacyPage() {
           <div>
             <h1>Privacy & data</h1>
             <p className="account-lead">
-              Exporteer of verwijder je persoonsgegevens. Wachtwoorden staan nooit in exports. Productie-fiscaliteit
-              voor facturen volgt nog een aparte bewaarplicht.
+              Beheer cookiekeuze, exporteer of verwijder je persoonsgegevens. Wachtwoorden staan nooit in exports.
             </p>
           </div>
         </div>

@@ -27,5 +27,5 @@ Depends on Phase 1 (identity) and Phase 3 (scoring). Gate B evidence lives in `s
 ## Out of scope
 
 - Phase 5 Mollie lifecycle
-- Phase 6 UX polish of exhausted states
+- Phase 6 public UX of exhausted states (separate PR)
 - Deploy / provider purchase

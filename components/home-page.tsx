@@ -17,37 +17,54 @@ export function HomePage({
   viewerName = null,
   draft = null,
   resumed = false,
+  preselectedSportId = null,
 }: {
   viewerName?: string | null;
   draft?: SearchDraft | null;
   resumed?: boolean;
+  preselectedSportId?: string | null;
 }) {
   const [sportId, setSportId] = useState(draft?.sportId ?? "fietsen");
   const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
   const [placeId, setPlaceId] = useState(draft?.placeId ?? "");
-  const [period, setPeriod] = useState<(typeof periods)[number]>(draft?.period ?? "Komende 48 uur");
-  const [notice, setNotice] = useState(
-    resumed && draft
-      ? `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`
-      : "",
-  );
+  const period: (typeof periods)[number] = draft?.period ?? "Komende 48 uur";
+  const notice = (() => {
+    if (resumed && draft) {
+      return `Je zoekopdracht is bewaard: ${draft.sportName} in ${draft.placeLabel}. Er is nog geen analyse gestart.`;
+    }
+    if (preselectedSportId) {
+      return `Sport voorgeselecteerd: ${findSport(preselectedSportId).name}. Kies je plek en zoek je sportmoment.`;
+    }
+    return "";
+  })();
   const [pending, setPending] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   async function onSearch(event: FormEvent) {
     event.preventDefault();
     setPending(true);
-    const response = await fetch("/api/zoeken", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sportId, placeId, placeLabel: location, period }),
-    });
-    const data = (await response.json().catch(() => ({}))) as { error?: string; next?: string; booked?: boolean };
-    if (!response.ok || !data.next || data.booked !== false) {
-      setNotice(data.error ?? "Zoeken is niet gestart. Er is geen analyse geboekt.");
+    setSearchError("");
+    try {
+      const response = await fetch("/api/zoeken", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sportId, placeId, placeLabel: location, period }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        next?: string;
+        booked?: boolean;
+      };
+      if (!response.ok || !data.next || data.booked !== false) {
+        setSearchError(data.error ?? "Zoeken is niet gestart. Je selectie blijft bewaard — probeer opnieuw.");
+        setPending(false);
+        return;
+      }
+      window.location.assign(data.next);
+    } catch {
+      setSearchError("Netwerkfout. Je selectie blijft staan — probeer opnieuw.");
       setPending(false);
-      return;
     }
-    window.location.assign(data.next);
   }
 
   return (
@@ -76,21 +93,31 @@ export function HomePage({
             Voor 24 buitensporten.
           </p>
           <a className="button button-lime hero-cta" href="#planner">
-            Vind mijn WeerSport-moment →
+            Plan mijn sportmoment →
           </a>
           <p className="hero-meta">24 Nederlandse buitensporten · Sportspecifiek advies</p>
         </div>
         <figure className="hero-photo">
-          <img src="/home/hero.png" alt="Fietser op een duinweg aan de Nederlandse kust." />
-          <div className="weather-chip">
+          <img
+            src="/home/hero.png"
+            alt="Fietser op een duinweg aan de Nederlandse kust."
+            width={1024}
+            height={1024}
+            sizes="(max-width: 767px) 100vw, (max-width: 1439px) 48vw, 620px"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="weather-chip" aria-label="Voorbeeldtemperatuur 16 graden, fictief">
             <svg className="weather-sun" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
               <circle cx="14" cy="14" r="4.5" fill="currentColor" />
-              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M14 3v3M14 22v3M3 14h3M22 14h3M6.2 6.2l2.1 2.1M19.7 19.7l2.1 2.1M21.8 6.2l-2.1 2.1M8.3 19.7l-2.1 2.1" />
               </g>
             </svg>
-            <p className="weather-temp">16°</p>
-            <p className="weather-note">Fictief · NL</p>
+            <div className="weather-sample">
+              <p className="weather-temp">16°</p>
+              <p className="weather-note">Voorbeeld · NL</p>
+            </div>
           </div>
           <figcaption>
             <p>Buiten begint hier</p>
@@ -105,14 +132,12 @@ export function HomePage({
           <h2 id="planner-title" className="planner-title">
             Kies jouw buitensport
           </h2>
-          <form className="planner-grid" onSubmit={onSearch}>
+          <form className="planner-grid" onSubmit={onSearch} noValidate>
             <div>
-              <label className="field-label" htmlFor="sport-label">
+              <label className="field-label" htmlFor="sport-trigger">
                 Kies je buitensport
               </label>
-              <div id="sport-label">
-                <SportSelect value={sportId} onChange={setSportId} />
-              </div>
+              <SportSelect id="sport-trigger" value={sportId} onChange={setSportId} />
             </div>
             <div>
               <label className="field-label" htmlFor="locatie">
@@ -128,39 +153,36 @@ export function HomePage({
               />
             </div>
             <div>
-              <label className="field-label" htmlFor="periode">
+              <span className="field-label" id="periode-label">
                 Wanneer?
-              </label>
-              <div className="text-field">
-                <select
-                  id="periode"
-                  name="periode"
-                  value={period}
-                  onChange={(event) => setPeriod(event.target.value as (typeof periods)[number])}
-                >
-                  {periods.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              </span>
+              <p className="text-field planner-period-fixed" aria-labelledby="periode-label">
+                <strong>Komende 48 uur</strong>
+                <input type="hidden" name="periode" value={period} />
+              </p>
             </div>
             <button className="button button-dark planner-cta" type="submit" disabled={pending}>
-              Bekijk mijn WeerSport-moment →
+              {pending ? "Bezig…" : "Zoek mijn sportmoment →"}
             </button>
           </form>
           <p className="planner-note">
-            <span>Gratis account nodig bij zoeken</span>
-            <span className="planner-note-long">
-              Alleen locaties in Nederland · Voorbeeldadvies; data en bronnen volgen bij livegang
-            </span>
-            <span className="planner-note-short">Alleen Nederland · Gratis, zonder account</span>
+            <span>Gratis account nodig om een analyse te starten</span>
+            <span className="planner-note-long">Alleen locaties in Nederland · Opslaan van de zoekopdracht kost geen analyse</span>
+            <span className="planner-note-short">Alleen Nederland · Account bij starten analyse</span>
           </p>
-          <p className="status" role="status">
-            {notice ||
-              `Geselecteerd: ${findSport(sportId).name}. Het voorbeeld hieronder blijft het fictieve fietsmoment en telt niet als analyse.`}
-          </p>
+          {searchError ? (
+            <p className="status form-error" role="alert">
+              {searchError}{" "}
+              <button className="linkish" type="button" onClick={() => setSearchError("")} disabled={pending}>
+                Sluiten
+              </button>
+            </p>
+          ) : (
+            <p className="status" role="status">
+              {notice ||
+                `Geselecteerd: ${findSport(sportId).name}. Het voorbeeld hieronder is illustratief en telt niet als analyse.`}
+            </p>
+          )}
         </section>
 
         <section className="families" id="families" aria-labelledby="families-title">
@@ -270,7 +292,15 @@ export function HomePage({
         </section>
 
         <figure className="editorial">
-          <img src="/home/hero.png" alt="Fietser op een duinweg aan de Nederlandse kust." />
+          <img
+            src="/home/hero.png"
+            alt="Fietser op een duinweg aan de Nederlandse kust."
+            width={1024}
+            height={1024}
+            sizes="(max-width: 767px) 100vw, min(1280px, 100vw)"
+            loading="lazy"
+            decoding="async"
+          />
         </figure>
 
         <section className="curve" id="uurverloop" aria-labelledby="curve-title">
@@ -299,8 +329,7 @@ export function HomePage({
             ))}
           </ol>
           <p className="curve-note">
-            Illustratieve scores. Definitieve berekening en betrouwbaarheid volgen na koppeling met gevalideerde weerdata.
-            Gekozen sport en periode ({period.toLowerCase()}
+            Illustratieve scores voor de homepage. Gekozen sport en periode ({period.toLowerCase()}
             {location.trim() ? `, ${location.trim()}` : ""}) veranderen dit voorbeeld niet.
           </p>
         </section>
@@ -358,7 +387,7 @@ export function HomePage({
             <h2>Ook zichtbaar zijn als sportpartner?</h2>
             <p>Sponsoring is duidelijk herkenbaar en beïnvloedt nooit de weerscore.</p>
           </div>
-          <a href="#planner">Samenwerken →</a>
+          <Link href="/samenwerken">Samenwerken →</Link>
         </aside>
       </main>
 

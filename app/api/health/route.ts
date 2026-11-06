@@ -25,7 +25,7 @@ export async function GET() {
     {
       status: database === "ok" ? "ok" : "degraded",
       service: "weersport",
-      phase: "5",
+      phase: "6",
       checks: {
         database,
         store: storeMode(),

@@ -7,9 +7,11 @@ import { families, findSport, sports, sportsInFamily } from "@/lib/sports";
 type SportSelectProps = {
   value: string;
   onChange: (sportId: string) => void;
+  /** Stable id for the trigger button so a field label can target it. */
+  id?: string;
 };
 
-export function SportSelect({ value, onChange }: SportSelectProps) {
+export function SportSelect({ value, onChange, id }: SportSelectProps) {
   const selected = findSport(value);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -17,7 +19,8 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listId = useId();
-  const buttonId = useId();
+  const generatedId = useId();
+  const buttonId = id ?? generatedId;
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();

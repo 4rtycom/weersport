@@ -39,4 +39,4 @@ With `WEERSPORT_BILLING_DISABLED=1`, health reports `billingMode=disabled` / `ch
 
 - Purchasing Mollie live merchant / opening real charges
 - Deploy / DNS
-- Phase 6 UX polish
+- Phase 6 public UX / SEO (separate PR)

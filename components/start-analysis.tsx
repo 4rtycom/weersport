@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { SearchDraft } from "@/lib/draft";
 
@@ -42,22 +43,41 @@ export function StartAnalysis({
     router.refresh();
   }
 
+  const resetLabel = new Intl.DateTimeFormat("nl-NL", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Amsterdam",
+  }).format(new Date(entitlement.resetAt));
+
   return (
     <main className="moment" id="inhoud">
       <p className="eyebrow">Analyse</p>
-      <h1>Start je WeerSport-analyse</h1>
+      <h1>{quotaExhausted ? "Quotum op · veiligheid blijft beschikbaar" : "Start je WeerSport-analyse"}</h1>
       <p>
-        {draft.sportId} · {draft.placeLabel} · {draft.period}
+        {draft.sportName} · {draft.placeLabel} · {draft.period}
       </p>
       <p>
         {entitlement.plan === "pro" ? "Pro" : "Basis"} {entitlement.used}/{entitlement.limit} deze maand.
         Refreshen of terugkeren naar een opgeslagen resultaat kost geen extra analyse.
       </p>
       {quotaExhausted ? (
+        <div className="quota-exhausted-panel" role="status">
+          <p>
+            Je maandlimiet is bereikt. Je kunt nog wel UV en officiële waarschuwingen laden. Een nieuwe sportsuitability
+            score volgt na reset op {resetLabel}
+            {entitlement.plan === "basis" ? ", of met WeerSport Pro." : "."}
+          </p>
+          {entitlement.plan === "basis" ? (
+            <Link className="button button-dark" href="/checkout/pro">
+              Bekijk Pro-upgrade →
+            </Link>
+          ) : null}
+        </div>
+      ) : (
         <p role="status">
-          Je quotum is op. Je kunt nog wel veiligheid en UV laden zonder nieuwe score. Reset: {entitlement.resetAt}.
+          Een analyse start pas als je op de knop hieronder klikt. Dat boekt één aanvraag bij een succesvolle score.
         </p>
-      ) : null}
+      )}
       {error ? (
         <p className="auth-error" role="alert">
           {error}
