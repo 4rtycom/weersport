@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
 import { verifyAndApplyPayment } from "@/lib/billing/mollie";
 import { db } from "@/lib/auth/db";
 import { ensureBillingSchema } from "@/lib/billing/schema";
+import { usesMollieApi } from "@/lib/billing/mollie-mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * Mollie webhook: notification only. Always re-fetch/verify payment before mutating entitlements.
+ * Durable idempotency is payment-id + verified status (not a random delivery UUID).
  */
 export async function POST(request: Request) {
   ensureBillingSchema();
@@ -32,12 +33,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const result = await verifyAndApplyPayment({
-    checkoutId: checkout.id,
-    providerEventId: `mollie:${paymentId}:${randomUUID().slice(0, 8)}`,
-  });
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+  if (!usesMollieApi()) {
+    return NextResponse.json({ ok: true, ignored: true, reason: "mollie-api-disabled" });
   }
-  return NextResponse.json({ ok: true, state: result.state, duplicate: result.duplicate });
+
+  const applied = await verifyAndApplyPayment({ checkoutId: checkout.id });
+  if (!applied.ok) {
+    return NextResponse.json({ error: applied.error }, { status: applied.status });
+  }
+  return NextResponse.json({
+    ok: true,
+    state: applied.state,
+    duplicate: applied.duplicate,
+    ignored: applied.ignored,
+  });
 }

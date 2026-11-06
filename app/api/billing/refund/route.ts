@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { accountFromSession } from "@/lib/auth/service";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
 import { isVercelProduction } from "@/lib/auth/release";
-import { applyRefund, mollieMode } from "@/lib/billing/mollie";
+import { applyRefund } from "@/lib/billing/mollie";
+import { billingMode } from "@/lib/billing/mollie-mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
-  if (mollieMode() !== "sandbox-local") {
+  if (billingMode() !== "sandbox-local") {
     return NextResponse.json(
       {
         error:

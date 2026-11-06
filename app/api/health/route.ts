@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db, isDurableStore, storeMode } from "@/lib/auth/db";
 import { query } from "@/lib/db/client";
 import { authDeliveryMode } from "@/lib/auth/release";
+import { billingModeLabel, checkoutEnabled } from "@/lib/billing/mollie-mode";
 import { mailDriver } from "@/lib/mail/send";
 
 export const runtime = "nodejs";
@@ -24,7 +25,7 @@ export async function GET() {
     {
       status: database === "ok" ? "ok" : "degraded",
       service: "weersport",
-      phase: "4",
+      phase: "5",
       checks: {
         database,
         store: storeMode(),
@@ -33,6 +34,8 @@ export async function GET() {
         mailDriver: mailDriver(),
         sourcesStatusPath: "/api/sources/status",
         quotaTimezone: "Europe/Amsterdam",
+        billingMode: billingModeLabel(),
+        checkoutEnabled: checkoutEnabled(),
       },
       time: new Date().toISOString(),
       latencyMs: Date.now() - started,
