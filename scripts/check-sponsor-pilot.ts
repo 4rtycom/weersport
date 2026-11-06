@@ -15,6 +15,16 @@ const preview = readFileSync(new URL("../components/sponsoring-running-preview.t
 const momentPage = readFileSync(new URL("../app/moment/page.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
 const screen = `${page}\n${form}\n${preview}`;
+const showcase = form.slice(form.indexOf("styles.showcase"));
+const previewAt = showcase.indexOf("<SponsoringRunningPreview");
+const momentAt = showcase.indexOf("<FietsMomentPage");
+if (previewAt < 0 || momentAt < 0 || previewAt > momentAt) {
+  throw new Error("Hardlopen preview must stay beside the Fietsen moment, compact card first");
+}
+const partnersCss = readFileSync(new URL("../app/sponsoring/partners.module.css", import.meta.url), "utf8");
+if (!partnersCss.includes("minmax(280px, 360px) minmax(0, 1fr)")) {
+  throw new Error("Sponsoring showcase lost its wide two-column layout");
+}
 for (const token of [
   "Stel je campagne samen",
   "Verder naar contactgegevens",
@@ -861,6 +871,12 @@ for (const token of [
   "Verder naar contactgegevens",
   "Sponsoraanvraag versturen",
   "Bekijk volledige momentpagina",
+  "Zo ziet een sporter je merk",
+  "Voorbeeld met demogegevens",
+  "Je ochtendrun",
+  "hardlopen-heide.webp",
+  "trailschoen.webp",
+  "Loopatelier Ede",
   "Jouw WeerSport-moment",
   "10:00 – 12:00",
   "Fietswerk Amsterdam",
@@ -868,9 +884,6 @@ for (const token of [
   "Kies een sport",
 ]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
-}
-for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede"]) {
-  if (html.includes(removed)) throw new Error(`Live sponsoring HTML still shows ${removed}`);
 }
 for (const banned of ["€99", "Vraag een pilot aan", "Bespreek maatwerk", "adsbygoogle"]) {
   if (html.includes(banned)) throw new Error(`Live sponsoring HTML still shows ${banned}`);
