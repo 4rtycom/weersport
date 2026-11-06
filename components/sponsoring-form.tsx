@@ -35,7 +35,7 @@ export function SponsoringForm() {
         errors?: Errors;
       };
       if (!response.ok || !data.ok || !data.id) {
-        setErrors(data.errors ?? { form: "De aanvraag is niet ontvangen. Er is geen e-mail verstuurd." });
+        setErrors(data.errors ?? { form: "De aanvraag is niet ontvangen. Probeer het opnieuw." });
         setPending(false);
         requestAnimationFrame(() => summaryRef.current?.focus());
         return;
@@ -44,7 +44,7 @@ export function SponsoringForm() {
       setPending(false);
       requestAnimationFrame(() => successRef.current?.focus());
     } catch {
-      setErrors({ form: "De aanvraag is niet ontvangen. Er is geen e-mail verstuurd." });
+      setErrors({ form: "De aanvraag is niet ontvangen. Probeer het opnieuw." });
       setPending(false);
       requestAnimationFrame(() => summaryRef.current?.focus());
     }
@@ -57,8 +57,7 @@ export function SponsoringForm() {
           Aanvraag ontvangen
         </h2>
         <p>
-          We hebben je samenwerkingsverzoek opgeslagen (kenmerk {receivedId}). Er is geen e-mail naar jou of naar een
-          klant verstuurd.
+          Bewaar je aanvraagnummer <strong>{receivedId}</strong> voor vragen over je samenwerking.
         </p>
       </div>
     );
@@ -95,6 +94,7 @@ export function SponsoringForm() {
               id={`sponsor-${field.id}`}
               className="auth-input"
               name={field.id}
+              type={field.id === "email" ? "email" : "text"}
               autoComplete={field.autoComplete}
               required
               aria-invalid={Boolean(errors[field.id])}
@@ -112,7 +112,7 @@ export function SponsoringForm() {
       })}
       <div>
         <label className="auth-label" htmlFor="sponsor-message">
-          Waar wil je samenwerken?
+          Wat heb je in gedachten?
         </label>
         <textarea
           id="sponsor-message"
@@ -126,7 +126,7 @@ export function SponsoringForm() {
           onChange={(event) => setValues((current) => ({ ...current, message: event.target.value }))}
         />
         <p className="sponsor-hint" id="sponsor-message-hint">
-          Merk, sport en gewenste zichtbaarheid. Minimaal 20 tekens.
+          Bijvoorbeeld een vermelding voor je fietsenwinkel tijdens het voorjaar. Minimaal 20 tekens.
         </p>
         {errors.message ? (
           <p className="sponsor-field-error" id="sponsor-message-error">

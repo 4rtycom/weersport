@@ -1,0 +1,52 @@
+.top, .hero, .footer {
+  background: var(--ws-surface-dark);
+  color: white;
+}
+.wrap, .split {
+  width: min(calc(100% - 40px), 1160px);
+  margin-inline: auto;
+}
+.top { padding-block: 10px; }
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 7vw, 100px);
+  align-items: center;
+  padding-block: clamp(48px, 7vw, 96px);
+}
+.hero .split { padding-top: clamp(20px, 4vw, 64px); }
+.page h1, .page h2 {
+  text-wrap: balance;
+  line-height: 1.03;
+  letter-spacing: -.055em;
+}
+.page h1 { font-size: clamp(48px, 6vw, 88px); margin-block: 20px; }
+.page h2 { font-size: clamp(34px, 4vw, 58px); margin-block: 12px 20px; }
+.split p { line-height: 1.65; }
+.split p + p { margin-top: 14px; }
+.lead { color: #d9e8e7; max-width: 48ch; margin-bottom: 30px; }
+.hero a { gap: 14px; }
+.photo { margin: 0; position: relative; }
+.photo img { width: 100%; aspect-ratio: 1.2; object-fit: cover; display: block; border-radius: 20px; }
+.photo figcaption { position: absolute; bottom: 16px; left: 16px; background: var(--ws-surface-dark); padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+.photo figcaption span { margin-left: 10px; color: var(--ws-accent-mint); font-weight: 400; }
+.preview { margin: 0; padding: clamp(18px, 3vw, 40px); background: #e4eeea; border-radius: 20px; }
+.preview figcaption { margin-bottom: 16px; font-size: 13px; font-weight: 700; }
+.forecast, .placement { padding: 20px; border-radius: 12px; }
+.forecast { background: white; }
+.placement { margin-top: 10px; background: var(--ws-sponsor); border: 1px solid #b6d8db; }
+.preview strong, .preview small { display: block; }
+.preview small { font-weight: 700; margin-bottom: 8px; }
+.preview p { margin-top: 6px; font-size: 15px; }
+.rules { background: var(--ws-accent-mint); }
+.form { min-width: 0; padding: clamp(20px, 3vw, 40px); border: 1px solid var(--ws-line); border-radius: 20px; background: white; }
+.form form { gap: 16px; margin: 0 0 16px; }
+.form textarea { font: inherit; }
+.form > a { font-size: 14px; }
+.form :focus-visible { outline-color: #126369; }
+.footer .wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding-block: 28px; }
+.footer a:first-child { margin-right: auto; font-weight: 800; }
+@media (max-width: 760px) {
+  .split { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .photo img { aspect-ratio: 1.7; }
+}
