@@ -50,6 +50,12 @@ export default async function MomentsPage() {
             Analyseleeftijd: {ageLabel(featured.lastSnapshotAt)}
             {featured.lastScoreLabel ? ` · laatst gezien als ${featured.lastScoreLabel}` : ""}
           </p>
+          {featured.archive ? (
+            <p className="account-disclaimer">
+              Gedateerd archief
+              {featured.modelVersion ? ` · model ${featured.modelVersion}` : ""}. Openen start geen betaalde analyse.
+            </p>
+          ) : null}
         </section>
       ) : null}
 
@@ -84,7 +90,11 @@ export default async function MomentsPage() {
                   </div>
                   <p className="account-tag">Plan opgeslagen</p>
                   <p className="account-age">Leeftijd gekoppelde analyse: {ageLabel(moment.lastSnapshotAt)}</p>
-                  <p className="account-disclaimer">{moment.note || "Geen live veiligheidsgarantie."}</p>
+                  <p className="account-disclaimer">
+                    {moment.archive
+                      ? "Gedateerd archief. De planner herberekent dit niet vanzelf en start geen betaalde analyse."
+                      : moment.note || "Geen live veiligheidsgarantie."}
+                  </p>
                   <div className="account-item-actions">
                     <Link className="button button-lime" href={`/?sport=${moment.sportId}#planner`}>
                       Details bekijken →

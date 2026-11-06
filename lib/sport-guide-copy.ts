@@ -1,33 +1,99 @@
-/** Everyday decisions to put each weather profile in context. */
+/** Everyday questions. Answers do not claim an unreleased score. */
 export const guideCopy: Record<string, [string, string]> = {
-  fietsen: ["Wanneer fiets ik het prettigst naar huis?", "Vergelijk de regenkans voor je heen- én terugweg. Het model kent de richting van je route niet."],
+  fietsen: [
+    "Wanneer fiets ik het prettigst naar huis?",
+    "Route en wind horen bij fietsen, maar er is nog geen vrijgegeven beslisregel. De gids geeft daarom geen punten.",
+  ],
   wielrennen: [
     "Welk uur past bij mijn rit over de dijk?",
-    "Wind telt zwaar voor wielrennen. De score gebruikt de verwachte windsnelheid; windrichting en stoten langs je route check je lokaal.",
+    "Wind in km/u hoort bij wielrennen, maar is nog geen score. Richting en stoten langs de route ontbreken.",
   ],
   openwaterzwemmen: [
     "Het is warm buiten. Wat weten we over het zwemwater?",
-    "Luchttemperatuur zegt weinig over het water. Zonder watertemperatuur en zwemwaterkwaliteit op jouw exacte zwemplek geeft WeerSport geen score.",
+    "We missen een recente watertemperatuur voor deze zwemplek. Daarom kunnen we nog geen zwemmoment adviseren.",
   ],
-  gravelbiken: ["Wanneer plan ik mijn rit over grindpaden?", "Een droger uur krijgt meer punten. Een grindpad kan na een eerdere bui nog nat zijn."],
-  mountainbiken: ["Maakt een droge middag mijn trail beter?", "Regenkans telt voor de helft mee. Controleer ook of de route open is: wortels en bochten kunnen na een bui glad blijven."],
-  hardlopen: ["Loop ik prettiger in de ochtend of later op de dag?", "Temperatuur telt het zwaarst. Vergelijk twee uren met dezelfde wind en regenkans om te zien wat een warmere middag doet."],
-  trailrunning: ["Wanneer kies ik voor een rondje over het bospad?", "Regenkans weegt zwaar. Het model ziet de bui in de verwachting, maar ziet niet hoeveel modder er al op het pad ligt."],
-  wandelen: ["Welk uur kies ik voor een ommetje?", "Vergelijk temperatuur en buienkans rond je vertrektijd. Voor een lange wandeling tellen de uren daarna ook mee."],
-  hiken: ["Wanneer vertrek ik voor een langere tocht?", "Bekijk ook de verwachting halverwege je tocht. Op een open stuk kun je meer wind voelen dan bij het vertrekpunt."],
-  golf: ["Wanneer begin ik aan mijn ronde?", "Wind en regenkans wegen even zwaar. Bekijk de uren na je starttijd en controleer bij de club of de baan open is."],
-  "tennis-padel": ["Welk uur reserveer ik op de buitenbaan?", "Een lagere buienkans helpt de score. Of de baan alweer droog en bespeelbaar is, weet de club."],
-  voetbal: ["Welk trainingsuur heeft de gunstigste verwachting?", "Regenkans weegt het zwaarst. Check bij de club of jouw veld is goedgekeurd."],
-  hockey: ["Wat zegt de verwachting over mijn training?", "De score vergelijkt het weer rond de training. De besproeiing en toestand van jouw kunstgrasveld zitten niet in de berekening."],
-  zeilen: ["Waarom is minder wind voor zeilen niet altijd beter?", "Het zeilprofiel geeft de meeste windpunten binnen een bereik. Controleer voor vertrek ook de omstandigheden op jouw vaarwater."],
-  windsurfen: ["Is er genoeg wind voor mijn sessie?", "Wind heeft het grootste aandeel in dit profiel. De keuze van zeil en spot hangt ook af van je ervaring en de lokale meting."],
-  kitesurfen: ["Waarom krijg ik soms geen score terwijl het waait?", "Een windverwachting alleen vertelt te weinig over jouw spot. Bekijk ook de lokale windrichting, vlagerigheid en de lanceerzone."],
-  surfen: ["Zijn er bruikbare golven op mijn strand?", "De weerscore berekent geen swell of getij. Raadpleeg die informatie voor jouw surfspot voordat je een sessie plant."],
-  suppen: ["Welk moment past bij mijn rondje op de SUP?", "Wind kan je op de heenweg helpen en op de terugweg tegenwerken. Kijk naar de omstandigheden langs beide delen van je route."],
-  kajakken: ["Wat vertelt het weer over mijn peddeltocht?", "Wind en luchttemperatuur wegen even zwaar. Controleer ook de stroming en eventuele beperkingen op jouw vaarroute."],
-  roeien: ["Kan ik mijn training op open water plannen?", "Op een open stuk voelt dwarswind anders dan langs de oever. Neem de vaarregels van je vereniging mee in je besluit."],
-  skeeleren: ["Is dit een handig uur voor een rondje op skates?", "Regenkans telt het zwaarst. Controleer ook het asfalt: schaduwrijke stukken kunnen na een bui langer nat blijven."],
-  paardrijden: ["Wanneer plan ik een buitenrit?", "Temperatuur en regenkans wegen even zwaar. Bekijk bij vertrek hoe de bodem van je ruiterpad erbij ligt."],
-  schaatsen: ["Het heeft gevroren. Wat zegt dat over het ijs?", "Vorst vertelt hoe koud de lucht was. Voor een besluit over natuurijs heb je lokale informatie over ijsdikte en ijskwaliteit nodig."],
-  outdoorfitness: ["Welk uur kies ik voor mijn buitentraining?", "Vergelijk temperatuur en regenkans. Kijk ter plekke ook of de stangen en ondergrond droog zijn."],
+  gravelbiken: [
+    "Wanneer plan ik mijn rit over grindpaden?",
+    "Eerdere regen en de droogtijd van het pad horen bij gravel. Die meting is nog geen score.",
+  ],
+  mountainbiken: [
+    "Maakt een droge middag mijn trail beter?",
+    "Trailstatus en grip ontbreken in dit profiel. Een droge verwachting is daarom geen advies.",
+  ],
+  hardlopen: [
+    "Loop ik prettiger in de ochtend of later op de dag?",
+    "Temperatuur in °C hoort bij hardlopen, maar is nog geen score. Warmtebelasting uit vocht en zon ontbreekt.",
+  ],
+  trailrunning: [
+    "Wanneer kies ik voor een rondje over het bospad?",
+    "Grip en eerder gevallen regen horen bij trailrunning. Het profiel ziet die bodem nog niet.",
+  ],
+  wandelen: [
+    "Welk uur kies ik voor een ommetje?",
+    "Gevoelskou, regenduur en daglicht horen bij wandelen. Ze worden nog niet tot een score verwerkt.",
+  ],
+  hiken: [
+    "Wanneer vertrek ik voor een langere tocht?",
+    "Tochtduur, terrein en resterend daglicht horen bij hiken. Een vertrekuur is nog geen advies.",
+  ],
+  golf: [
+    "Wanneer begin ik aan mijn ronde?",
+    "Bliksem en baanstatus gaan vóór een vergelijking. Die bronnen zijn niet gekoppeld.",
+  ],
+  "tennis-padel": [
+    "Welk uur reserveer ik op de buitenbaan?",
+    "Baantype en droogtijd horen bij tennis en padel. De clubstatus zit niet in dit profiel.",
+  ],
+  voetbal: [
+    "Welk trainingsuur heeft de gunstigste verwachting?",
+    "Veldtype en onweer horen bij voetbal. Zonder veldstatus is er geen score.",
+  ],
+  hockey: [
+    "Wat zegt de verwachting over mijn training?",
+    "Officiële veldstatus gaat vóór het weercomfort. Die status is niet gekoppeld.",
+  ],
+  zeilen: [
+    "Waarom is minder wind voor zeilen niet altijd beter?",
+    "Windhoek, windstoten en golfslag horen bij zeilen. Zonder die waterdata is er geen score.",
+  ],
+  windsurfen: [
+    "Is er genoeg wind voor mijn sessie?",
+    "Windbereik en watertemperatuur horen bij windsurfen. Een windverwachting alleen geeft geen score.",
+  ],
+  kitesurfen: [
+    "Waarom krijg ik soms geen score terwijl het waait?",
+    "Spotregels, lanceerzijde en lokale watercondities ontbreken. Wind alleen is geen advies.",
+  ],
+  surfen: [
+    "Zijn er bruikbare golven op mijn strand?",
+    "Deining, periode en getijfase horen bij de break. Die metingen zitten niet in een weerscore.",
+  ],
+  suppen: [
+    "Welk moment past bij mijn rondje op de SUP?",
+    "Stroming, golfslag en watertemperatuur horen bij suppen. Zonder die metingen is er geen score.",
+  ],
+  kajakken: [
+    "Wat vertelt het weer over mijn peddeltocht?",
+    "Stroming, waterstand en watertemperatuur horen bij kajakken. Het weer alleen geeft geen score.",
+  ],
+  roeien: [
+    "Kan ik mijn training op open water plannen?",
+    "Wind over de baan en lokale vaarbeperkingen horen bij roeien. Die status ontbreekt.",
+  ],
+  skeeleren: [
+    "Is dit een handig uur voor een rondje op skates?",
+    "Droog asfalt en zicht horen bij skeeleren. Het wegdek wordt nog niet gemeten.",
+  ],
+  paardrijden: [
+    "Wanneer plan ik een buitenrit?",
+    "Bodem en ruiterpadstatus horen bij paardrijden. Een temperatuurverwachting is nog geen advies.",
+  ],
+  schaatsen: [
+    "Het heeft gevroren. Wat zegt dat over het ijs?",
+    "Vorst vertelt hoe koud de lucht was. Voor natuurijs heb je lokale ijsdikte en ijskwaliteit nodig.",
+  ],
+  outdoorfitness: [
+    "Welk uur kies ik voor mijn buitentraining?",
+    "Hitte, natte toestellen en onweer horen bij outdoorfitness. Die plekmeting ontbreekt nog.",
+  ],
 };

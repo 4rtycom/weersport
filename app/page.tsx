@@ -1,5 +1,6 @@
 import { HomePage } from "@/components/home-page";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
+import { parseDraft } from "@/lib/draft";
 import { findSport, sports } from "@/lib/sports";
 
 export const dynamic = "force-dynamic";
@@ -17,18 +18,23 @@ export default async function Page({
       : null;
   const baseDraft = draft ?? account?.draft ?? null;
   // Explicit ?sport= wins over an older draft sport; keep place/period when present.
-  const initialDraft =
+  // A spot from the previous sport or place is dropped, including when an old draft is restored.
+  const overridden =
     requestedSport && baseDraft
-      ? { ...baseDraft, sportId: requestedSport, sportName: findSport(requestedSport).name }
-      : requestedSport
-        ? {
-            sportId: requestedSport,
-            sportName: findSport(requestedSport).name,
-            placeId: "",
-            placeLabel: "Amsterdam",
-            period: "Komende 48 uur" as const,
-          }
-        : baseDraft;
+      ? parseDraft({ ...baseDraft, sportId: requestedSport, sportName: findSport(requestedSport).name })
+      : null;
+  const initialDraft =
+    overridden ??
+    (requestedSport
+      ? {
+          sportId: requestedSport,
+          sportName: findSport(requestedSport).name,
+          placeId: "",
+          placeLabel: "Amsterdam",
+          period: "Komende 48 uur" as const,
+          spotId: null,
+        }
+      : baseDraft);
 
   return (
     <HomePage
