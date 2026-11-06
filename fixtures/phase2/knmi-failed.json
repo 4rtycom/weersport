@@ -1,0 +1,10 @@
+{
+  "lifecycle": "provider-failure",
+  "status": "MISSING_CRITICAL",
+  "publishedAt": null,
+  "validUntil": null,
+  "lastSuccessAt": null,
+  "spatialCoverage": null,
+  "items": [],
+  "error": "Fixture: KNMI fetch mislukt (timeout/5xx)."
+}

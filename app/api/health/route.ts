@@ -24,13 +24,14 @@ export async function GET() {
     {
       status: database === "ok" ? "ok" : "degraded",
       service: "weersport",
-      phase: "1",
+      phase: "2",
       checks: {
         database,
         store: storeMode(),
         durable: isDurableStore(),
         authDelivery: authDeliveryMode(),
         mailDriver: mailDriver(),
+        sourcesStatusPath: "/api/sources/status",
       },
       time: new Date().toISOString(),
       latencyMs: Date.now() - started,

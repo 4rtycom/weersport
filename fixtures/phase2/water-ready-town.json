@@ -1,0 +1,11 @@
+{
+  "status": "READY",
+  "publishedAt": "2026-11-06T07:00:00.000Z",
+  "value": {
+    "waterTemperatureC": 12.4,
+    "waveHeightM": 0.6,
+    "currentMs": 0.2
+  },
+  "stationLabel": "Fixture meetpunt (niet gekoppeld aan plaatscentroïde)",
+  "note": "Waterdata aanwezig maar ruimtelijk niet te koppelen aan een woonplaatscentroïde."
+}

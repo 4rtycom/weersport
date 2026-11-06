@@ -937,6 +937,43 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   font-size: 13px;
   font-weight: 600;
 }
+.warning-lifecycle,
+.moment-coverage-note {
+  display: block;
+  margin-top: 10px;
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.warning-items {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 0;
+  list-style: none;
+}
+.warning-items li {
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.warning-items strong {
+  margin-top: 0;
+  font-size: 13px;
+}
+.warning-items span,
+.warning-items small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
 .uv-panel { background: #fff0d2; }
 .uv-panel p { color: var(--ws-text-primary); font-size: 25px; font-weight: 800; margin: 0; }
 .uv-panel span { display: block; margin-top: 10px; color: #95620b; font-size: 12px; }

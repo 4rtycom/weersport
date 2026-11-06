@@ -44,7 +44,27 @@ export type UvBundle = {
 };
 
 export type WarningBundle = {
-  items: Array<{ title: string; detail: string }>;
+  lifecycle:
+    | "provider-failure"
+    | "verified-all-clear"
+    | "active-warning"
+    | "stale"
+    | "not-linked"
+    | "partial-coverage";
+  spatialCoverage: string | null;
+  lastSuccessAt: string | null;
+  items: Array<{
+    id: string;
+    title: string;
+    detail: string;
+    code?: "geel" | "oranje" | "rood" | "none";
+    spatialScope: string;
+    issuedAt: string;
+    expiresAt: string | null;
+    eventStartAt: string | null;
+    eventEndAt: string | null;
+    provenance: string;
+  }>;
 };
 
 export type WaterBundle = {
@@ -108,6 +128,16 @@ export type ForecastSnapshot = {
   water: SourceObservation<WaterBundle>;
   swim: SourceObservation<SwimBundle>;
   suitability: SuitabilityOutcome;
+  coverage: {
+    kind: "town-centroid" | "site-specific" | "unknown";
+    note: string;
+  };
+  dependencies: {
+    terrain: "land" | "water" | "ice";
+    required: string[];
+    scoreBlocking: string[];
+    coverageNote: string;
+  };
   sources: Array<{
     id: string;
     label: string;

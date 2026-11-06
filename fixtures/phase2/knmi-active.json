@@ -1,0 +1,22 @@
+{
+  "lifecycle": "active-warning",
+  "status": "OFFICIAL_WARNING",
+  "publishedAt": "2026-11-06T07:00:00.000Z",
+  "validUntil": "2026-11-06T18:00:00.000Z",
+  "lastSuccessAt": "2026-11-06T08:00:00.000Z",
+  "spatialCoverage": "Noord-Holland kuststrook",
+  "items": [
+    {
+      "id": "fixture-wind-oranje",
+      "title": "Code oranje · windstoten",
+      "detail": "Fixture: zware windstoten mogelijk langs de kust. Geen live KNMI-feed.",
+      "code": "oranje",
+      "spatialScope": "Noord-Holland kuststrook",
+      "issuedAt": "2026-11-06T07:00:00.000Z",
+      "expiresAt": "2026-11-06T18:00:00.000Z",
+      "eventStartAt": "2026-11-06T09:00:00.000Z",
+      "eventEndAt": "2026-11-06T16:00:00.000Z",
+      "provenance": "fixture:phase2/knmi-active"
+    }
+  ]
+}

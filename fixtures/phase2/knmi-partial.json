@@ -1,0 +1,22 @@
+{
+  "lifecycle": "partial-coverage",
+  "status": "PARTIAL",
+  "publishedAt": "2026-11-06T07:30:00.000Z",
+  "validUntil": "2026-11-06T15:00:00.000Z",
+  "lastSuccessAt": "2026-11-06T07:30:00.000Z",
+  "spatialCoverage": "Alleen kustprovincies in fixture; binnenland onbekend",
+  "items": [
+    {
+      "id": "fixture-partial-geel",
+      "title": "Code geel · gladheid (partiële dekking)",
+      "detail": "Fixture met partiële ruimtelijke dekking.",
+      "code": "geel",
+      "spatialScope": "Zeeland / Zuid-Holland kust",
+      "issuedAt": "2026-11-06T07:30:00.000Z",
+      "expiresAt": "2026-11-06T15:00:00.000Z",
+      "eventStartAt": "2026-11-06T08:00:00.000Z",
+      "eventEndAt": "2026-11-06T14:00:00.000Z",
+      "provenance": "fixture:phase2/knmi-partial"
+    }
+  ]
+}
