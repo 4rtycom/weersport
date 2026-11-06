@@ -4,6 +4,7 @@ import { query } from "@/lib/db/client";
 import { authDeliveryMode } from "@/lib/auth/release";
 import { billingModeLabel, checkoutEnabled } from "@/lib/billing/mollie-mode";
 import { mailDriver } from "@/lib/mail/send";
+import { capabilitySnapshot } from "@/lib/release/capabilities";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,12 +21,13 @@ export async function GET() {
   } catch {
     database = "error";
   }
+  const capabilities = capabilitySnapshot();
   const status = database === "ok" ? 200 : 503;
   return NextResponse.json(
     {
       status: database === "ok" ? "ok" : "degraded",
       service: "weersport",
-      phase: "6",
+      phase: "7",
       checks: {
         database,
         store: storeMode(),
@@ -36,6 +38,7 @@ export async function GET() {
         quotaTimezone: "Europe/Amsterdam",
         billingMode: billingModeLabel(),
         checkoutEnabled: checkoutEnabled(),
+        capabilities,
       },
       time: new Date().toISOString(),
       latencyMs: Date.now() - started,

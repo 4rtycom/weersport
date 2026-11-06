@@ -8,6 +8,10 @@ import { ensureBasisSubscription, getEntitlement } from "@/lib/billing/entitleme
 import { analysisFingerprint, calendarPeriodKey } from "@/lib/billing/period";
 import { QUOTA_POLICY_SUMMARY } from "@/lib/billing/quota-policy";
 import { ensureBillingSchema } from "@/lib/billing/schema";
+import {
+  RECOMMENDATIONS_DISABLED_REASON,
+  recommendationsEnabled,
+} from "@/lib/release/capabilities";
 
 export type AnalysisResult =
   | {
@@ -60,6 +64,25 @@ function downgradeForQuota(snapshot: ForecastSnapshot): ForecastSnapshot {
       missing: ["analysesquota"],
     },
   };
+}
+
+function downgradeForRecommendationsDisabled(snapshot: ForecastSnapshot): ForecastSnapshot {
+  return {
+    ...snapshot,
+    suitability: {
+      kind: "NO_SCORE",
+      reason: RECOMMENDATIONS_DISABLED_REASON,
+      missing: ["recommendations_disabled"],
+    },
+  };
+}
+
+async function buildSnapshotRespectingCapabilities(draft: SearchDraft) {
+  const snapshot = await buildSnapshot(draft);
+  if (!recommendationsEnabled()) {
+    return downgradeForRecommendationsDisabled(snapshot);
+  }
+  return snapshot;
 }
 
 function readCache(userId: string, cacheKey: string) {
@@ -191,7 +214,7 @@ export async function runMeteredAnalysis(input: {
   if (entitlement.remaining <= 0) {
     let snapshot: ForecastSnapshot;
     try {
-      snapshot = downgradeForQuota(await buildSnapshot(input.draft));
+      snapshot = downgradeForQuota(await buildSnapshotRespectingCapabilities(input.draft));
     } catch {
       return {
         ok: false,
@@ -223,7 +246,7 @@ export async function runMeteredAnalysis(input: {
 
   let snapshot: ForecastSnapshot;
   try {
-    snapshot = await buildSnapshot(input.draft);
+    snapshot = await buildSnapshotRespectingCapabilities(input.draft);
   } catch {
     return {
       ok: false,

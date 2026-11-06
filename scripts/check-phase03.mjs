@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { assertDisposableCheckTarget } from "../lib/auth/release-check.mjs";
 
 const required = [
   "lib/data/types.ts",
@@ -34,6 +35,8 @@ if (!base) {
   console.log("phase 03 static checks ok");
   process.exit(0);
 }
+
+assertDisposableCheckTarget(base);
 
 const jar = new Map();
 function store(response) {
