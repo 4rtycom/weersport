@@ -169,20 +169,35 @@ export function scoreSportHours(input: {
   hours: WeatherHour[];
   waterLinked: boolean;
   swimLinked: boolean;
+  /** Phase 2: town centroids cannot satisfy water/ice site claims. */
+  siteSpecificCoverage?: boolean;
+  coverageNote?: string;
 }): SuitabilityOutcome {
   const profile = getScoreProfile(input.sportId);
+  const siteOk = input.siteSpecificCoverage === true;
 
   if (ICE_CRITICAL_SPORTS.has(input.sportId)) {
     return {
       kind: "NO_SCORE",
       reason:
         "Natuurijs wordt nooit veilig verklaard op basis van luchttemperatuur alleen. IJsdata ontbreekt → NO_SCORE.",
-      missing: ["ijsdikte", "ijskwaliteit"],
+      missing: ["ijsdikte", "ijskwaliteit", ...(siteOk ? [] : ["sitespecifieke ijsdekking"])],
     };
   }
 
   if (WATER_CRITICAL_SPORTS.has(input.sportId)) {
     const swimNeedsLink = input.sportId === "openwaterzwemmen";
+    if (!siteOk) {
+      return {
+        kind: "NO_SCORE",
+        reason:
+          input.coverageNote ??
+          "Een woonplaatscentroïde kan water- of zwemcondities op een meer of strand niet vaststellen → NO_SCORE.",
+        missing: swimNeedsLink
+          ? ["sitespecifieke waterlocatie", "zwemwaterkwaliteit"]
+          : ["sitespecifieke waterlocatie", "watercondities"],
+      };
+    }
     if (!input.waterLinked || (swimNeedsLink && !input.swimLinked)) {
       return {
         kind: "NO_SCORE",

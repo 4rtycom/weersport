@@ -170,8 +170,32 @@ export function MomentView({
               <span>Zonbescherming los van de sportscore.</span>
             </div>
             <div className="warning-panel">
-              <p>Officiële weerwaarschuwingen</p>
+              <p>Officiële weerwaarschuwingen · {statusLabel(snapshot.warnings.status)}</p>
               <strong>{snapshot.warnings.message}</strong>
+              {snapshot.warnings.value?.lifecycle ? (
+                <span className="warning-lifecycle">
+                  Status: {snapshot.warnings.value.lifecycle}
+                  {snapshot.warnings.value.spatialCoverage
+                    ? ` · dekking: ${snapshot.warnings.value.spatialCoverage}`
+                    : ""}
+                </span>
+              ) : null}
+              {snapshot.warnings.value?.items?.length ? (
+                <ul className="warning-items">
+                  {snapshot.warnings.value.items.map((item) => (
+                    <li key={item.id}>
+                      <strong>{item.title}</strong>
+                      <span>{item.detail}</span>
+                      <small>
+                        Scope: {item.spatialScope}
+                        {item.issuedAt ? ` · uitgegeven ${item.issuedAt}` : ""}
+                        {item.expiresAt ? ` · geldig tot ${item.expiresAt}` : ""}
+                      </small>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="moment-coverage-note">{snapshot.coverage.note}</p>
             </div>
             {nextSport ? (
               <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
@@ -249,6 +273,10 @@ export function MomentView({
         <section className="moment-card" aria-labelledby="bronnen-title">
           <p className="eyebrow">Officiële bronnen en coverage</p>
           <h2 id="bronnen-title">Bronstatus</h2>
+          <p className="moment-source-line">
+            Terreintype: {snapshot.dependencies.terrain}. Score blokkeert op:{" "}
+            {snapshot.dependencies.scoreBlocking.join(", ")}. {snapshot.dependencies.coverageNote}
+          </p>
           <ul className="source-list">
             {snapshot.sources.map((source) => (
               <li key={source.id}>
