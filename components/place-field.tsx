@@ -45,13 +45,16 @@ export function PlaceField({
       setStatus("");
       return;
     }
+    let cancelled = false;
     const controller = new AbortController();
+    setPlaces([]);
     const timer = setTimeout(async () => {
       setPhase("loading");
       setStatus("Plaatsen zoeken…");
       try {
         const response = await fetch(`/api/plaatsen?q=${encodeURIComponent(needle)}`, { signal: controller.signal });
         const data = (await response.json()) as { places?: Place[]; error?: string };
+        if (cancelled) return;
         if (!response.ok || data.error) {
           setPlaces([]);
           setPhase("error");
@@ -64,13 +67,14 @@ export function PlaceField({
         setPhase(next.length > 0 ? "ready" : "empty");
         setStatus(next.length > 0 ? "" : "Geen plaatsen gevonden.");
       } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return;
+        if (cancelled || (error instanceof Error && error.name === "AbortError")) return;
         setPlaces([]);
         setPhase("error");
         setStatus("De Nederlandse plaatscontrole is nu niet bereikbaar.");
       }
     }, 180);
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       controller.abort();
     };

@@ -70,11 +70,13 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
   const [pending, setPending] = useState(false);
   const [retryable, setRetryable] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [focusGeneration, setFocusGeneration] = useState(0);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
   const lock = useRef(false);
   const attempt = useRef<{ key: string; body: string } | null>(null);
   const mounted = useRef(false);
+  const pendingErrorFocus = useRef<(typeof fieldOrder)[number] | null>(null);
   const statusId = useId();
   const today = amsterdamToday();
   const sportName = sports.find((sport) => sport.id === sportId)?.name ?? "";
@@ -93,19 +95,28 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
       mounted.current = true;
       return;
     }
+    const key = pendingErrorFocus.current;
+    if (key === "form") {
+      alertRef.current?.focus();
+      return;
+    }
+    if (key) {
+      document.getElementById(fieldIds[key])?.focus();
+      return;
+    }
     titleRef.current?.focus();
-  }, [step]);
+  }, [step, focusGeneration]);
+
+  function showStep(next: Step) {
+    pendingErrorFocus.current = null;
+    setStep(next);
+  }
 
   function focusError(next: Errors) {
     const key = fieldOrder.find((item) => next[item]);
     if (!key) return;
-    requestAnimationFrame(() => {
-      if (key === "form") {
-        alertRef.current?.focus();
-        return;
-      }
-      document.getElementById(fieldIds[key])?.focus();
-    });
+    pendingErrorFocus.current = key;
+    setFocusGeneration((value) => value + 1);
   }
 
   function campaignErrors(): Errors {
@@ -138,7 +149,7 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
       return;
     }
     setErrors({});
-    setStep("contact");
+    showStep("contact");
   }
 
   function payloadBody() {
@@ -168,7 +179,7 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
     const next = { ...campaignErrors(), ...contactErrors() };
     if (Object.keys(next).length > 0) {
       setErrors(next);
-      if (next.sport || next.region || next.area || next.start || next.weeks) setStep("campaign");
+      if (next.sport || next.region || next.area || next.start || next.weeks) showStep("campaign");
       focusError(next);
       return;
     }
@@ -200,14 +211,14 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
         setPending(false);
         lock.current = false;
         if (serverErrors.sport || serverErrors.region || serverErrors.area || serverErrors.start || serverErrors.weeks) {
-          setStep("campaign");
+          showStep("campaign");
         }
         focusError(serverErrors);
         return;
       }
       setReceipt(data.receipt);
       setPending(false);
-      setStep("received");
+      showStep("received");
     } catch {
       setErrors({ form: "De aanvraag is niet ontvangen. Je gegevens blijven staan." });
       setRetryable(true);
@@ -418,7 +429,7 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
                       disabled={pending}
                       onClick={() => {
                         setErrors({});
-                        setStep("campaign");
+                        showStep("campaign");
                       }}
                     >
                       Keuzes wijzigen
