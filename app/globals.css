@@ -1752,7 +1752,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   border: 1px solid #9ec9cc;
   color: var(--ws-text-primary);
 }
-.sponsor-placement-kicker {
+.sponsor-placement .sponsor-placement-kicker {
   display: inline-flex;
   margin: 0;
   padding: 4px 8px;
@@ -1795,7 +1795,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
-.sponsor-placement-note {
+.sponsor-placement .sponsor-placement-note {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #9ec9cc;
