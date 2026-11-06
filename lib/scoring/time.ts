@@ -29,8 +29,11 @@ export function formatAmsterdamClock(isoUtc: string) {
   }).format(new Date(isoUtc));
 }
 
-export function formatAmsterdamWindow(startUtc: string, endUtc: string) {
-  return `${formatAmsterdamClock(startUtc)}–${formatAmsterdamClock(endUtc)}`;
+function formatAmsterdamDate(isoUtc: string) {
+  return new Intl.DateTimeFormat("nl-NL", {
+    dateStyle: "medium",
+    timeZone: AMSTERDAM_TZ,
+  }).format(new Date(isoUtc));
 }
 
 export function formatAmsterdamDateTime(isoUtc: string) {
@@ -39,4 +42,14 @@ export function formatAmsterdamDateTime(isoUtc: string) {
     timeStyle: "short",
     timeZone: AMSTERDAM_TZ,
   }).format(new Date(isoUtc));
+}
+
+/** Clock span plus the Amsterdam calendar date. Repeats the date when the window crosses midnight. */
+export function formatAmsterdamWindow(startUtc: string, endUtc: string) {
+  const startDate = formatAmsterdamDate(startUtc);
+  const endDate = formatAmsterdamDate(endUtc);
+  if (startDate === endDate) {
+    return `${startDate}, ${formatAmsterdamClock(startUtc)}–${formatAmsterdamClock(endUtc)}`;
+  }
+  return `${formatAmsterdamDateTime(startUtc)}–${formatAmsterdamDateTime(endUtc)}`;
 }

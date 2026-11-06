@@ -6,7 +6,7 @@ import {
   sportProfiles,
   type SportScoreProfile,
 } from "@/lib/scoring/profiles";
-import { formatAmsterdamClock, formatAmsterdamWindow } from "@/lib/scoring/time";
+import { formatAmsterdamDateTime, formatAmsterdamWindow } from "@/lib/scoring/time";
 import {
   findPeakHour,
   rankTwoHourWindows,
@@ -238,12 +238,12 @@ export function scoreSportHours(input: {
     now: {
       time: nowHour.time,
       score: nowHour.score,
-      label: `Nu · ${formatAmsterdamClock(nowHour.time)} · ${nowHour.score}/100`,
+      label: `Nu · ${formatAmsterdamDateTime(nowHour.time)} · ${nowHour.score}/100`,
     },
     peakHour: {
       time: peak.time,
       score: peak.score,
-      label: `Piek-uur · ${formatAmsterdamClock(peak.time)} · ${peak.score}/100`,
+      label: `Piek-uur · ${formatAmsterdamDateTime(peak.time)} · ${peak.score}/100`,
     },
     recommendedWindow: {
       ...peakWindow,
