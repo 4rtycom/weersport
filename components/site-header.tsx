@@ -28,11 +28,16 @@ export function SiteHeader({ account = false }: { account?: boolean }) {
             {link.label}
           </Link>
         ))}
-        {account ? <Link href="/account/momenten">Mijn momenten</Link> : null}
         {account ? <Link href="/account">Account</Link> : null}
-        <Link className="button button-lime nav-cta" href="/#planner">
-          Bekijk jouw moment →
-        </Link>
+        {account ? (
+          <Link className="button button-lime nav-cta" href="/account/momenten">
+            Mijn momenten →
+          </Link>
+        ) : (
+          <Link className="button button-lime nav-cta" href="/auth/inloggen">
+            Inloggen →
+          </Link>
+        )}
       </nav>
       <button
         className="menu-button"
@@ -56,9 +61,15 @@ export function SiteHeader({ account = false }: { account?: boolean }) {
               Account
             </Link>
           ) : null}
-          <Link className="button button-lime" href="/#planner" onClick={() => setOpen(false)}>
-            Bekijk jouw moment →
-          </Link>
+          {account ? (
+            <Link className="button button-lime" href="/account/momenten" onClick={() => setOpen(false)}>
+              Mijn momenten →
+            </Link>
+          ) : (
+            <Link className="button button-lime" href="/auth/inloggen" onClick={() => setOpen(false)}>
+              Inloggen →
+            </Link>
+          )}
         </nav>
       ) : null}
     </header>
