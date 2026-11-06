@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { registerAccount, saveDraft } from "@/lib/auth/service";
-import { readDraftCookie, writeDevMail, writeSession } from "@/lib/auth/cookies";
+import { clearDevMail, readDraftCookie, writeDevMail, writeSession } from "@/lib/auth/cookies";
+import { authIsClosed, CLOSED_SIGNUP_MESSAGE } from "@/lib/auth/release";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  if (authIsClosed()) {
+    const response = NextResponse.json({ error: CLOSED_SIGNUP_MESSAGE }, { status: 503 });
+    clearDevMail(response, request);
+    return response;
+  }
+
   const body = (await request.json().catch(() => null)) as {
     name?: string;
     email?: string;

@@ -30,6 +30,13 @@ if (!base) {
   process.exit(0);
 }
 
+const { assertDisposableCheckTarget } = await import("../lib/auth/release-check.mjs");
+assertDisposableCheckTarget(base);
+if (process.env.WEERSPORT_FORCE_AUTH_CLOSED === "1" || process.env.VERCEL_ENV === "production") {
+  console.log("phase 02 live auth mailbox checks skipped under closed auth mode");
+  process.exit(0);
+}
+
 const jar = new Map();
 
 function store(response) {

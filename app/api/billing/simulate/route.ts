@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { accountFromSession } from "@/lib/auth/service";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
+import { isVercelProduction } from "@/lib/auth/release";
 import { mollieMode, verifyAndApplyPayment } from "@/lib/billing/mollie";
 
 export const runtime = "nodejs";
@@ -9,6 +10,12 @@ export const dynamic = "force-dynamic";
 
 /** Local sandbox confirmation — still goes through verifyAndApplyPayment, never trust redirect alone. */
 export async function POST(request: Request) {
+  if (isVercelProduction()) {
+    return NextResponse.json(
+      { error: "Betalingssimulatie is uitgeschakeld op productie." },
+      { status: 403 },
+    );
+  }
   if (mollieMode() !== "sandbox-local") {
     return NextResponse.json({ error: "Simulatie alleen beschikbaar zonder MOLLIE_API_KEY." }, { status: 400 });
   }

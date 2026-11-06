@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { accountFromSession } from "@/lib/auth/service";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
+import { isVercelProduction } from "@/lib/auth/release";
 import { applyRefund, mollieMode } from "@/lib/billing/mollie";
 
 export const runtime = "nodejs";
@@ -9,6 +10,12 @@ export const dynamic = "force-dynamic";
 
 /** Staging/sandbox refund — live Mollie refunds remain provider-dashboard only until keys are wired. */
 export async function POST(request: Request) {
+  if (isVercelProduction()) {
+    return NextResponse.json(
+      { error: "Sandbox-terugbetaling is uitgeschakeld op productie." },
+      { status: 403 },
+    );
+  }
   if (mollieMode() !== "sandbox-local") {
     return NextResponse.json(
       {
