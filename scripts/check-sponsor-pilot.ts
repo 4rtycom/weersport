@@ -860,15 +860,17 @@ for (const token of [
   "Stel je campagne samen",
   "Verder naar contactgegevens",
   "Sponsoraanvraag versturen",
-  "Voorbeeld met demogegevens",
-  "Je ochtendrun",
-  "hardlopen-heide.webp",
-  "trailschoen.webp",
-  "Loopatelier Ede",
+  "Bekijk volledige momentpagina",
+  "Jouw WeerSport-moment",
+  "10:00 – 12:00",
+  "Fietswerk Amsterdam",
   "Fictieve partner",
   "Kies een sport",
 ]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
+}
+for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede"]) {
+  if (html.includes(removed)) throw new Error(`Live sponsoring HTML still shows ${removed}`);
 }
 for (const banned of ["€99", "Vraag een pilot aan", "Bespreek maatwerk", "adsbygoogle"]) {
   if (html.includes(banned)) throw new Error(`Live sponsoring HTML still shows ${banned}`);
