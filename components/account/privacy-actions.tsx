@@ -9,25 +9,34 @@ export function PrivacyActions() {
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
   const [consentPending, setConsentPending] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
+  const [consentMessage, setConsentMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   async function withdrawConsent() {
     setConsentPending(true);
-    setError(null);
-    setMessage(null);
-    const response = await fetch("/api/consent", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reset: true }),
-    });
-    setConsentPending(false);
-    if (!response.ok) {
-      setError("Cookiekeuze intrekken mislukt.");
-      return;
+    setConsentError(null);
+    setConsentMessage(null);
+    try {
+      const response = await fetch("/api/consent", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reset: true }),
+      });
+      if (!response.ok) {
+        setConsentError("Cookiekeuze intrekken mislukt.");
+        return;
+      }
+      setConsentMessage(
+        "Optionele cookies uitgeschakeld. De cookiebanner verschijnt opnieuw zodat je opnieuw kunt kiezen.",
+      );
+      window.location.assign("/?consent=review#planner");
+    } catch {
+      setConsentError("Netwerkfout. Probeer opnieuw.");
+    } finally {
+      setConsentPending(false);
     }
-    setMessage("Optionele cookies uitgeschakeld. De cookiebanner verschijnt opnieuw zodat je opnieuw kunt kiezen.");
-    window.location.assign("/?consent=review#planner");
   }
 
   async function onDelete() {
@@ -61,6 +70,12 @@ export function PrivacyActions() {
         <button className="button button-dark" type="button" disabled={consentPending} onClick={withdrawConsent}>
           {consentPending ? "Bezig…" : "Trek optionele cookies in"}
         </button>
+        {consentError ? (
+          <p className="form-error" role="alert">
+            {consentError}
+          </p>
+        ) : null}
+        {consentMessage ? <p role="status">{consentMessage}</p> : null}
       </section>
 
       <section className="account-panel" aria-labelledby="export-title">

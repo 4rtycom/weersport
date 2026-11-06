@@ -22,8 +22,9 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  // "./" resolves against the current route, so each page canonicalizes itself.
   alternates: {
-    canonical: "/",
+    canonical: "./",
   },
   robots: robotsDirective(),
   openGraph: {
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
-    url: origin,
+    url: "./",
   },
 };
 

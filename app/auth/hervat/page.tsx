@@ -14,7 +14,7 @@ export default async function ResumePage() {
   return (
     <AuthShell>
       <p className="auth-eyebrow">Account</p>
-      <h1>Je zoekopdracht is bewaard</h1>
+      <h1>{draft ? "Je zoekopdracht is bewaard" : "Nog geen bewaarde zoekopdracht"}</h1>
       <p className="auth-lead">
         {draft
           ? "Hieronder staan je drie keuzes. Bewerken of inloggen heeft nog geen analyse gestart."
