@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { BrandMark } from "@/components/brand-mark";
 import { SiteHeader } from "@/components/site-header";
@@ -21,7 +22,7 @@ export default async function SportenPage() {
         <div className="catalog-intro">
           <p className="eyebrow eyebrow-lime">Buitensporten in Nederland</p>
           <h1>Alle 24 sporten</h1>
-          <p>Eén sport per zoekopdracht. Scores en live weer volgen in een latere fase.</p>
+          <p>Kies je sport en ontdek hoe WeerSport het weeradvies berekent.</p>
         </div>
       </div>
       <main id="inhoud" className="catalog">
@@ -39,8 +40,7 @@ export default async function SportenPage() {
                   <span className="icon-badge icon-badge-lg">
                     <SportIcon src={sport.icon} size={36} label="" />
                   </span>
-                  <h3>{sport.name}</h3>
-                  {sport.iconNote ? <p>{sport.iconNote}</p> : null}
+                  <h3><Link href={`/sporten/${sport.id}`}>{sport.name}</Link></h3>
                 </li>
               ))}
             </ul>

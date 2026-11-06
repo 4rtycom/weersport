@@ -71,6 +71,7 @@ export function MomentView({
             </span>
             <div>
               <h1>{snapshot.sportName}</h1>
+              <Link href={`/sporten/${sport.id}`}>Hoe werkt het advies voor {sport.name.toLowerCase()}?</Link>
               <p>
                 {snapshot.placeLabel}, Nederland · {snapshot.period}
               </p>
