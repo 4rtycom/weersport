@@ -69,6 +69,10 @@ const paris = await request("/api/plaatsen?q=parijs");
 const parisBody = await paris.json();
 if (parisBody.places?.length) throw new Error("Parijs was accepted as a Dutch place");
 
+const guestHome = await (await request("/")).text();
+if (!guestHome.includes("Inloggen")) throw new Error("Guest header should offer login");
+if (guestHome.includes("Mijn momenten")) throw new Error("Guest header should not show the signed-in moments link");
+
 const amsterdam = await (await request("/api/plaatsen?q=amsterdam")).json();
 const city = amsterdam.places.find((place) => place.label === "Amsterdam");
 if (!city?.id.startsWith("wpl-")) throw new Error("Amsterdam was not found");
@@ -142,5 +146,11 @@ const oldLogin = await post("/api/auth/inloggen", { email, password });
 if (oldLogin.status !== 401) throw new Error("Old password still works");
 const newLogin = await post("/api/auth/inloggen", { email, password: "nieuw-wachtwoord-12" });
 if (newLogin.data.next !== "/auth/hervat") throw new Error(`Login after reset went to ${newLogin.data.next}`);
+
+const signedInHome = await (await request("/?sport=hardlopen")).text();
+if (!signedInHome.includes("Mijn momenten")) throw new Error("Signed-in header missing moments CTA");
+if (!signedInHome.includes("Hardlopen") || !signedInHome.includes("voorgeselecteerd")) {
+  throw new Error("?sport= after login did not preselect Hardlopen");
+}
 
 console.log("phase 02 route checks ok");

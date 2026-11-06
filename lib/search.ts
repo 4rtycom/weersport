@@ -7,6 +7,7 @@ export async function prepareSearch(input: {
   placeId?: unknown;
   placeLabel?: unknown;
   period?: unknown;
+  spotId?: unknown;
 }): Promise<{ ok: true; draft: SearchDraft } | { ok: false; error: string; status: number }> {
   const sport = typeof input.sportId === "string" ? findSport(input.sportId) : undefined;
   const known = typeof input.sportId === "string" && sport?.id === input.sportId;
@@ -26,6 +27,7 @@ export async function prepareSearch(input: {
       placeId: place.id,
       placeLabel: place.label,
       period,
+      spotId: input.spotId,
     });
     if (!draft) return { ok: false, status: 400, error: "Kies een woonplaats in Nederland." };
     return { ok: true, draft };

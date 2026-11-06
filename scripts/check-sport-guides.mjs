@@ -14,44 +14,17 @@ if (sportIds.length !== 24) {
   throw new Error(`Expected 24 sports, found ${sportIds.length}`);
 }
 
-const expectedWeights = {
-  fietsen: [35, 30, 35],
-  wielrennen: [30, 40, 30],
-  gravelbiken: [30, 30, 40],
-  mountainbiken: [28, 22, 50],
-  hardlopen: [45, 25, 30],
-  trailrunning: [35, 20, 45],
-  wandelen: [40, 25, 35],
-  hiken: [35, 25, 40],
-  golf: [30, 35, 35],
-  "tennis-padel": [30, 30, 40],
-  voetbal: [35, 25, 40],
-  hockey: [35, 25, 40],
-  zeilen: [25, 55, 20],
-  windsurfen: [20, 60, 20],
-  kitesurfen: [20, 65, 15],
-  surfen: [25, 35, 40],
-  suppen: [35, 40, 25],
-  kajakken: [35, 35, 30],
-  roeien: [35, 40, 25],
-  openwaterzwemmen: [45, 20, 35],
-  skeeleren: [30, 25, 45],
-  paardrijden: [35, 30, 35],
-  schaatsen: [50, 25, 25],
-  outdoorfitness: [40, 25, 35],
-};
-
 const profilesSrc = readFileSync(new URL("../lib/scoring/profiles.ts", import.meta.url), "utf8");
-for (const [id, [temp, wind, rain]] of Object.entries(expectedWeights)) {
-  const block = profilesSrc.match(
-    new RegExp(`sportId: "${id}"[\\s\\S]*?weights: \\{ temperature: ([\\d.]+), wind: ([\\d.]+), rain: ([\\d.]+) \\}`),
-  );
-  if (!block) throw new Error(`Profile missing for ${id}`);
-  const got = [Number(block[1]), Number(block[2]), Number(block[3])].map((n) => Math.round(n * 100));
-  if (got[0] !== temp || got[1] !== wind || got[2] !== rain) {
-    throw new Error(`${id} weights ${got.join("/")} !== ${temp}/${wind}/${rain}`);
-  }
-  if (temp + wind + rain !== 100) throw new Error(`${id} weights do not sum to 100`);
+if (profilesSrc.includes("weights:")) throw new Error("Profiles must not keep the three-weight table");
+for (const id of sportIds) {
+  if (!profilesSrc.includes(`sportId: "${id}"`)) throw new Error(`Profile missing for ${id}`);
+}
+if (!profilesSrc.includes('personalAdvice: false')) {
+  throw new Error("Profiles must record that personal advice is not released");
+}
+const swimProfile = readFileSync(new URL("../lib/scoring/swim.ts", import.meta.url), "utf8");
+if (!swimProfile.includes("We missen een recente watertemperatuur voor deze zwemplek.")) {
+  throw new Error("Swim profile must explain a missing water temperature");
 }
 
 const copy = readFileSync(new URL("../lib/sport-guide-copy.ts", import.meta.url), "utf8");
@@ -62,10 +35,14 @@ for (const id of sportIds) {
 }
 
 const examples = readFileSync(new URL("../lib/sport-guide-examples.ts", import.meta.url), "utf8");
-for (const needle of ["hardlopen", "wielrennen", "scoreHour", "buildLandGuideExample"]) {
-  if (!examples.includes(needle)) {
-    throw new Error(`Land examples must include ${needle}`);
-  }
+if (!examples.includes("describeProfileForGuide")) {
+  throw new Error("Guide examples must describe the shared profile");
+}
+if (!profilesSrc.includes('sportId: "hardlopen"') || !profilesSrc.includes("°C")) {
+  throw new Error("Hardlopen profile must name temperature in °C without scoring it");
+}
+if (!profilesSrc.includes('sportId: "wielrennen"') || !profilesSrc.includes("km/u")) {
+  throw new Error("Wielrennen profile must name wind in km/u without scoring it");
 }
 
 const guidePage = readFileSync(new URL("../app/sporten/[sport]/page.tsx", import.meta.url), "utf8");
@@ -75,8 +52,8 @@ if (!guidePage.includes("/?sport=${sport.id}#planner")) {
 if (guidePage.includes('href="/#planner"')) {
   throw new Error("Generic /#planner CTA must be replaced");
 }
-if (!guidePage.includes("buildLandGuideExample")) {
-  throw new Error("Guide page must use sport-specific land examples");
+if (!guidePage.includes("describeProfileForGuide")) {
+  throw new Error("Guide page must render the sport profile");
 }
 
 const home = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
@@ -138,17 +115,15 @@ for (const id of sportIds) {
 await check("/sporten/niet-bestaande-sport", 404);
 
 const hardlopen = await (await check("/sporten/hardlopen")).text();
-if (!hardlopen.includes("°C") || !hardlopen.includes("/ 100")) {
-  throw new Error("Hardlopen land example missing temperature/score evidence");
-}
-if (!hardlopen.includes("lucht") && !hardlopen.includes("temperatuur")) {
-  throw new Error("Hardlopen should vary temperature in its demo");
+if (!hardlopen.includes("°C")) throw new Error("Hardlopen guide should name temperature in °C");
+if (hardlopen.includes("/ 100")) throw new Error("Hardlopen must not show an unreleased score");
+if (!hardlopen.includes("temperatuur") && !hardlopen.includes("Temperatuur")) {
+  throw new Error("Hardlopen should mention temperature");
 }
 
 const wielrennen = await (await check("/sporten/wielrennen")).text();
-if (!wielrennen.includes("km/u") || !wielrennen.includes("/ 100")) {
-  throw new Error("Wielrennen land example missing wind/score evidence");
-}
+if (!wielrennen.includes("km/u")) throw new Error("Wielrennen guide should name wind in km/u");
+if (wielrennen.includes("/ 100")) throw new Error("Wielrennen must not show an unreleased score");
 
 for (const id of waterSports) {
   const html = await (await check(`/sporten/${id}`)).text();

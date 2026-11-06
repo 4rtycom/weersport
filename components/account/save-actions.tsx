@@ -10,6 +10,8 @@ type Props = {
   peakLabel?: string | null;
   snapshotAt?: string | null;
   scoreLabel?: string | null;
+  modelVersion?: string | null;
+  spotId?: string | null;
 };
 
 export function SaveActions(props: Props) {
@@ -58,6 +60,8 @@ export function SaveActions(props: Props) {
         plannedEnd: end.toISOString(),
         lastSnapshotAt: props.snapshotAt ?? null,
         lastScoreLabel: props.scoreLabel ?? null,
+        modelVersion: props.modelVersion ?? null,
+        spotId: props.spotId ?? null,
         note: "Opgeslagen plan, geen live weersadvies of veiligheidsgarantie.",
       }),
     });
