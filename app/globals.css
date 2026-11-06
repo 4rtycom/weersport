@@ -1706,3 +1706,29 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   text-transform: uppercase;
   margin: 16px 0 10px;
 }
+
+.sponsor-form { position: relative; display: grid; gap: 4px; margin: 20px 0 28px; }
+.sponsor-form .sponsor-textarea { min-height: 140px; padding: 12px 14px; resize: vertical; }
+.sponsor-hint, .sponsor-field-error { margin-top: 6px; font-size: 13px; }
+.sponsor-form .sponsor-field-error { color: #8e3427; font-weight: 700; }
+.sponsor-errors {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fbe7de;
+  color: var(--ws-text-primary);
+}
+.sponsor-form .sponsor-errors p { color: var(--ws-text-primary); }
+.sponsor-errors ul { margin-top: 8px; padding-left: 18px; list-style: disc; }
+.sponsor-success { margin: 20px 0 28px; padding: 16px; border-radius: 16px; background: var(--ws-surface-base); }
+.sponsor-success h2 { margin-bottom: 8px; }
+.sponsor-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

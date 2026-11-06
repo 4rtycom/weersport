@@ -379,7 +379,7 @@ export function HomePage({
             <h2>Ook zichtbaar zijn als sportpartner?</h2>
             <p>Sponsoring is duidelijk herkenbaar en beïnvloedt nooit de weerscore.</p>
           </div>
-          <a href="#planner">Samenwerken →</a>
+          <a href="/sponsoring">Samenwerken →</a>
         </aside>
       </main>
 
@@ -394,6 +394,7 @@ export function HomePage({
           <Link href="/privacy">Privacy</Link>
           <Link href="/voorwaarden">Voorwaarden</Link>
           <Link href="/support">Support</Link>
+          <Link href="/sponsoring">Samenwerken</Link>
         </nav>
       </footer>
       </>
