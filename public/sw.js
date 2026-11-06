@@ -1,12 +1,13 @@
 /*
  * Inventory before this worker: no manifest, no service worker, and no install
  * banner. Public files were SVG marks, weather icons, and public/home/hero.png.
- * Cache only the static offline shell. Never store personal results, payments,
+ * Cache only public/offline.html. Never precache the Next.js /offline document:
+ * that response embeds the root layout. Never store personal results, payments,
  * account/auth pages, API payloads, or current warnings.
  */
 const CACHE = "weersport-offline-v1";
 const SHELL = [
-  "/offline",
+  "/offline.html",
   "/manifest.webmanifest",
   "/icons/pwa-192.png",
   "/icons/pwa-512.png",
@@ -22,7 +23,10 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))),
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then(() => caches.open(CACHE).then((cache) => cache.delete("/offline", { ignoreSearch: true }))),
   );
   self.clients.claim();
 });
@@ -41,7 +45,7 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(async () => (await caches.match("/offline")) || Response.error()),
+      fetch(request).catch(async () => (await caches.match("/offline.html")) || Response.error()),
     );
   }
 });
