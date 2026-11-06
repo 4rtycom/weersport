@@ -399,7 +399,10 @@
     gap: 32px;
     margin-top: 28px;
   }
-  .card { padding: 22px 28px 28px; }
+  .card {
+    max-width: 536px;
+    padding: 22px 28px 28px;
+  }
   .aside h2 { font-size: 28px; }
   .heroTitle { font-size: 38px; }
   .partner { grid-template-columns: 143px minmax(0, 1fr); min-height: 147px; }
