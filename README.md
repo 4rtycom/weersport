@@ -38,4 +38,4 @@ WEERSPORT_BASE_URL=http://127.0.0.1:3000 npm run check
 | Zwemwater / BIJ12 | `NOT_LINKED` |
 | PDOK | Live plaats- en centroïde-lookup |
 
-Gevalideerde sportscore 0–100, quota, Mollie en AdSense horen bij latere fases.
+Persoonlijk advies is nog voor geen sport vrijgegeven. Openwaterzwemmen blijft `NO_SCORE` zonder officiële zwemplek en geldige metingen. Het oude temperatuur/wind/regen-gewicht is verwijderd. Quota, Mollie en AdSense blijven actief voor een latere, gevalideerde score.

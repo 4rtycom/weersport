@@ -123,26 +123,16 @@ const first = await post("/api/moment", {
   period: "Komende 48 uur",
 });
 if (first.status !== 200) throw new Error("Wielrennen moment failed");
-if (first.data.snapshot.suitability.kind !== "SCORED") {
-  throw new Error(`Wielrennen expected SCORED, got ${first.data.snapshot.suitability.kind}`);
+if (first.data.snapshot.suitability.kind !== "NO_SCORE") {
+  throw new Error(`Wielrennen expected NO_SCORE until a rule is released, got ${first.data.snapshot.suitability.kind}`);
 }
-const scored = first.data.snapshot.suitability;
-if (!Array.isArray(scored.hourly) || scored.hourly.length < 2) {
-  throw new Error("Hourly curve missing");
+if (!first.data.snapshot.suitability.modelVersion?.includes("wielrennen")) {
+  throw new Error("Wielrennen model version missing");
 }
-if (!scored.peakWindow?.peakTime || scored.peakWindow.peakScore == null) {
-  throw new Error("Peak window missing");
+if (first.data.snapshot.suitability.peakWindow) {
+  throw new Error("Withheld advice must not invent a best window");
 }
-const peakPoint = scored.hourly.find((point) => point.time === scored.peakWindow.peakTime);
-if (!peakPoint || peakPoint.score !== scored.peakWindow.peakScore) {
-  throw new Error("Peak score inconsistent with hourly curve");
-}
-if (!["GOED", "MATIG", "SLECHT"].includes(scored.badge)) {
-  throw new Error("Badge missing");
-}
-if (!scored.tooltip || !scored.modelVersion.includes("weersport-score")) {
-  throw new Error("Tooltip/model version missing");
-}
+if (first.data.booked !== false) throw new Error("Withheld advice must not book an analysis");
 
 for (const sportId of landSports) {
   const result = await post("/api/moment", {
@@ -151,14 +141,11 @@ for (const sportId of landSports) {
     placeLabel: "Amsterdam",
     period: "Komende 48 uur",
   });
-  if (result.data.snapshot.suitability.kind !== "SCORED") {
-    throw new Error(`${sportId} should score`);
+  if (result.data.snapshot.suitability.kind !== "NO_SCORE") {
+    throw new Error(`${sportId} must NO_SCORE until its rule is released`);
   }
-  const hours = result.data.snapshot.suitability.hourly;
-  const peak = result.data.snapshot.suitability.peakWindow;
-  const match = hours.find((point) => point.time === peak.peakTime);
-  if (!match || match.score !== peak.peakScore) {
-    throw new Error(`${sportId} peak inconsistent with curve`);
+  if (result.data.booked !== false || result.data.consumed !== 0) {
+    throw new Error(`${sportId} booked a withheld analysis`);
   }
 }
 

@@ -47,15 +47,27 @@ export type WarningBundle = {
   items: Array<{ title: string; detail: string }>;
 };
 
+export type WaterKind = "stilstaand" | "stromend" | "kust" | "onbekend";
+
 export type WaterBundle = {
   waterTemperatureC: number | null;
   waveHeightM: number | null;
   currentMs: number | null;
+  /** Degrees from north, only when a source measured direction. */
+  currentDirectionDeg?: number | null;
+  waterKind?: WaterKind | null;
+  /** Source text for exposure. Not inferred from wind. */
+  exposure?: string | null;
+  /** A tide clock is stored so it can be rejected as a current measurement. */
+  tideTime?: string | null;
+  stationId?: string | null;
 };
 
 export type SwimBundle = {
   advice: string | null;
   quality: string | null;
+  spotId?: string | null;
+  spotLabel?: string | null;
 };
 
 export type SuitabilityFactor = {
@@ -71,14 +83,40 @@ export type HourlyScorePoint = {
   temperatureC: number;
   windKmh: number;
   precipitationProbability: number;
-  uvIndex: number;
+  /** Unknown UV stays null. It is never coerced to zero. */
+  uvIndex: number | null;
+};
+
+export type ShownMeasurement = {
+  id: string;
+  label: string;
+  display: string;
+  sourceLabel: string;
+  observedAt: string | null;
+  quality: "measured" | "predicted" | "unknown" | "expired" | "not_applicable";
+};
+
+export type ScoreHorizon = {
+  requestedHours: number;
+  usableHours: number;
+  shortened: boolean;
+  note: string;
 };
 
 export type SuitabilityOutcome =
-  | { kind: "NO_SCORE"; reason: string; missing?: string[] }
+  | {
+      kind: "NO_SCORE";
+      reason: string;
+      missing?: string[];
+      modelVersion: string;
+      blocked?: boolean;
+      measurements?: ShownMeasurement[];
+      horizon?: ScoreHorizon;
+    }
   | {
       kind: "SCORED";
       modelVersion: string;
+      /** Window aggregate. Badge, factors, and the best-moment label use this same value. */
       score: number;
       badge: "GOED" | "MATIG" | "SLECHT";
       peakWindow: {
@@ -93,6 +131,11 @@ export type SuitabilityOutcome =
       factors: SuitabilityFactor[];
       tooltip: string;
       caveats: string;
+      /** Current hour, when it is also available. Not the best-moment window. */
+      now?: { time: string; score: number; label: string } | null;
+      horizon?: ScoreHorizon;
+      aggregation?: string;
+      tieBreak?: string;
     };
 
 export type ForecastSnapshot = {
@@ -101,6 +144,8 @@ export type ForecastSnapshot = {
   placeId: string;
   placeLabel: string;
   period: string;
+  /** Official swim spot used for this request. Null when none is linked. */
+  spotId: string | null;
   generatedAt: string;
   weather: SourceObservation<WeatherBundle>;
   uv: SourceObservation<UvBundle>;

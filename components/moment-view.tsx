@@ -8,6 +8,7 @@ import { UvBadge } from "@/components/uv-badge";
 import type { AdDecision } from "@/lib/ads/policy";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { getSportMeta } from "@/lib/scoring/engine";
+import { MISSING_WATER_TEMPERATURE_REASON } from "@/lib/scoring/swim";
 import { findSport } from "@/lib/sports";
 
 function formatMetric(value: number | null, suffix: string) {
@@ -120,6 +121,11 @@ export function MomentView({
                 <p className="score-tooltip" title={scored.tooltip}>
                   {meta.tagline}. {scored.bestTimeLabel}.
                 </p>
+                {scored.now ? (
+                  <p>
+                    {scored.now.label} · {scored.now.score}/100. Dit is het huidige uur, niet het beste tijdvak.
+                  </p>
+                ) : null}
                 <ScoreCurve
                   hourly={scored.hourly}
                   peakTime={scored.peakWindow.peakTime}
@@ -140,9 +146,10 @@ export function MomentView({
               </>
             ) : (
               <>
-                <p className="eyebrow">Sportgeschiktheid · NO_SCORE</p>
+                <p className="eyebrow">Sportgeschiktheid · NO_SCORE · {noScore?.modelVersion}</p>
                 <h2>NO_SCORE</h2>
                 <p>{noScore?.reason ?? "Geen score beschikbaar."}</p>
+                {noScore?.missing?.includes("watertemperatuur") ? <p>{MISSING_WATER_TEMPERATURE_REASON}</p> : null}
                 {noScore?.missing && noScore.missing.length > 0 ? (
                   <ul className="score-missing">
                     {noScore.missing.map((item) => (
@@ -150,6 +157,17 @@ export function MomentView({
                     ))}
                   </ul>
                 ) : null}
+                {noScore?.measurements && noScore.measurements.length > 0 ? (
+                  <ul className="score-missing">
+                    {noScore.measurements.map((item) => (
+                      <li key={item.id}>
+                        {item.label}: {item.display}. Bron: {item.sourceLabel}
+                        {item.observedAt ? `. Tijd: ${item.observedAt}` : ""}.
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {noScore?.horizon?.shortened ? <p>{noScore.horizon.note}</p> : null}
                 <div className="moment-note">
                   <strong>Broncontrole</strong>
                   <span>
@@ -197,6 +215,8 @@ export function MomentView({
             peakLabel={scored?.peakWindow.label ?? scored?.bestTimeLabel ?? null}
             snapshotAt={snapshot.generatedAt}
             scoreLabel={scored ? `${scored.score}/100 · ${scored.badge}` : noScore ? "NO_SCORE" : null}
+            modelVersion={suitability.modelVersion}
+            spotId={snapshot.spotId}
           />
           <p className="moment-save-link">
             <Link href="/account/momenten">Naar mijn sportmomenten</Link>

@@ -3,6 +3,7 @@ import { db } from "@/lib/auth/db";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { buildForecastSnapshot } from "@/lib/data/snapshot";
 import type { SearchDraft } from "@/lib/draft";
+import { getScoreProfile } from "@/lib/scoring/profiles";
 import { CACHE_TTL_MS } from "@/lib/billing/constants";
 import { ensureBasisSubscription, getEntitlement } from "@/lib/billing/entitlement";
 import { calendarPeriodKey, hourBucketKey } from "@/lib/billing/period";
@@ -31,17 +32,31 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function cacheKeyFor(userId: string, draft: SearchDraft) {
-  return `${userId}:${draft.sportId}:${draft.placeId}:${draft.period}:${hourBucketKey()}`;
+export function analysisCacheIdentity(userId: string, draft: SearchDraft) {
+  const profile = getScoreProfile(draft.sportId);
+  return `${userId}:${draft.sportId}:${draft.placeId}:${draft.spotId ?? ""}:${draft.period}:${profile.modelVersion}:${hourBucketKey()}`;
 }
 
-function shouldConsume(snapshot: ForecastSnapshot) {
+export function snapshotIsCurrent(snapshot: ForecastSnapshot, draft: SearchDraft) {
+  const profile = getScoreProfile(draft.sportId);
+  if (snapshot.sportId !== draft.sportId || snapshot.placeId !== draft.placeId) return false;
+  if ((snapshot.spotId ?? null) !== (draft.spotId ?? null)) return false;
+  if (snapshot.period !== draft.period) return false;
+  return snapshot.suitability.modelVersion === profile.modelVersion;
+}
+
+export function snapshotConsumesQuota(snapshot: ForecastSnapshot) {
   if (snapshot.weather.status === "MISSING_CRITICAL" || !snapshot.weather.value) return false;
   if (snapshot.suitability.kind === "NO_SCORE") return false;
   return snapshot.suitability.kind === "SCORED";
 }
 
-function readCache(userId: string, cacheKey: string) {
+/** A free result is never blocked by a used allowance. Only a snapshot that would book can 402. */
+export function quotaBlocksSnapshot(remaining: number, consumesQuota: boolean) {
+  return consumesQuota && remaining <= 0;
+}
+
+function readCache(userId: string, cacheKey: string, draft: SearchDraft) {
   const row = db()
     .prepare("SELECT snapshot_json, expires_at FROM analysis_cache WHERE cache_key = ? AND user_id = ?")
     .get(cacheKey, userId) as { snapshot_json: string; expires_at: string } | undefined;
@@ -51,7 +66,9 @@ function readCache(userId: string, cacheKey: string) {
     return null;
   }
   try {
-    return JSON.parse(row.snapshot_json) as ForecastSnapshot;
+    const snapshot = JSON.parse(row.snapshot_json) as ForecastSnapshot;
+    if (!snapshotIsCurrent(snapshot, draft)) return null;
+    return snapshot;
   } catch {
     return null;
   }
@@ -79,14 +96,14 @@ export async function runMeteredAnalysis(input: {
   ensureBillingSchema();
   ensureBasisSubscription(input.userId);
   const entitlement = getEntitlement(input.userId);
-  const cacheKey = cacheKeyFor(input.userId, input.draft);
+  const cacheKey = analysisCacheIdentity(input.userId, input.draft);
 
   if (input.idempotencyKey) {
     const prior = db()
       .prepare("SELECT cache_key FROM analysis_ledger WHERE user_id = ? AND idempotency_key = ?")
       .get(input.userId, input.idempotencyKey) as { cache_key: string } | undefined;
     if (prior) {
-      const cached = readCache(input.userId, prior.cache_key) ?? readCache(input.userId, cacheKey);
+      const cached = readCache(input.userId, prior.cache_key, input.draft) ?? readCache(input.userId, cacheKey, input.draft);
       if (cached) {
         return {
           ok: true,
@@ -100,7 +117,7 @@ export async function runMeteredAnalysis(input: {
     }
   }
 
-  const cached = readCache(input.userId, cacheKey);
+  const cached = readCache(input.userId, cacheKey, input.draft);
   if (cached) {
     return {
       ok: true,
@@ -109,18 +126,6 @@ export async function runMeteredAnalysis(input: {
       cacheHit: true,
       snapshot: cached,
       entitlement,
-    };
-  }
-
-  if (entitlement.remaining <= 0) {
-    return {
-      ok: false,
-      status: 402,
-      error: "Maandelijks analyselimiet bereikt. Opgeslagen plannen blijven beschikbaar; upgrade naar Pro voor meer analyses.",
-      booked: false,
-      consumed: 0,
-      entitlement,
-      next: "/account/abonnement",
     };
   }
 
@@ -138,9 +143,8 @@ export async function runMeteredAnalysis(input: {
     };
   }
 
-  writeCache(input.userId, cacheKey, snapshot);
-
-  if (!shouldConsume(snapshot)) {
+  if (!snapshotConsumesQuota(snapshot)) {
+    writeCache(input.userId, cacheKey, snapshot);
     return {
       ok: true,
       booked: false,
@@ -150,6 +154,20 @@ export async function runMeteredAnalysis(input: {
       entitlement: getEntitlement(input.userId),
     };
   }
+
+  if (quotaBlocksSnapshot(entitlement.remaining, true)) {
+    return {
+      ok: false,
+      status: 402,
+      error: "Maandelijks analyselimiet bereikt. Opgeslagen plannen blijven beschikbaar; upgrade naar Pro voor meer analyses.",
+      booked: false,
+      consumed: 0,
+      entitlement,
+      next: "/account/abonnement",
+    };
+  }
+
+  writeCache(input.userId, cacheKey, snapshot);
 
   const periodKey = calendarPeriodKey();
   const stamp = nowIso();

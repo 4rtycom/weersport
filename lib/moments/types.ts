@@ -16,6 +16,10 @@ export type PlannedMoment = {
   /** Optional last analysis age marker — never treated as live safety. */
   lastSnapshotAt: string | null;
   lastScoreLabel: string | null;
+  modelVersion: string | null;
+  spotId: string | null;
+  /** Stored advice from another model or spot. Opening it does not start a new analysis. */
+  archive: boolean;
 };
 
 export type SavedSearch = {

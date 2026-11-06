@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { ReturnLink } from "@/components/return-link";
+import { pageReturn } from "@/lib/navigation/page-return";
 
 export const metadata = { title: "Voorwaarden" };
 
-export default function TermsPage() {
+export default async function TermsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ van?: string }>;
+}) {
+  const params = await searchParams;
+  const back = await pageReturn(params.van);
   return (
     <>
       <section className="legal-hero">
@@ -20,7 +28,7 @@ export default function TermsPage() {
         <p>
           WeerSport is bedoeld voor locaties in Nederland. Een WeerSport-moment is een advies, geen veiligheidsgarantie.
         </p>
-        <Link href="/auth/registreren">Terug naar registreren</Link>
+        <ReturnLink href={back.href} label={back.label} />
       </main>
     </>
   );
