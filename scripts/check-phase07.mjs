@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { assertDisposableCheckTarget } from "../lib/auth/release-check.mjs";
 
 const required = [
   "lib/ads/policy.ts",
@@ -55,6 +56,8 @@ if (!base) {
   console.log("phase 07 static checks ok");
   process.exit(0);
 }
+
+assertDisposableCheckTarget(base);
 
 const jar = new Map();
 function storeCookies(response) {

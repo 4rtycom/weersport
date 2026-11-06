@@ -161,6 +161,33 @@ export function createPlannedMoment(
   return getPlannedMoment(userId, id)!;
 }
 
+export function updatePlannedMoment(
+  userId: string,
+  id: string,
+  patch: {
+    windowLabel?: string;
+    plannedStart?: string;
+    plannedEnd?: string;
+    note?: string;
+  },
+) {
+  ensureMomentsSchema();
+  const existing = getPlannedMoment(userId, id);
+  if (!existing) return null;
+  const windowLabel = patch.windowLabel?.trim().slice(0, 80) || existing.windowLabel;
+  const plannedStart = patch.plannedStart || existing.plannedStart;
+  const plannedEnd = patch.plannedEnd || existing.plannedEnd;
+  const note = typeof patch.note === "string" ? patch.note.slice(0, 240) : existing.note;
+  db()
+    .prepare(
+      `UPDATE planned_moments
+       SET window_label = ?, planned_start = ?, planned_end = ?, note = ?, updated_at = ?
+       WHERE user_id = ? AND id = ?`,
+    )
+    .run(windowLabel, plannedStart, plannedEnd, note, nowIso(), userId, id);
+  return getPlannedMoment(userId, id);
+}
+
 export function deletePlannedMoment(userId: string, id: string) {
   ensureMomentsSchema();
   const result = db().prepare("DELETE FROM planned_moments WHERE user_id = ? AND id = ?").run(userId, id);

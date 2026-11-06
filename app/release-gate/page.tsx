@@ -17,7 +17,7 @@ export default function ReleaseGatePage() {
           <h1>Niet alleen mooi. Aantoonbaar correct.</h1>
           <p>
             Release is geblokkeerd zolang P0 veiligheids-, betalings-, privacy- of authenticatieproblemen openstaan.
-            Figma <code>314:8</code> · Phase 08.
+            Figma <code>314:8</code> · Phase 08 matrix · Phase 7 evidence packs.
           </p>
         </div>
       </section>
@@ -46,21 +46,26 @@ export default function ReleaseGatePage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <p>Totdat opgelost: geen live release.</p>
+          <p>Totdat opgelost: geen live release. Productie-GO blijft menselijke review (Glenn).</p>
         </section>
 
         <section className="release-evidence-box" aria-labelledby="evidence-title">
-          <h2 id="evidence-title">Elke Cursor-fase levert bewijs</h2>
+          <h2 id="evidence-title">Phase 7 evidence & rollback</h2>
           <p>
-            Pull request / wijzigingslijst · Figma node-ID&apos;s · screenshots 390 en 1440 · tests + resultaten ·
-            bekende issues · rollbackplan · expliciete reviewbeslissing.
+            Per gate: commit, environment, datum, fixture/provider-ref, expected/actual, classificatie
+            (static / automated / manual_uat / untested), reviewer, open defects, GO/NO-GO.
           </p>
           <p className="release-status-lime">
-            Codefase 01–08: geautomatiseerde checks aanwezig · productie-GO blijft menselijke review
+            Geautomatiseerde checks ≠ browser-UAT. Visuele en AT-checks vullen de packs handmatig.
           </p>
           <p>
-            Bewijsdocument: <code>docs/phase08-release-gate.md</code> · <Link href="/support">support</Link> ·{" "}
-            <Link href="/api/health">/api/health</Link>.
+            Runbook: <code>docs/phase7-release-evidence.md</code> · packs:{" "}
+            <code>docs/phase7-evidence/</code> · kill switches via health{" "}
+            <code>checks.capabilities</code>.
+          </p>
+          <p>
+            Staging-only: <Link href="/ux-states">/ux-states</Link> · support voor klanten zonder
+            staging-diagnostics.
           </p>
         </section>
       </main>

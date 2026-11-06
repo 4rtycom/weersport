@@ -42,12 +42,21 @@ export function authUsesMailbox() {
 }
 
 export function assertDisposableCheckTarget(baseUrl: string | undefined) {
+  // Keep TS callers aligned with the plain-JS check helper used by scripts.
   if (!baseUrl) return;
   if (process.env.WEERSPORT_ALLOW_PROD_CHECK === "1") return;
-  const host = new URL(baseUrl).hostname;
-  if (host === "weersport.vercel.app") {
+  const host = new URL(baseUrl).hostname.toLowerCase();
+  const blocked = host === "weersport.vercel.app" || host === "weersport.nl" || host === "www.weersport.nl";
+  const loopback = host === "localhost" || host === "127.0.0.1" || host === "::1";
+  const allowlist = (process.env.WEERSPORT_CHECK_ALLOWLIST || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  const allowed =
+    loopback || allowlist.includes(host) || (host.endsWith(".vercel.app") && !blocked);
+  if (blocked || !allowed) {
     throw new Error(
-      "Refusing destructive checks against production. Set WEERSPORT_ALLOW_PROD_CHECK=1 only with explicit review.",
+      `Refusing destructive checks against non-allowlisted host "${host}". Use disposable staging only.`,
     );
   }
 }

@@ -281,9 +281,17 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   align-items: center;
   justify-content: center;
   flex: none;
+  overflow: hidden;
 }
 .icon-badge-lg { width: 56px; height: 56px; border-radius: 16px; }
-.sport-glyph { width: auto; display: block; }
+.sport-glyph {
+  display: block;
+  width: 24px;
+  height: 24px;
+  max-width: none;
+  object-fit: contain;
+  flex: none;
+}
 .sport-popover {
   position: absolute;
   z-index: 8;
@@ -357,8 +365,11 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   border-radius: 18px;
   background: var(--ws-surface-base);
   text-decoration: none;
+  color: var(--ws-text-primary);
 }
-.family-card strong { display: block; font-size: 16px; }
+.family-card .icon-badge { flex: none; }
+.family-card > span:nth-child(2) { min-width: 0; flex: 1; }
+.family-card strong { display: block; font-size: 16px; color: var(--ws-text-primary); }
 .family-card small { color: var(--ws-text-secondary); }
 
 .showcase { display: grid; gap: 22px; }
@@ -593,12 +604,16 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   border-radius: 18px;
   background: var(--ws-surface-base);
 }
+/* Spacer at end of page flow so fixed consent does not cover planner CTAs / icons. */
 .consent-reserve {
   height: 0;
+  pointer-events: none;
+}
+body:has(.consent-banner) {
+  padding-bottom: clamp(160px, 32vh, 260px);
 }
 body:has(.consent-banner) .consent-reserve {
-  /* Reserve space so the fixed banner does not cover planner fields on first visit. */
-  height: clamp(140px, 28vh, 220px);
+  height: 0;
 }
 .auth-edit-draft {
   display: inline-flex;

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { assertDisposableCheckTarget } from "../lib/auth/release-check.mjs";
 
 const required = [
   "lib/account/privacy.ts",
@@ -60,6 +61,8 @@ if (!base) {
   process.exit(0);
 }
 
+assertDisposableCheckTarget(base);
+
 const jar = new Map();
 function storeCookies(response) {
   const cookies = typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
@@ -117,8 +120,11 @@ if ((!release.includes("UI & RESPONSIVE") && !release.includes("UI &amp; RESPONS
 if (!release.includes("GO / NO-GO")) throw new Error("Release gate missing GO/NO-GO");
 
 const support = await (await request("/support")).text();
-if (!support.includes("Support") || !support.includes("/api/health")) {
+if (!support.includes("Support") || !support.includes("Terugbetalingen")) {
   throw new Error("Support page incomplete");
+}
+if (support.includes("/api/health") || support.includes("release-gate")) {
+  throw new Error("Support must not expose staging diagnostics (Phase 6/7)");
 }
 const refundPolicy = await (await request("/support/terugbetaling")).text();
 if (!refundPolicy.includes("Terugbetalingen")) throw new Error("Refund policy page missing");

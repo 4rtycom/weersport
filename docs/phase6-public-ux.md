@@ -33,6 +33,6 @@ Depends on Phases 0–5 for result/checkout states. **No deploy, DNS change or M
 
 ## Out of scope
 
-- Phase 7 staging UAT / controlled rollout
+- Phase 7 release evidence / rollback (separate PR)
 - Purchasing Mollie / opening live charges
 - Deploy / DNS / production indexing without Glenn

@@ -3,7 +3,12 @@ import { cookies } from "next/headers";
 import { accountFromSession } from "@/lib/auth/service";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
 import { parseDraft } from "@/lib/draft";
-import { createPlannedMoment, deletePlannedMoment, listPlannedMoments } from "@/lib/moments/store";
+import {
+  createPlannedMoment,
+  deletePlannedMoment,
+  listPlannedMoments,
+  updatePlannedMoment,
+} from "@/lib/moments/store";
 import { PHASE05_BOOKING } from "@/lib/moments/types";
 
 export const runtime = "nodejs";
@@ -52,6 +57,37 @@ export async function POST(request: Request) {
     lastSnapshotAt: typeof body?.lastSnapshotAt === "string" ? body.lastSnapshotAt : null,
     lastScoreLabel: typeof body?.lastScoreLabel === "string" ? body.lastScoreLabel : null,
   });
+  return NextResponse.json({ moment, ...PHASE05_BOOKING });
+}
+
+export async function PATCH(request: Request) {
+  const auth = await requireAccount();
+  if ("error" in auth) return auth.error;
+  const body = (await request.json().catch(() => null)) as {
+    id?: string;
+    windowLabel?: string;
+    plannedStart?: string;
+    plannedEnd?: string;
+    note?: string;
+  } | null;
+  if (!body?.id) {
+    return NextResponse.json({ error: "Sportmoment-id ontbreekt.", ...PHASE05_BOOKING }, { status: 400 });
+  }
+  if (body.plannedStart && Number.isNaN(Date.parse(body.plannedStart))) {
+    return NextResponse.json({ error: "Ongeldige geplande start.", ...PHASE05_BOOKING }, { status: 400 });
+  }
+  if (body.plannedEnd && Number.isNaN(Date.parse(body.plannedEnd))) {
+    return NextResponse.json({ error: "Ongeldige geplande eindtijd.", ...PHASE05_BOOKING }, { status: 400 });
+  }
+  const moment = updatePlannedMoment(auth.account.id, body.id, {
+    windowLabel: body.windowLabel,
+    plannedStart: body.plannedStart,
+    plannedEnd: body.plannedEnd,
+    note: body.note,
+  });
+  if (!moment) {
+    return NextResponse.json({ error: "Sportmoment niet gevonden.", ...PHASE05_BOOKING }, { status: 404 });
+  }
   return NextResponse.json({ moment, ...PHASE05_BOOKING });
 }
 
