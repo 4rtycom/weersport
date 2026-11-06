@@ -29,4 +29,9 @@ for (const token of ["--ws-surface-dark", "--ws-accent-action", "--ws-accent-min
 }
 if (!css.includes("min-height: 44px")) throw new Error("Touch target size is missing");
 
+const sportIcon = readFileSync(new URL("../components/sport-icon.tsx", import.meta.url), "utf8");
+if (!sportIcon.includes("width={size}") || !sportIcon.includes("height={size}")) {
+  throw new Error("SportIcon must set explicit width and height so glyphs cannot collapse");
+}
+
 console.log("Phase 01 checks passed: 24 sports, assets, tokens, touch targets.");
