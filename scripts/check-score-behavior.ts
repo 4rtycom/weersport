@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { decideAdPlacement } from "@/lib/ads/policy";
 import { analysisCacheIdentity, quotaBlocksSnapshot, snapshotConsumesQuota, snapshotIsCurrent } from "@/lib/billing/analysis";
-import type { ForecastSnapshot, WeatherHour } from "@/lib/data/types";
+import type { ForecastSnapshot, SourceObservation, WaterBundle, WeatherBundle, WeatherHour } from "@/lib/data/types";
 import { parseDraft } from "@/lib/draft";
 import { createPlannedMoment } from "@/lib/moments/store";
 import { scoreSportHours } from "@/lib/scoring/engine";
@@ -84,6 +84,10 @@ for (const sport of sports) {
   assert.equal(profile.personalAdvice, false);
   assert.equal(profile.releaseStatus, "withheld");
   assert.match(profile.modelVersion, /v1/);
+  assert.ok(profile.requiredFields.length > 0);
+  assert.ok(profile.blocks.some((block) => block.applied));
+  if (sport.id === "openwaterzwemmen") assert.equal(profile.gate, null);
+  else assert.ok(profile.gate);
 }
 assert.equal(Object.keys(sportProfiles).length, 24);
 
@@ -359,6 +363,285 @@ function fakeSnapshot(suitability: ForecastSnapshot["suitability"], sportId: str
     suitability,
     sources: [],
   };
+}
+
+const STATION = "station-fixture";
+
+function observation<T>(value: T | null, patch?: Partial<SourceObservation<T>>): SourceObservation<T> {
+  return {
+    sourceId: "fixture-source",
+    sourceLabel: "Gelabelde fixturebron",
+    status: value === null ? "NOT_LINKED" : "READY",
+    rightsNote: "Alleen voor deze test.",
+    coverageNote: "Gelabelde fixture.",
+    publishedAt: "2026-06-15T07:00:00.000Z",
+    receivedAt: "2026-06-15T07:05:00.000Z",
+    validUntil: "2026-06-15T12:00:00.000Z",
+    locationLabel: "Fixture",
+    demo: true,
+    value,
+    message: "fixture",
+    ...patch,
+  };
+}
+
+function waterBundle(partial: Partial<WaterBundle> = {}): WaterBundle {
+  return {
+    waterTemperatureC: null,
+    waveHeightM: null,
+    currentMs: null,
+    currentDirectionDeg: null,
+    waterKind: null,
+    exposure: null,
+    tideTime: null,
+    stationId: STATION,
+    ...partial,
+  };
+}
+
+function samplePair(field: "waterTemperatureC" | "waveHeightM" | "currentMs" | "currentDirectionDeg"): [number, number] {
+  if (field === "waterTemperatureC") return [14, 22];
+  if (field === "currentMs") return [0.2, 0.8];
+  if (field === "currentDirectionDeg") return [40, 220];
+  return [0.4, 1.6];
+}
+
+function invalidSample(field: "waterTemperatureC" | "waveHeightM" | "currentMs" | "currentDirectionDeg") {
+  if (field === "waterTemperatureC") return 80;
+  if (field === "currentDirectionDeg") return 360;
+  return -1;
+}
+
+const calmHours = weather(NOW, 48, { temperatureC: -2, windKmh: 8, precipitationProbability: 5, uvIndex: 1 });
+const harshHours = weather(NOW, 48, { temperatureC: 31, windKmh: 45, precipitationProbability: 90, uvIndex: 8 });
+const calmWeather: SourceObservation<WeatherBundle> = observation({
+  temperatureC: -2,
+  windKmh: 8,
+  precipitationProbability: 5,
+  hours: calmHours,
+});
+const harshWeather: SourceObservation<WeatherBundle> = observation({
+  temperatureC: 31,
+  windKmh: 45,
+  precipitationProbability: 90,
+  hours: harshHours,
+});
+
+for (const sport of sports) {
+  const profile = getScoreProfile(sport.id);
+  if (sport.id === "openwaterzwemmen") {
+    assert.equal(profile.requiredFields.some((field) => field.id === "waterTemperature" && field.measurable), true);
+    assert.notEqual(cool.reason, missingTemp.reason);
+    assert.equal(snapshotConsumesQuota(fakeSnapshot(cool, sport.id)), false);
+    continue;
+  }
+  const gate = profile.gate;
+  if (!gate) throw new Error(`${sport.id} mist een poort`);
+  const distracted = {
+    weather: harshWeather,
+    warnings: observation({ items: [{ title: "Onweer", detail: "Gelabelde fixture, geen bliksemcode." }] }),
+    swim: observation({ advice: "zwemverbod", quality: "negatief", spotId: SPOT, spotLabel: "Fixture" }),
+    linkedStationId: null as string | null,
+  };
+  if (gate.kind === "unmeasured") {
+    const blocked = scoreSportHours({
+      sportId: sport.id,
+      hours: calmHours,
+      now: NOW,
+      placeId: PLACE,
+      sources: { weather: calmWeather, linkedStationId: null },
+    });
+    const stillBlocked = scoreSportHours({
+      sportId: sport.id,
+      hours: harshHours,
+      now: NOW,
+      placeId: PLACE,
+      sources: distracted,
+    });
+    assert.equal(blocked.kind, "NO_SCORE");
+    assert.equal(stillBlocked.kind, "NO_SCORE");
+    if (blocked.kind !== "NO_SCORE" || stillBlocked.kind !== "NO_SCORE") throw new Error(sport.id);
+    assert.equal(blocked.reason, gate.blockedReason);
+    assert.equal(stillBlocked.reason, gate.blockedReason);
+    assert.equal(blocked.blocked, true);
+    assert.equal(blocked.measurements?.length ?? 0, 0);
+    assert.equal(JSON.stringify(blocked).includes("peakWindow"), false);
+    assert.equal(blocked.horizon?.requestedHours, 48);
+    assert.equal(snapshotConsumesQuota(fakeSnapshot(blocked, sport.id)), false);
+    assert.equal(snapshotConsumesQuota(fakeSnapshot(stillBlocked, sport.id)), false);
+    if (sport.id === "kitesurfen") {
+      assert.equal(profile.requiredFields.find((item) => item.field === "tideTime")?.required, false);
+      assert.equal(blocked.missing?.includes("getij"), false);
+      assert.equal(stillBlocked.missing?.includes("getij"), false);
+      assert.equal(blocked.missing?.includes("windrichting"), true);
+      assert.equal(blocked.missing?.includes("lanceerzijde"), true);
+    }
+    if (gate.tideReason) {
+      const tide = scoreSportHours({
+        sportId: sport.id,
+        hours: calmHours,
+        now: NOW,
+        placeId: PLACE,
+        sources: {
+          water: observation(waterBundle({ tideTime: "2026-06-15T09:30:00.000Z" })),
+          linkedStationId: STATION,
+        },
+      });
+      assert.equal(tide.kind, "NO_SCORE");
+      if (tide.kind !== "NO_SCORE") throw new Error(sport.id);
+      assert.equal(tide.reason, gate.tideReason);
+      assert.notEqual(tide.reason, blocked.reason);
+      assert.equal(tide.blocked, true);
+      assert.equal(snapshotConsumesQuota(fakeSnapshot(tide, sport.id)), false);
+      if (sport.id === "kitesurfen" && tide.kind === "NO_SCORE") {
+        assert.equal(tide.missing?.includes("windrichting"), true);
+        assert.equal(tide.missing?.includes("lanceerzijde"), true);
+      }
+    }
+    continue;
+  }
+
+  const [low, high] = samplePair(gate.field);
+  const absent = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    placeId: PLACE,
+    sources: { weather: calmWeather, water: observation<WaterBundle>(null), linkedStationId: STATION },
+  });
+  const present = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    placeId: PLACE,
+    sources: {
+      ...distracted,
+      water: observation(waterBundle({ [gate.field]: low })),
+      linkedStationId: STATION,
+    },
+  });
+  const sameWater = scoreSportHours({
+    sportId: sport.id,
+    hours: harshHours,
+    now: NOW,
+    placeId: PLACE,
+    sources: {
+      weather: harshWeather,
+      water: observation(waterBundle({ [gate.field]: low })),
+      linkedStationId: STATION,
+    },
+  });
+  const otherValue = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    placeId: PLACE,
+    sources: {
+      water: observation(waterBundle({ [gate.field]: high })),
+      linkedStationId: STATION,
+    },
+  });
+  assert.equal(absent.kind, "NO_SCORE");
+  assert.equal(present.kind, "NO_SCORE");
+  assert.equal(sameWater.kind, "NO_SCORE");
+  assert.equal(otherValue.kind, "NO_SCORE");
+  if (absent.kind !== "NO_SCORE" || present.kind !== "NO_SCORE" || sameWater.kind !== "NO_SCORE" || otherValue.kind !== "NO_SCORE") {
+    throw new Error(sport.id);
+  }
+  assert.equal(absent.reason, gate.blockedReason);
+  assert.equal(present.reason, gate.recordedReason);
+  assert.notEqual(absent.reason, present.reason);
+  assert.equal(sameWater.reason, present.reason);
+  assert.equal(otherValue.reason, present.reason);
+  assert.equal(present.blocked, true);
+  assert.equal(JSON.stringify(present).includes("peakWindow"), false);
+  const lowDisplay = present.measurements?.find((item) => item.id === gate.field)?.display;
+  const sameDisplay = sameWater.measurements?.find((item) => item.id === gate.field)?.display;
+  const highDisplay = otherValue.measurements?.find((item) => item.id === gate.field)?.display;
+  assert.ok(lowDisplay);
+  assert.equal(lowDisplay, sameDisplay);
+  assert.notEqual(lowDisplay, highDisplay);
+  assert.equal(present.horizon?.requestedHours, 48);
+  assert.equal(snapshotConsumesQuota(fakeSnapshot(absent, sport.id)), false);
+  assert.equal(snapshotConsumesQuota(fakeSnapshot(present, sport.id)), false);
+
+  const otherStation = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    sources: {
+      water: observation(waterBundle({ [gate.field]: low, stationId: "ander-meetpunt" })),
+      linkedStationId: STATION,
+    },
+  });
+  assert.equal(otherStation.kind, "NO_SCORE");
+  if (otherStation.kind === "NO_SCORE") assert.match(otherStation.reason, /ander meetpunt/);
+
+  const expired = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    sources: {
+      water: observation(waterBundle({ [gate.field]: low }), { validUntil: "2026-06-15T07:00:00.000Z" }),
+      linkedStationId: STATION,
+    },
+  });
+  assert.equal(expired.kind, "NO_SCORE");
+  if (expired.kind === "NO_SCORE") assert.match(expired.reason, /verlopen/);
+
+  const noLocation = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    sources: {
+      water: observation(waterBundle({ [gate.field]: low, stationId: null })),
+      linkedStationId: STATION,
+    },
+  });
+  assert.equal(noLocation.kind, "NO_SCORE");
+  if (noLocation.kind === "NO_SCORE") assert.match(noLocation.reason, /locatie-id/);
+
+  const invalid = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    sources: {
+      water: observation(waterBundle({ [gate.field]: invalidSample(gate.field) })),
+      linkedStationId: STATION,
+    },
+  });
+  assert.equal(invalid.kind, "NO_SCORE");
+  if (invalid.kind === "NO_SCORE") assert.match(invalid.reason, /geen geldige meting/);
+
+  const partial = scoreSportHours({
+    sportId: sport.id,
+    hours: calmHours,
+    now: NOW,
+    sources: {
+      water: observation(waterBundle({ [gate.field]: low }), { status: "PARTIAL" }),
+      linkedStationId: STATION,
+    },
+  });
+  assert.equal(partial.kind, "NO_SCORE");
+  if (partial.kind === "NO_SCORE") assert.match(partial.reason, /dekking/);
+  assert.equal(snapshotConsumesQuota(fakeSnapshot(partial, sport.id)), false);
+
+  if (gate.tideReason) {
+    const tide = scoreSportHours({
+      sportId: sport.id,
+      hours: calmHours,
+      now: NOW,
+      sources: {
+        water: observation(waterBundle({ tideTime: "2026-06-15T09:30:00.000Z" })),
+        linkedStationId: STATION,
+      },
+    });
+    assert.equal(tide.kind, "NO_SCORE");
+    if (tide.kind === "NO_SCORE") {
+      assert.equal(tide.reason, gate.tideReason);
+      assert.notEqual(tide.reason, present.reason);
+    }
+  }
 }
 
 const scores = new Map<number, number>();

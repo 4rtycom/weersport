@@ -1,6 +1,7 @@
 import type { SuitabilityOutcome, WeatherHour } from "@/lib/data/types";
 import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
 import { getScoreProfile, sportProfiles } from "@/lib/scoring/profiles";
+import { assessCharacteristic, type SportSources } from "@/lib/scoring/sport-gates";
 import { assessOpenWater, type SwimAssessmentInput } from "@/lib/scoring/swim";
 import { horizonFor, selectUsableHours } from "@/lib/scoring/windows";
 
@@ -22,6 +23,8 @@ export function scoreSportHours(input: {
   spotId?: string | null;
   now?: Date;
   swim?: SwimAssessmentInput | null;
+  /** Same bundles as the forecast snapshot. They are not a three-factor fallback. */
+  sources?: SportSources | null;
 }): SuitabilityOutcome {
   const profile = getScoreProfile(input.sportId);
   const now = input.now ?? new Date();
@@ -51,31 +54,29 @@ export function scoreSportHours(input: {
     );
   }
 
-  const withheld: SuitabilityOutcome = {
-    kind: "NO_SCORE",
-    modelVersion: profile.modelVersion,
-    reason: profile.withheldReason,
-    missing: profile.missing,
-    blocked: true,
-    measurements: [],
-  };
-  if (ICE_CRITICAL_SPORTS.has(input.sportId)) {
-    return withHorizon(
-      {
-        ...withheld,
-        reason:
-          "Natuurijs wordt nooit veilig verklaard op basis van luchttemperatuur alleen. IJsdata ontbreekt → NO_SCORE.",
-      },
-      input.hours,
-      now,
-    );
+  const assessment = assessCharacteristic({ profile, now, sources: input.sources ?? null });
+  if (ICE_CRITICAL_SPORTS.has(input.sportId) && !assessment.reason.toLowerCase().includes("natuurijs")) {
+    throw new Error("Schaatsen moet Natuurijs noemen en NO_SCORE blijven");
   }
-
   if (WATER_CRITICAL_SPORTS.has(input.sportId)) {
-    return withHorizon(withheld, input.hours, now);
+    const gate = profile.gate;
+    const readsWater = gate?.kind === "water" || (gate?.kind === "unmeasured" && gate.tideReason !== null);
+    if (!readsWater) {
+      throw new Error(`${input.sportId} is een watersport zonder waterpoort`);
+    }
   }
-
-  return withHorizon(withheld, input.hours, now);
+  return withHorizon(
+    {
+      kind: "NO_SCORE",
+      modelVersion: assessment.modelVersion,
+      reason: assessment.reason,
+      missing: assessment.missing,
+      blocked: assessment.blocked,
+      measurements: assessment.measurements,
+    },
+    input.hours,
+    now,
+  );
 }
 
 export function getSportMeta(sportId: string) {
