@@ -13,22 +13,32 @@ export default async function AuthGatePage() {
 
   return (
     <AuthShell>
-      <p className="auth-eyebrow">01 / Authenticatie bij zoeken</p>
-      <h1>Je sportmoment staat klaar.</h1>
-      <p className="auth-lead">Log in of maak een account om jouw weersanalyse te bekijken.</p>
+      <p className="auth-eyebrow">Accountstap</p>
+      <h1>{draft ? "Je zoekopdracht is bewaard" : "Je sportmoment staat klaar."}</h1>
+      <p className="auth-lead">
+        {draft
+          ? "Log in of maak een gratis account. Er is nog geen analyse gestart."
+          : "Log in of maak een account om jouw weersanalyse te bekijken."}
+      </p>
       <div className="auth-draft">
-        <p>Je zoekopdracht blijft bewaard</p>
+        <p>{draft ? "Bewaarde zoekopdracht" : "Nog geen zoekopdracht"}</p>
         {draft ? (
           <>
             <strong>{draft.sportName}</strong>
             <span>
               {draft.placeLabel} · {draft.period}
             </span>
+            <Link className="auth-edit" href="/#planner">
+              Wijzig zoekopdracht
+            </Link>
           </>
         ) : (
           <>
-            <strong>Nog geen zoekopdracht</strong>
-            <span>Kies eerst een sport en een Nederlandse plaats.</span>
+            <strong>Kies eerst een sport en een Nederlandse plaats</strong>
+            <span>De planner op de homepage start nog geen analyse.</span>
+            <Link className="auth-edit" href="/#planner">
+              Naar de planner
+            </Link>
           </>
         )}
       </div>

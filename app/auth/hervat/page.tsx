@@ -13,10 +13,10 @@ export default async function ResumePage() {
 
   return (
     <AuthShell>
-      <p className="auth-eyebrow">Account / resume</p>
-      <h1>Je bent ingelogd!</h1>
+      <p className="auth-eyebrow">Accountstap</p>
+      <h1>{draft ? "Je zoekopdracht is bewaard" : "Je bent ingelogd!"}</h1>
       <p className="auth-lead">
-        {draft ? "Je bewaarde zoekopdracht staat klaar." : "Er is nog geen bewaarde zoekopdracht."}
+        {draft ? "Er is nog geen analyse gestart." : "Er is nog geen bewaarde zoekopdracht."}
       </p>
       <div className="auth-draft auth-draft-tall">
         <p>Account geverifieerd · Basis</p>
@@ -24,6 +24,9 @@ export default async function ResumePage() {
           <>
             <strong>{`${draft.sportName} in ${draft.placeLabel}`}</strong>
             <span>{draft.period} · bewaarde zoekvoorkeuren</span>
+            <Link className="auth-edit" href="/#planner">
+              Wijzig zoekopdracht
+            </Link>
           </>
         ) : (
           <>

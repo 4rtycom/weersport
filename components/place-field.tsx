@@ -20,23 +20,34 @@ export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
 
   useEffect(() => {
     const needle = label.trim();
+    // Drop the previous suggestion list immediately so a slow response cannot linger.
+    setPlaces([]);
+    setActive(0);
     if (needle.length < 2) {
-      setPlaces([]);
+      setStatus("");
       return;
     }
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/plaatsen?q=${encodeURIComponent(needle)}`);
+        const response = await fetch(`/api/plaatsen?q=${encodeURIComponent(needle)}`, {
+          signal: controller.signal,
+        });
         const data = (await response.json()) as { places?: Place[]; error?: string };
+        if (controller.signal.aborted) return;
         setPlaces(data.places ?? []);
         setActive(0);
         setStatus(data.error ?? "");
-      } catch {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
         setPlaces([]);
         setStatus("De Nederlandse plaatscontrole is nu niet bereikbaar.");
       }
     }, 180);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [label]);
 
   useEffect(() => {
@@ -63,6 +74,7 @@ export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
+          aria-activedescendant={open && places[active] ? `${listId}-option-${active}` : undefined}
           value={label}
           autoComplete="off"
           onChange={(event) => {
@@ -94,6 +106,7 @@ export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
             <li key={place.id}>
               <button
                 type="button"
+                id={`${listId}-option-${index}`}
                 role="option"
                 aria-selected={place.id === placeId || index === active}
                 className="place-option"
@@ -107,7 +120,11 @@ export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
           ))}
         </ul>
       ) : null}
-      {status ? <p className="place-status">{status}</p> : null}
+      {status ? (
+        <p className="place-status" role="status">
+          {status}
+        </p>
+      ) : null}
     </div>
   );
 }
