@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SponsoringForm } from "@/components/sponsoring-form";
+import { SponsoringRunningPreview } from "@/components/sponsoring-running-preview";
 import styles from "./partners.module.css";
 
 export const metadata: Metadata = {
@@ -21,25 +22,29 @@ export default function SponsoringPage() {
               <p className="eyebrow eyebrow-mint">WeerSport voor partners</p>
               <h1>In beeld vóór de eerste kilometer.</h1>
               <p className={styles.lead}>Een wielrenner checkt de wind. Een hardloper zoekt een droog uur. Op WeerSport kan je merk zichtbaar zijn terwijl sporters hun training plannen.</p>
-              <a className="button button-lime" href="#aanvraag">Bespreek een samenwerking <span aria-hidden="true">↗</span></a>
+              <div className={styles.actions}>
+                <a className="button button-lime" href="#aanvraag">Bespreek een samenwerking <span aria-hidden="true">↗</span></a>
+                <a className={styles.textLink} href="#voorbeeld">Bekijk een voorbeeld ↓</a>
+              </div>
             </div>
             <figure className={styles.photo}>
-              <Image src="/home/hero.png" alt="Wielrenner op een slingerend fietspad door de duinen" width={1024} height={1024} priority sizes="(min-width: 800px) 46vw, 100vw" />
-              <figcaption>Wielrennen <span>Wind aan de kust</span></figcaption>
+              <Image
+                src="/sponsoring/hardlopen-heide.png"
+                alt="Twee hardlopers op een nat zandpad door de heide, met ochtendlicht onder een openbrekend wolkendek."
+                width={1536}
+                height={1024}
+                priority
+                sizes="(max-width: 760px) calc(100vw - 40px), 530px"
+              />
             </figure>
           </div>
         </section>
-        <section className={styles.split} aria-labelledby="voorbeeld">
-          <div>
-            <p className="eyebrow">Voorbeeld van een plaatsing</p>
-            <h2 id="voorbeeld">Zo komt je merk in beeld.</h2>
-            <p>Een fietser bekijkt het weer voor een duinrit. Onder het advies kan een fietsenwinkel uit de regio zich voorstellen. Het label ‘Gesponsord’ maakt direct duidelijk wie de afzender is.</p>
+        <section className={styles.example} id="voorbeeld" aria-labelledby="voorbeeld-kop">
+          <div className={styles.exampleIntro}>
+            <h2 id="voorbeeld-kop">Zo ziet een hardloper jouw merk</h2>
+            <p>In dit voorbeeld bekijkt een hardloper het weer in Ede. Onder het sportadvies is ruimte voor een lokale hardloopwinkel.</p>
           </div>
-          <figure className={styles.preview}>
-            <figcaption>Illustratief voorbeeld · Wielrennen</figcaption>
-            <div className={styles.forecast}><strong>Je rit door de duinen</strong><p>Op de terugweg heb je tegenwind. Houd daar rekening mee bij het kiezen van je route.</p></div>
-            <div className={styles.placement}><small>Gesponsord</small><strong>Jouw fietsenwinkel</strong><p>Van een lekke band tot een voorjaarsbeurt. Onze werkplaats helpt je weer op weg.</p></div>
-          </figure>
+          <SponsoringRunningPreview />
         </section>
         <section className={styles.rules}>
           <div className={styles.split}>

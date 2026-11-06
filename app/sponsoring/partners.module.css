@@ -25,19 +25,115 @@
 .split p { line-height: 1.65; }
 .split p + p { margin-top: 14px; }
 .lead { color: #d9e8e7; max-width: 48ch; margin-bottom: 30px; }
-.hero a { gap: 14px; }
-.photo { margin: 0; position: relative; }
-.photo img { width: 100%; aspect-ratio: 1.2; object-fit: cover; display: block; border-radius: 20px; }
-.photo figcaption { position: absolute; bottom: 16px; left: 16px; background: var(--ws-surface-dark); padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; }
-.photo figcaption span { margin-left: 10px; color: var(--ws-accent-mint); font-weight: 400; }
-.preview { margin: 0; padding: clamp(18px, 3vw, 40px); background: #e4eeea; border-radius: 20px; }
-.preview figcaption { margin-bottom: 16px; font-size: 13px; font-weight: 700; }
-.forecast, .placement { padding: 20px; border-radius: 12px; }
-.forecast { background: white; }
-.placement { margin-top: 10px; background: var(--ws-sponsor); border: 1px solid #b6d8db; }
-.preview strong, .preview small { display: block; }
-.preview small { font-weight: 700; margin-bottom: 8px; }
-.preview p { margin-top: 6px; font-size: 15px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
+.actions a { gap: 14px; }
+.textLink {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+.photo { margin: 0; }
+.photo img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1536 / 1024;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 20px;
+}
+.example {
+  width: min(calc(100% - 40px), 1160px);
+  margin-inline: auto;
+  padding-block: clamp(48px, 7vw, 96px);
+  scroll-margin-top: 20px;
+}
+.exampleIntro { max-width: 40rem; margin-bottom: 28px; }
+.exampleIntro p { line-height: 1.65; margin-top: 8px; }
+.preview {
+  margin: 0;
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  padding: 12px;
+  background: #e7f0ec;
+  border-radius: 28px;
+}
+.result { display: grid; gap: 12px; min-width: 0; }
+.preview :global(.moment-hero) h3 {
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.preview :global(.moment-hero) a {
+  display: inline-block;
+  margin-top: 8px;
+  color: white;
+  font-weight: 700;
+}
+.preview :global(.moment-card) .demoLabel {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff2ce;
+  color: #72540e;
+  font-size: 14px;
+  font-weight: 800;
+}
+.preview :global(.score-value) { color: var(--ws-text-primary); }
+.preview :global(.score-badge-goed) { color: #165730; }
+.preview :global(.score-badge-matig) { color: #72540e; }
+.preview :global(.score-badge-slecht) { color: #8e3427; }
+.preview :global(.score-peak) strong { color: var(--ws-text-primary); font-size: 22px; }
+.advice { min-width: 0; }
+.partner {
+  margin: 4px 0 0;
+  padding: 18px 20px 16px;
+  border-radius: 16px;
+  background: var(--ws-sponsor);
+  border: 1px solid #9ec9cc;
+  color: var(--ws-text-primary);
+}
+.partner .sponsored {
+  display: inline-flex;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: white;
+  color: var(--ws-teal);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.partner .shop {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ws-text-primary);
+}
+.partner h3 {
+  margin-top: 8px;
+  max-width: 28ch;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ws-text-primary);
+}
+.partner p { margin-top: 8px; max-width: 62ch; font-size: 15px; line-height: 1.55; color: var(--ws-text-primary); }
+.partner .fictional {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #b7d5d7;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ws-teal);
+}
 .rules { background: var(--ws-accent-mint); }
 .form { min-width: 0; padding: clamp(20px, 3vw, 40px); border: 1px solid var(--ws-line); border-radius: 20px; background: white; }
 .form form { gap: 16px; margin: 0 0 16px; }
@@ -47,6 +143,6 @@
 .footer .wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding-block: 28px; }
 .footer a:first-child { margin-right: auto; font-weight: 800; }
 @media (max-width: 760px) {
-  .split { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .photo img { aspect-ratio: 1.7; }
+  .split, .preview { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .preview { gap: 16px; }
 }
