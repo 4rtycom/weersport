@@ -8,9 +8,12 @@ type PlaceFieldProps = {
   label: string;
   placeId: string;
   onChange: (next: { label: string; placeId: string }) => void;
+  inputId?: string;
+  invalid?: boolean;
+  describedBy?: string;
 };
 
-export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
+export function PlaceField({ label, placeId, onChange, inputId = "locatie", invalid = false, describedBy }: PlaceFieldProps) {
   const [open, setOpen] = useState(false);
   const [places, setPlaces] = useState<Place[]>([]);
   const [active, setActive] = useState(0);
@@ -57,12 +60,14 @@ export function PlaceField({ label, placeId, onChange }: PlaceFieldProps) {
       <div className="text-field">
         <span aria-hidden="true">⌖</span>
         <input
-          id="locatie"
-          name="locatie"
+          id={inputId}
+          name={inputId}
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           value={label}
           autoComplete="off"
           onChange={(event) => {

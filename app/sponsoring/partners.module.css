@@ -28,7 +28,7 @@
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
 .actions a { gap: 14px; }
 .textLink {
-  color: rgba(255, 255, 255, 0.82);
+  color: #ffffff;
   font-size: 15px;
   font-weight: 600;
   text-decoration: underline;
@@ -45,11 +45,13 @@
   display: block;
   border-radius: 20px;
 }
+.example, .price, .split {
+  scroll-margin-top: 24px;
+}
 .example {
   width: min(calc(100% - 40px), 1160px);
   margin-inline: auto;
   padding-block: clamp(48px, 7vw, 96px);
-  scroll-margin-top: 20px;
 }
 .exampleIntro { max-width: 40rem; margin-bottom: 28px; }
 .exampleIntro p { line-height: 1.65; margin-top: 8px; }
@@ -91,49 +93,48 @@
 .preview :global(.score-badge-slecht) { color: #8e3427; }
 .preview :global(.score-peak) strong { color: var(--ws-text-primary); font-size: 22px; }
 .advice { min-width: 0; }
-.partner {
-  margin: 4px 0 0;
-  padding: 18px 20px 16px;
-  border-radius: 16px;
-  background: var(--ws-sponsor);
-  border: 1px solid #9ec9cc;
-  color: var(--ws-text-primary);
+.price {
+  width: min(calc(100% - 40px), 1160px);
+  margin-inline: auto;
+  padding-bottom: clamp(24px, 5vw, 64px);
 }
-.partner .sponsored {
-  display: inline-flex;
-  margin: 0;
-  padding: 4px 8px;
-  border-radius: 999px;
+.priceCard {
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: 28px;
   background: white;
-  color: var(--ws-teal);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-.partner .shop {
-  margin: 12px 0 0;
-  font-size: 15px;
-  font-weight: 800;
+  border: 1px solid var(--ws-line);
   color: var(--ws-text-primary);
 }
-.partner h3 {
-  margin-top: 8px;
-  max-width: 28ch;
-  font-size: 22px;
-  line-height: 1.25;
+.priceCard h2 { max-width: 16ch; }
+.priceAmount {
+  margin: 8px 0 16px;
+  font-size: clamp(32px, 4vw, 48px);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: var(--ws-text-primary);
 }
-.partner p { margin-top: 8px; max-width: 62ch; font-size: 15px; line-height: 1.55; color: var(--ws-text-primary); }
-.partner .fictional {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #b7d5d7;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--ws-teal);
+.priceCard ul {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
 }
+.priceCard li { font-weight: 700; }
+.priceCard p { max-width: 62ch; line-height: 1.6; }
+.priceActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 22px;
+  margin-top: 22px;
+}
+.priceLink {
+  color: var(--ws-text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+.priceNote { margin-top: 14px; font-size: 14px; }
 .rules { background: var(--ws-accent-mint); }
 .form { min-width: 0; padding: clamp(20px, 3vw, 40px); border: 1px solid var(--ws-line); border-radius: 20px; background: white; }
 .form form { gap: 16px; margin: 0 0 16px; }

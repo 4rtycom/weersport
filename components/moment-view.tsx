@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { SaveActions } from "@/components/account/save-actions";
 import { AdsHost } from "@/components/ads/ads-host";
+import { SponsorMeasure } from "@/components/sponsor-measure";
 import { SiteHeader } from "@/components/site-header";
 import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
 import type { AdDecision } from "@/lib/ads/policy";
+import type { SponsorCreative } from "@/lib/sponsoring/placement";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { getSportMeta } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
@@ -41,12 +43,14 @@ export function MomentView({
   entitlement = null,
   booking = null,
   ads = null,
+  sponsor = null,
 }: {
   snapshot: ForecastSnapshot;
   accountName: string;
   entitlement?: { plan: string; used: number; limit: number; remaining: number } | null;
   booking?: { booked: boolean; consumed: number; cacheHit: boolean } | null;
   ads?: { decision: AdDecision; scriptEnabled: boolean } | null;
+  sponsor?: { mode: "show" | "eligible"; creative: SponsorCreative } | null;
 }) {
   const sport = findSport(snapshot.sportId);
   const meta = getSportMeta(snapshot.sportId);
@@ -266,6 +270,7 @@ export function MomentView({
           </ul>
         </section>
 
+        {sponsor ? <SponsorMeasure creative={sponsor.creative} mode={sponsor.mode} /> : null}
         {ads ? (
           <AdsHost
             decision={ads.decision}

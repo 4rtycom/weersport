@@ -1722,6 +1722,87 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .sponsor-errors ul { margin-top: 8px; padding-left: 18px; list-style: disc; }
 .sponsor-success { margin: 20px 0 28px; padding: 16px; border-radius: 16px; background: var(--ws-surface-base); }
 .sponsor-success h2 { margin-bottom: 8px; }
+.sponsor-intent {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+.sponsor-intent legend {
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sponsor-intent label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 700;
+}
+.sponsor-intent input { width: 18px; height: 18px; accent-color: #0b2530; }
+.sponsor-placement {
+  margin: 4px 0 0;
+  padding: 18px 20px 16px;
+  border-radius: 16px;
+  background: var(--ws-sponsor);
+  border: 1px solid #9ec9cc;
+  color: var(--ws-text-primary);
+}
+.sponsor-placement-kicker {
+  display: inline-flex;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: white;
+  color: #0b2530;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.sponsor-placement-partner {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0b2530;
+}
+.sponsor-placement h3 {
+  margin-top: 8px;
+  max-width: 28ch;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0b2530;
+}
+.sponsor-placement p {
+  margin-top: 8px;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #0b2530;
+}
+.sponsor-placement a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 8px;
+  color: #0b2530;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.sponsor-placement-note {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #9ec9cc;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0b2530;
+}
 .sponsor-honeypot {
   position: absolute;
   width: 1px;

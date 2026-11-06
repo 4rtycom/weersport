@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { MomentView } from "@/components/moment-view";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
 import { resolveAdPlacement } from "@/lib/ads/server";
+import { resolveSponsorSlot } from "@/lib/sponsoring/placement";
 import { runMeteredAnalysis } from "@/lib/billing/analysis";
 import { saveDraft } from "@/lib/auth/service";
 
@@ -52,13 +53,44 @@ export default async function MomentPage() {
     suitabilityKind: result.snapshot.suitability.kind,
     userId: account.id,
   });
+  let sponsor: ReturnType<typeof resolveSponsorSlot> = { mode: "none", reason: "error" };
+  try {
+    sponsor = resolveSponsorSlot({
+      surface: "moment",
+      plan: ads.plan,
+      consentGranted: ads.consent.granted,
+      snapshot: result.snapshot,
+    });
+  } catch {
+    sponsor = { mode: "none", reason: "error" };
+  }
   return (
     <MomentView
       snapshot={result.snapshot}
       accountName={account.name}
       entitlement={result.entitlement}
       booking={{ booked: result.booked, consumed: result.consumed, cacheHit: result.cacheHit }}
-      ads={ads}
+      ads={sponsor.mode === "show" ? null : ads}
+      sponsor={
+        sponsor.mode === "none"
+          ? null
+          : sponsor.mode === "show"
+            ? sponsor
+            : {
+                mode: "eligible",
+                creative: {
+                  placementId: sponsor.creative.placementId,
+                  signature: sponsor.creative.signature,
+                  campaignId: sponsor.creative.campaignId,
+                  sportId: sponsor.creative.sportId,
+                  placeId: sponsor.creative.placeId,
+                  partnerName: "",
+                  headline: "",
+                  body: "",
+                  destinationUrl: null,
+                },
+              }
+      }
     />
   );
 }

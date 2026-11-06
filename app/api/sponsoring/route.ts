@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { saveSponsorship } from "@/lib/sponsoring/store";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
     name?: unknown;
@@ -12,7 +15,7 @@ export async function POST(request: Request) {
   if (!body) {
     return NextResponse.json({ ok: false, errors: { form: "De aanvraag is onleesbaar." } }, { status: 400 });
   }
-  const result = saveSponsorship(body);
+  const result = await saveSponsorship(body);
   if (!result.ok) {
     return NextResponse.json({ ok: false, errors: result.errors }, { status: result.status });
   }

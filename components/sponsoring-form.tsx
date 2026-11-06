@@ -1,33 +1,66 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { PlaceField } from "@/components/place-field";
 
-type Field = "name" | "organisation" | "email" | "message";
+type Field = "name" | "organisation" | "email" | "message" | "sport" | "region" | "start" | "intent";
 type Errors = Partial<Record<Field | "form", string>>;
+type Intent = "pilot" | "custom";
 
-const fields: { id: Field; label: string; autoComplete: string }[] = [
+const fields: { id: "name" | "organisation" | "email"; label: string; autoComplete: string }[] = [
   { id: "name", label: "Naam", autoComplete: "name" },
   { id: "organisation", label: "Organisatie", autoComplete: "organization" },
   { id: "email", label: "E-mailadres", autoComplete: "email" },
 ];
 
-export function SponsoringForm() {
-  const [values, setValues] = useState({ name: "", organisation: "", email: "", message: "", wsHp: "" });
+export function SponsoringForm({
+  initialIntent,
+  sports,
+}: {
+  initialIntent: Intent;
+  sports: { id: string; name: string }[];
+}) {
+  const [values, setValues] = useState({
+    name: "",
+    organisation: "",
+    email: "",
+    message: "",
+    wsHp: "",
+    intent: initialIntent,
+    sportId: "",
+    placeId: "",
+    placeLabel: "",
+    desiredStart: "",
+  });
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
   const [receivedId, setReceivedId] = useState<string | null>(null);
   const successRef = useRef<HTMLHeadingElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
+  const lock = useRef(false);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (lock.current) return;
+    lock.current = true;
     setPending(true);
     setErrors({});
     try {
       const response = await fetch("/api/sponsoring", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          name: values.name,
+          organisation: values.organisation,
+          email: values.email,
+          message: values.message,
+          wsHp: values.wsHp,
+          intent: values.intent,
+          sportId: values.intent === "pilot" ? values.sportId : undefined,
+          placeId: values.intent === "pilot" ? values.placeId : undefined,
+          placeLabel: values.intent === "pilot" ? values.placeLabel : undefined,
+          desiredStart: values.intent === "pilot" ? values.desiredStart : undefined,
+        }),
       });
       const data = (await response.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -37,6 +70,7 @@ export function SponsoringForm() {
       if (!response.ok || !data.ok || !data.id) {
         setErrors(data.errors ?? { form: "De aanvraag is niet ontvangen. Probeer het opnieuw." });
         setPending(false);
+        lock.current = false;
         requestAnimationFrame(() => summaryRef.current?.focus());
         return;
       }
@@ -46,6 +80,7 @@ export function SponsoringForm() {
     } catch {
       setErrors({ form: "De aanvraag is niet ontvangen. Probeer het opnieuw." });
       setPending(false);
+      lock.current = false;
       requestAnimationFrame(() => summaryRef.current?.focus());
     }
   }
@@ -57,13 +92,14 @@ export function SponsoringForm() {
           Aanvraag ontvangen
         </h2>
         <p>
-          Bewaar je aanvraagnummer <strong>{receivedId}</strong> voor vragen over je samenwerking.
+          Bewaar je aanvraagnummer <strong>{receivedId}</strong>. Er wordt geen bevestigingsmail verstuurd.
         </p>
       </div>
     );
   }
 
   const errorEntries = (Object.keys(errors) as (keyof Errors)[]).filter((key) => errors[key]);
+  const pilot = values.intent === "pilot";
 
   return (
     <form className="sponsor-form" onSubmit={onSubmit} noValidate>
@@ -76,13 +112,38 @@ export function SponsoringForm() {
                 {key === "form" ? (
                   errors[key]
                 ) : (
-                  <a href={`#sponsor-${key}`}>{errors[key]}</a>
+                  <a href={`#sponsor-${key === "region" ? "region" : key}`}>{errors[key]}</a>
                 )}
               </li>
             ))}
           </ul>
         </div>
       ) : null}
+      <fieldset className="sponsor-intent">
+        <legend>Type aanvraag</legend>
+        <label htmlFor="sponsor-intent-pilot">
+          <input
+            id="sponsor-intent-pilot"
+            type="radio"
+            name="intent"
+            value="pilot"
+            checked={values.intent === "pilot"}
+            onChange={() => setValues((current) => ({ ...current, intent: "pilot" }))}
+          />
+          Pilot, één sport en één regio
+        </label>
+        <label htmlFor="sponsor-intent-custom">
+          <input
+            id="sponsor-intent-custom"
+            type="radio"
+            name="intent"
+            value="custom"
+            checked={values.intent === "custom"}
+            onChange={() => setValues((current) => ({ ...current, intent: "custom" }))}
+          />
+          Maatwerk
+        </label>
+      </fieldset>
       {fields.map((field) => {
         const errorId = `sponsor-${field.id}-error`;
         return (
@@ -110,6 +171,80 @@ export function SponsoringForm() {
           </div>
         );
       })}
+      {pilot ? (
+        <>
+          <div>
+            <label className="auth-label" htmlFor="sponsor-sport">
+              Sport
+            </label>
+            <select
+              id="sponsor-sport"
+              className="auth-input"
+              name="sportId"
+              value={values.sportId}
+              aria-invalid={Boolean(errors.sport)}
+              aria-describedby={errors.sport ? "sponsor-sport-error" : undefined}
+              onChange={(event) => setValues((current) => ({ ...current, sportId: event.target.value }))}
+            >
+              <option value="">Kies een sport</option>
+              {sports.map((sport) => (
+                <option key={sport.id} value={sport.id}>
+                  {sport.name}
+                </option>
+              ))}
+            </select>
+            {errors.sport ? (
+              <p className="sponsor-field-error" id="sponsor-sport-error">
+                {errors.sport}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label className="auth-label" htmlFor="sponsor-region">
+              Regio
+            </label>
+            <PlaceField
+              inputId="sponsor-region"
+              label={values.placeLabel}
+              placeId={values.placeId}
+              invalid={Boolean(errors.region)}
+              describedBy={errors.region ? "sponsor-region-error" : "sponsor-region-hint"}
+              onChange={(next) => setValues((current) => ({ ...current, placeId: next.placeId, placeLabel: next.label }))}
+            />
+            <p className="sponsor-hint" id="sponsor-region-hint">
+              Eén Nederlandse plaats, bijvoorbeeld Ede.
+            </p>
+            {errors.region ? (
+              <p className="sponsor-field-error" id="sponsor-region-error">
+                {errors.region}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label className="auth-label" htmlFor="sponsor-start">
+              Gewenste startdatum (optioneel)
+            </label>
+            <input
+              id="sponsor-start"
+              className="auth-input"
+              name="desiredStart"
+              type="date"
+              value={values.desiredStart}
+              aria-invalid={Boolean(errors.start)}
+              aria-describedby={errors.start ? "sponsor-start-error" : "sponsor-start-hint"}
+              onChange={(event) => setValues((current) => ({ ...current, desiredStart: event.target.value }))}
+            />
+            <p className="sponsor-hint" id="sponsor-start-hint">
+              We leggen de startdatum pas vast na akkoord. Dit veld is een wens.
+            </p>
+            {errors.start ? (
+              <p className="sponsor-field-error" id="sponsor-start-error">
+                {errors.start}
+              </p>
+            ) : null}
+          </div>
+        </>
+      ) : null}
       <div>
         <label className="auth-label" htmlFor="sponsor-message">
           Wat heb je in gedachten?
@@ -126,7 +261,9 @@ export function SponsoringForm() {
           onChange={(event) => setValues((current) => ({ ...current, message: event.target.value }))}
         />
         <p className="sponsor-hint" id="sponsor-message-hint">
-          Bijvoorbeeld een vermelding voor je fietsenwinkel tijdens het voorjaar. Minimaal 20 tekens.
+          {pilot
+            ? "Beschrijf de vermelding die je voor ogen hebt. Minimaal 20 tekens."
+            : "Je kunt meerdere sporten, regio's of een seizoen in dit bericht beschrijven. Minimaal 20 tekens."}
         </p>
         {errors.message ? (
           <p className="sponsor-field-error" id="sponsor-message-error">

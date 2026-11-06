@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ScoreCurve } from "@/components/score-curve";
+import { SponsorCard } from "@/components/sponsor-card";
 import { SportIcon } from "@/components/sport-icon";
 import styles from "@/app/sponsoring/partners.module.css";
 import type { WeatherHour } from "@/lib/data/types";
@@ -107,13 +108,12 @@ export function SponsoringRunningPreview() {
           <p className="moment-rights">{scored.caveats} UV en officiële waarschuwingen blijven los van deze score.</p>
         </article>
       </div>
-      <aside className={styles.partner} aria-label="Gesponsorde vermelding">
-        <p className={styles.sponsored}>Gesponsord</p>
-        <p className={styles.shop}>Loopatelier Ede</p>
-        <h3>Welke schoen past bij jouw rondje?</h3>
-        <p>Van asfalt tot heidepad. In onze winkel in Ede kun je verschillende hardloopschoenen passen en vergelijken.</p>
-        <p className={styles.fictional}>Fictieve partner</p>
-      </aside>
+      <SponsorCard
+        partner="Loopatelier Ede"
+        headline="Welke schoen past bij jouw rondje?"
+        body="Van asfalt tot heidepad. In onze winkel in Ede kun je verschillende hardloopschoenen passen en vergelijken."
+        fictional
+      />
     </figure>
   );
 }
