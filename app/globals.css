@@ -606,7 +606,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
     display: block;
     padding-bottom: 31px;
   }
-  .catalog-hero {
+  .catalog-hero,
+  .release-hero {
     width: min(1440px, 100%);
     margin-inline: auto;
   }
@@ -751,7 +752,17 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .place-option[aria-selected="true"], .place-option:hover { background: var(--ws-surface-base); }
 .place-status { margin: 6px 0 0; color: var(--ws-text-secondary); font-size: 12px; }
 
-.auth-page { min-height: 100vh; background: var(--ws-surface-page); padding: 16px; }
+.auth-frame,
+.account-frame {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.auth-page {
+  flex: 1;
+  background: var(--ws-surface-page);
+  padding: 16px;
+}
 .auth-shell {
   max-width: 1230px;
   margin: 0 auto;
@@ -1207,7 +1218,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .moment-save-link a { text-decoration: none; }
 
 .account-app {
-  min-height: 100vh;
+  flex: 1;
   display: grid;
   background: var(--ws-surface-base);
 }
@@ -1385,8 +1396,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .account-card-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-  .account-app { grid-template-columns: 244px minmax(0, 1fr); }
-  .account-sidebar { min-height: 100vh; padding: 28px 16px; }
+  .account-app { grid-template-columns: 244px minmax(0, 1fr); grid-template-rows: 1fr; }
+  .account-sidebar { min-height: 100%; padding: 28px 16px; }
   .account-content { padding: 28px 44px 80px; }
   .account-user { margin-left: 0; }
   .account-badge { margin-left: auto; }
@@ -1602,6 +1613,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .refund-actions { margin-top: 12px; display: grid; gap: 8px; }
 
 .release-hero {
+  display: flow-root;
   background: linear-gradient(160deg, #0b2530 0%, #143844 55%, #0f2f38 100%);
   color: #fff;
   padding-bottom: 48px;
