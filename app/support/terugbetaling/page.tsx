@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { PRO_PRICE_EUR } from "@/lib/billing/constants";
 
 export const metadata = { title: "Terugbetalingen" };
@@ -7,9 +7,7 @@ export const metadata = { title: "Terugbetalingen" };
 export default function RefundPolicyPage() {
   return (
     <>
-      <section className="legal-hero">
-        <SiteHeader />
-      </section>
+      <SiteHeaderBar />
       <main className="legal" id="inhoud">
         <p className="eyebrow">Mollie · Pro</p>
         <h1>Terugbetalingen</h1>

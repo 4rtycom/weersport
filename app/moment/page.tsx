@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MomentView } from "@/components/moment-view";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
 import { resolveAdPlacement } from "@/lib/ads/server";
 import { resolveSponsorSlot } from "@/lib/sponsoring/placement";
@@ -21,29 +22,35 @@ export default async function MomentPage() {
   if (!result.ok) {
     if (result.status === 402) {
       return (
-        <main className="moment" id="inhoud">
-          <p className="eyebrow">Quota</p>
-          <h1>Maandelijks analyselimiet bereikt</h1>
-          <p>{result.error}</p>
-          <p>
-            Gebruikt {result.entitlement.used}/{result.entitlement.limit}. Opgeslagen plannen blijven beschikbaar.
-          </p>
-          <div className="account-item-actions" style={{ marginTop: 18 }}>
-            <Link className="button button-lime" href="/checkout/pro">
-              Upgrade naar Pro
-            </Link>
-            <Link className="button button-dark" href="/account/momenten">
-              Bekijk opgeslagen momenten
-            </Link>
-          </div>
-        </main>
+        <>
+          <SiteHeaderBar account />
+          <main className="moment" id="inhoud">
+            <p className="eyebrow">Quota</p>
+            <h1>Maandelijks analyselimiet bereikt</h1>
+            <p>{result.error}</p>
+            <p>
+              Gebruikt {result.entitlement.used}/{result.entitlement.limit}. Opgeslagen plannen blijven beschikbaar.
+            </p>
+            <div className="account-item-actions" style={{ marginTop: 18 }}>
+              <Link className="button button-lime" href="/checkout/pro">
+                Upgrade naar Pro
+              </Link>
+              <Link className="button button-dark" href="/account/momenten">
+                Bekijk opgeslagen momenten
+              </Link>
+            </div>
+          </main>
+        </>
       );
     }
     return (
-      <main className="moment" id="inhoud">
-        <h1>Bronnen niet bereikbaar</h1>
-        <p>{result.error}</p>
-      </main>
+      <>
+        <SiteHeaderBar account />
+        <main className="moment" id="inhoud">
+          <h1>Bronnen niet bereikbaar</h1>
+          <p>{result.error}</p>
+        </main>
+      </>
     );
   }
 

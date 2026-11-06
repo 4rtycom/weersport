@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 
 const links = [
   { href: "/account", label: "Overzicht", match: "overview" as const },
@@ -27,7 +28,9 @@ export function AccountShell({
   children: ReactNode;
 }) {
   return (
-    <div className="account-app">
+    <>
+      <SiteHeaderBar account />
+      <div className="account-app">
       <a className="skip-link" href="#inhoud">
         Naar inhoud
       </a>
@@ -62,5 +65,6 @@ export function AccountShell({
         </div>
       </div>
     </div>
+    </>
   );
 }

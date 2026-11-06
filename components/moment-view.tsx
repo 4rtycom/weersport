@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SaveActions } from "@/components/account/save-actions";
 import { AdsHost } from "@/components/ads/ads-host";
 import { SponsorMeasure } from "@/components/sponsor-measure";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
@@ -63,9 +63,7 @@ export function MomentView({
 
   return (
     <>
-      <header className="moment-top">
-        <SiteHeader account />
-      </header>
+      <SiteHeaderBar account />
       <main id="inhoud" className="moment">
         <p className="eyebrow">{`Sportmoment · ${sport.name}`}</p>
         <section className="moment-hero">

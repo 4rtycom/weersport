@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { RELEASE_NO_GO, RELEASE_QA_CARDS } from "@/lib/release/matrix";
 
 export const metadata = {
@@ -10,8 +10,8 @@ export const metadata = {
 export default function ReleaseGatePage() {
   return (
     <>
+      <SiteHeaderBar />
       <section className="release-hero">
-        <SiteHeader />
         <div className="release-hero-copy">
           <p className="eyebrow">H06 / UAT, regression & release approval</p>
           <h1>Niet alleen mooi. Aantoonbaar correct.</h1>

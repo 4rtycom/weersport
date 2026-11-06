@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SponsoringForm } from "@/components/sponsoring-form";
 import { sports } from "@/lib/sports";
 import styles from "./partners.module.css";
@@ -15,15 +15,7 @@ export default function SponsoringPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <a className="skip-link" href="#inhoud">
-          Naar inhoud
-        </a>
-        <Link className={styles.wordmark} href="/">
-          WeerSport.
-        </Link>
-        <p className={styles.partnerLabel}>Voor sportpartners</p>
-      </header>
+      <SiteHeaderBar />
       <main id="inhoud" className={styles.main}>
         <SponsoringForm sports={catalog} />
       </main>

@@ -1,9 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className="auth-page" id="inhoud">
+    <>
+      <SiteHeaderBar />
+      <main className="auth-page" id="inhoud">
       <section className="auth-shell">
         <aside className="auth-story">
           <Link className="auth-wordmark" href="/">
@@ -27,5 +30,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
         </div>
       </section>
     </main>
+    </>
   );
 }
