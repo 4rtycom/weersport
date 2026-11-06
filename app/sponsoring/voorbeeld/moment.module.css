@@ -487,18 +487,18 @@
     font-size: 12px;
     font-weight: 400;
   }
+
+  @container (max-width: 740px) {
+    .embed .hero { padding: 18px 16px 14px; }
+    .embed .window { font-size: 42px; }
+    .embed .hero h1 { font-size: 22px; }
+    .embed .reason { font-size: 15px; }
+    .embed .hours li { font-size: 11px; }
+    .embed.shell :global(.sponsor-moment) h3 { font-size: 24px; }
+  }
 }
 
 @media (min-width: 1100px) {
   .header { padding-inline: 76px; }
   .main { width: min(1048px, calc(100% - 152px)); }
-}
-
-@container (max-width: 740px) {
-  .embed .hero { padding: 18px 16px 14px; }
-  .embed .window { font-size: 42px; }
-  .embed .hero h1 { font-size: 22px; }
-  .embed .reason { font-size: 15px; }
-  .embed .hours li { font-size: 11px; }
-  .embed.shell :global(.sponsor-moment) h3 { font-size: 24px; }
 }
