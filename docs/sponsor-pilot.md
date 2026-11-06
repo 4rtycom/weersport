@@ -1,5 +1,7 @@
 # Sponsorpilot lokaal testen
 
+De publieke pagina `/sponsoring` is een directe sponsoraanvraag (`requestType` `campaign_v1`). Er staat geen pakketprijs op. Verzenden bewaart sport, plaats, bereik, periode en contact in dezelfde database en plant niets in. Zoek de aanvraag na een herstart met `npm run sponsor -- list` en `npm run sponsor -- show <aanvraag-id>`.
+
 De betaalde pilot staat uit. `WEERSPORT_SPONSOR_PILOT_BOOKABLE` blijft leeg tot een aanvraag na een herstart nog in de database staat en het eindrapport klopt. Dit bestand publiceert geen campagne en verplaatst geen productie-alias.
 
 De database is het lokale SQLite-bestand (`WEERSPORT_DB`, anders `data/weersport.sqlite`). Dat bestand is niet gedeeld tussen servers. Dat is een releaseblokkade voor verkoop.

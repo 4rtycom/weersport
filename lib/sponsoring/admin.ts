@@ -25,7 +25,7 @@ export type RequestRow = {
   name: string;
   organisation: string;
   email: string;
-  message: string;
+  message: string | null;
   inbox: string | null;
   created_at: string;
   intent: string | null;
@@ -40,6 +40,13 @@ export type RequestRow = {
   agreed_price_cents: number | null;
   agreed_at: string | null;
   price_kind: string | null;
+  request_type: string | null;
+  area_kind: string | null;
+  radius_km: number | null;
+  duration_weeks: number | null;
+  end_date: string | null;
+  province: string | null;
+  idempotency_key: string | null;
 };
 
 export type CampaignRow = {
@@ -432,11 +439,51 @@ function csvCell(value: string) {
   return value;
 }
 
+export function formatCampaignRequest(row: RequestRow) {
+  const sport = row.sport_id ? (sports.find((item) => item.id === row.sport_id)?.name ?? row.sport_id) : "—";
+  const place = [row.place_label, row.province].filter(Boolean).join(", ") || "—";
+  const area = row.area_kind === "radius" ? `straal ${row.radius_km ?? "—"} km` : "alleen deze plaats";
+  return [
+    "Campagneaanvraag",
+    `Aanvraag: ${row.id}`,
+    `Status: ${row.status ?? "ontvangen"}`,
+    `Sport: ${sport} (${row.sport_id ?? "—"})`,
+    `Plaats: ${place} (${row.place_id ?? "—"})`,
+    `Gebied: ${area}`,
+    `Start: ${row.desired_start ?? "—"}`,
+    `Einde (inclusief): ${row.end_date ?? "—"}`,
+    `Looptijd: ${row.duration_weeks ?? "—"} weken`,
+    `Organisatie: ${row.organisation}`,
+    `Contactpersoon: ${row.name}`,
+    `E-mail: ${row.email}`,
+    `Ontvangen: ${row.created_at}`,
+  ].join("\n");
+}
+
 export function formatRequestList(rows: ReturnType<typeof listRequests>) {
   if (rows.length === 0) return "Geen aanvragen.";
   return rows
     .map((row) => {
       const sport = row.sport_id ? (sports.find((item) => item.id === row.sport_id)?.name ?? row.sport_id) : "—";
+      if (row.request_type === "campaign_v1") {
+        const place = [row.place_label, row.province].filter(Boolean).join(", ") || "—";
+        const area = row.area_kind === "radius" ? `straal ${row.radius_km ?? "—"} km` : "alleen deze plaats";
+        return [
+          row.id,
+          "campaign_v1",
+          row.status ?? "ontvangen",
+          sport,
+          place,
+          row.place_id ?? "—",
+          area,
+          row.desired_start ?? "—",
+          row.end_date ?? "—",
+          row.duration_weeks ? `${row.duration_weeks} weken` : "—",
+          row.organisation,
+          row.name,
+          row.email,
+        ].join(" · ");
+      }
       const price =
         row.agreed_price_cents === null || row.agreed_price_cents === undefined
           ? row.quoted_price_cents === null || row.quoted_price_cents === undefined

@@ -719,8 +719,20 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   text-align: left;
   cursor: pointer;
 }
+.place-option strong, .place-option small { overflow-wrap: anywhere; }
 .place-option strong { font-size: 14px; }
 .place-option small { color: var(--ws-text-secondary); font-size: 12px; }
+.place-retry {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #276053;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
 .place-option[aria-selected="true"], .place-option:hover { background: var(--ws-surface-base); }
 .place-status { margin: 6px 0 0; color: var(--ws-text-secondary); font-size: 12px; }
 
