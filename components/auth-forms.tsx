@@ -193,10 +193,12 @@ export function VerifyActions({
   email,
   mailPath,
   authClosed = false,
+  delivery = "mailbox",
 }: {
   email: string;
   mailPath: string | null;
   authClosed?: boolean;
+  delivery?: "closed" | "inbox" | "mailbox";
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -268,6 +270,11 @@ export function VerifyActions({
         </p>
       ) : (
         <>
+          {delivery === "inbox" ? (
+            <p className="auth-inline-note">
+              We hebben een beveiligde link naar {email} gestuurd. Er verschijnt geen token in deze browser.
+            </p>
+          ) : null}
           <button className="button button-dark auth-button" type="button" onClick={resend}>
             Verificatiemail opnieuw sturen
           </button>
@@ -296,9 +303,11 @@ export function VerifyActions({
               </button>
             </form>
           ) : null}
-          <button className="button button-lime auth-button" type="button" onClick={prototype}>
-            Prototype: e-mailverificatie voltooid →
-          </button>
+          {delivery === "mailbox" ? (
+            <button className="button button-lime auth-button" type="button" onClick={prototype}>
+              Prototype: e-mailverificatie voltooid →
+            </button>
+          ) : null}
           {mailPath ? (
             <p className="auth-dev-mail">
               Er is geen mailserver gekoppeld. Dezelfde verificatie staat in deze ontwikkelmailbox:{" "}
