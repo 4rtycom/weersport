@@ -119,7 +119,7 @@ await request(link);
 
 const beforeConsent = await (await request("/moment")).text();
 if (!beforeConsent.includes('data-ad-state="blocked"')) {
-  throw new Error("SCORED moment without cookie consent must block ads");
+  throw new Error("Moment without a released score must block ads");
 }
 if (beforeConsent.includes("Sandbox-advertentie")) {
   throw new Error("Ads must not fill before cookie consent");
@@ -127,11 +127,8 @@ if (beforeConsent.includes("Sandbox-advertentie")) {
 
 await post("/api/consent", { granted: true });
 const afterConsent = await (await request("/moment")).text();
-if (!afterConsent.includes("ad-slot")) {
-  throw new Error("Cookie-consented Basis SCORED moment must mount ad slot");
-}
-if (afterConsent.includes('data-ad-state="blocked"')) {
-  throw new Error("Cookie-consented Basis SCORED should allow ad slot");
+if (!afterConsent.includes('data-ad-state="blocked"') || afterConsent.includes("Sandbox-advertentie")) {
+  throw new Error("Cookie consent must not unlock ads on NO_SCORE");
 }
 
 const noScoreDraft = { ...draft, sportId: "schaatsen" };

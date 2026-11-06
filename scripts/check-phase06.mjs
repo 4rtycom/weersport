@@ -21,6 +21,12 @@ const analysis = readFileSync(new URL("../lib/billing/analysis.ts", import.meta.
 if (!analysis.includes("BEGIN IMMEDIATE") || !analysis.includes("idempotency")) {
   throw new Error("Quota ledger must be atomic and idempotent");
 }
+const buildAt = analysis.indexOf("await buildForecastSnapshot");
+const freeAt = analysis.indexOf("if (!snapshotConsumesQuota(snapshot))");
+const blockAt = analysis.indexOf("quotaBlocksSnapshot(entitlement.remaining, true)");
+if (buildAt < 0 || freeAt < buildAt || blockAt < freeAt) {
+  throw new Error("A free NO_SCORE must be built and returned before a used quota can block the request");
+}
 
 const mollie = readFileSync(new URL("../lib/billing/mollie.ts", import.meta.url), "utf8");
 const constants = readFileSync(new URL("../lib/billing/constants.ts", import.meta.url), "utf8");
@@ -85,9 +91,9 @@ await request(link);
 
 const first = await post("/api/moment", draft, { "idempotency-key": "phase06-first" });
 if (first.status !== 200) throw new Error(`First moment failed: ${first.status}`);
-if (first.data.snapshot.suitability.kind !== "SCORED") throw new Error("Expected SCORED");
-if (first.data.booked !== true || first.data.consumed !== 1) {
-  throw new Error("First successful analysis must book exactly once");
+if (first.data.snapshot.suitability.kind !== "NO_SCORE") throw new Error("Unreleased sport must NO_SCORE");
+if (first.data.booked !== false || first.data.consumed !== 0) {
+  throw new Error("NO_SCORE must not book an analysis");
 }
 
 const repeat = await post("/api/moment", draft, { "idempotency-key": "phase06-first" });
@@ -106,29 +112,16 @@ if (save.data.booked !== false || save.data.consumed !== 0) {
   throw new Error("Saving search must remain zero-cost");
 }
 
-// Exhaust remaining basis quota with distinct place labels via different hours is hard;
-// use different sports to create distinct cache keys.
-const sports = ["fietsen", "hardlopen", "wandelen", "golf"];
+const sports = ["fietsen", "hardlopen", "wandelen", "golf", "tennis-padel"];
 for (const sportId of sports) {
   const result = await post("/api/moment", { ...draft, sportId });
   if (result.status !== 200) throw new Error(`${sportId} moment failed`);
-  if (result.data.snapshot.suitability.kind === "SCORED" && result.data.cacheHit !== true && result.data.booked !== true) {
-    throw new Error(`${sportId} scored without booking`);
+  if (result.data.snapshot.suitability.kind !== "NO_SCORE" || result.data.booked !== false || result.data.consumed !== 0) {
+    throw new Error(`${sportId} must stay unbilled while its rule is withheld`);
   }
 }
-
-const blocked = await post("/api/moment", { ...draft, sportId: "tennis-padel" });
-if (blocked.status !== 402) {
-  // If weather failed for some sports, continue trying until limit is hit.
-  let hit = blocked.status === 402;
-  for (const sportId of ["voetbal", "hockey", "skeeleren", "paardrijden", "outdoorfitness", "gravelbiken", "mountainbiken"]) {
-    const again = await post("/api/moment", { ...draft, sportId });
-    if (again.status === 402) {
-      hit = true;
-      break;
-    }
-  }
-  if (!hit) throw new Error("Expected 402 after Basis limit");
+if (first.data.entitlement?.used !== 0) {
+  throw new Error("Withheld analyses changed the Basis quota");
 }
 
 const earlyPro = await post("/api/billing/checkout", { consent: false });

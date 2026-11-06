@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { ReturnLink } from "@/components/return-link";
+import { pageReturn } from "@/lib/navigation/page-return";
 
 export const metadata = { title: "Privacy" };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ van?: string }>;
+}) {
+  const params = await searchParams;
+  const back = await pageReturn(params.van);
   return (
     <>
       <section className="legal-hero">
@@ -28,7 +36,7 @@ export default function PrivacyPage() {
           veiligheid. Homepage, auth, Mollie checkout/facturering, kritieke NO_SCORE-schermen en Pro tonen geen
           advertenties. AdSense is geen sport+radius-targetingengine van WeerSport.
         </p>
-        <Link href="/auth/registreren">Terug naar registreren</Link>
+        <ReturnLink href={back.href} label={back.label} />
       </main>
     </>
   );

@@ -54,7 +54,10 @@ export default async function AccountPage() {
             Opgeslagen plan, geen live weersadvies of veiligheidsgarantie. Controleer de voorspelling opnieuw
             voordat je vertrekt.
           </p>
-          <p className="account-age">Analyseleeftijd: {ageLabel(nextMoment.lastSnapshotAt)}</p>
+          <p className="account-age">
+            Analyseleeftijd: {ageLabel(nextMoment.lastSnapshotAt)}
+            {nextMoment.archive ? " · gedateerd archief, geen nieuwe analyse" : ""}
+          </p>
           <Link className="button button-lime" href="/account/momenten">
             Bekijk sportmomenten →
           </Link>

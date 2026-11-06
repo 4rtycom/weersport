@@ -24,9 +24,10 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   margin: 0;
+  overflow-x: hidden;
   background: var(--ws-surface-page);
   color: var(--ws-text-primary);
   font-family: var(--font);
@@ -861,6 +862,33 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .legal h1 { margin: 8px 0 16px; font-size: 36px; }
 .legal p { margin-bottom: 12px; color: var(--ws-text-secondary); }
 .legal a { color: var(--ws-teal); font-weight: 700; }
+.legal h2 { margin: 20px 0 8px; font-size: 22px; }
+.support-steps { margin: 0 0 16px; padding-left: 18px; list-style: decimal; }
+.support-steps li { margin: 8px 0; color: var(--ws-text-secondary); }
+.return-link { margin-top: 20px; }
+.return-link a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+}
+.legal a:focus-visible,
+.return-link a:focus-visible,
+.auth-input:focus-visible,
+.support-list a:focus-visible {
+  outline: 3px solid #216c69;
+  outline-offset: 3px;
+}
+@media (max-width: 390px) {
+  .legal { padding-inline: 16px; }
+  .legal h1 { font-size: 30px; }
+  .site-header { gap: 8px; }
+  .families-head, .curve-head, .sponsor, .catalog-family-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .peak { min-width: 0; max-width: 100%; }
+}
 
 @media (max-width: 799px) {
   .auth-chart { display: none; }
@@ -1707,6 +1735,31 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   margin: 16px 0 10px;
 }
 
+.sponsor-form { position: relative; display: grid; gap: 4px; margin: 20px 0 28px; }
+.sponsor-form .sponsor-textarea { min-height: 140px; padding: 12px 14px; resize: vertical; }
+.sponsor-hint, .sponsor-field-error { margin-top: 6px; font-size: 13px; }
+.sponsor-form .sponsor-field-error { color: #8e3427; font-weight: 700; }
+.sponsor-errors {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fbe7de;
+  color: var(--ws-text-primary);
+}
+.sponsor-form .sponsor-errors p { color: var(--ws-text-primary); }
+.sponsor-errors ul { margin-top: 8px; padding-left: 18px; list-style: disc; }
+.sponsor-success { margin: 20px 0 28px; padding: 16px; border-radius: 16px; background: var(--ws-surface-base); }
+.sponsor-success h2 { margin-bottom: 8px; }
+.sponsor-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 .pwa-banner {
   position: fixed;
   z-index: 30;

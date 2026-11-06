@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SportIcon } from "@/components/sport-icon";
-import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
+import { ICE_CRITICAL_SPORTS } from "@/lib/data/types";
 import { getScoreProfile } from "@/lib/scoring/profiles";
+import { MISSING_WATER_TEMPERATURE_REASON } from "@/lib/scoring/swim";
 import { guideCopy } from "@/lib/sport-guide-copy";
-import { buildLandGuideExample } from "@/lib/sport-guide-examples";
+import { describeProfileForGuide } from "@/lib/sport-guide-examples";
 import { sports } from "@/lib/sports";
 import styles from "./guide.module.css";
 
@@ -34,17 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SportGuide({ params }: Props) {
   const sport = requireSport((await params).sport);
   const profile = getScoreProfile(sport.id);
+  const guide = describeProfileForGuide(profile);
   const [question, advice] = guideCopy[sport.id];
   const ice = ICE_CRITICAL_SPORTS.has(sport.id);
-  const water = WATER_CRITICAL_SPORTS.has(sport.id);
-  const exampleTemp = Math.round((profile.idealTempC[0] + profile.idealTempC[1]) / 2);
-  const windKmh = Math.round((profile.idealWindKmh[0] + profile.idealWindKmh[1]) / 2);
-  const factors = [
-    ["Luchttemperatuur", profile.weights.temperature],
-    ["Windsnelheid", profile.weights.wind],
-    ["Kans op regen", profile.weights.rain],
-  ] as const;
-  const landExample = !ice && !water ? buildLandGuideExample(profile, sport.name) : null;
+  const swim = sport.id === "openwaterzwemmen";
 
   return (
     <>
@@ -61,99 +55,76 @@ export default async function SportGuide({ params }: Props) {
         </header>
 
         <section className={styles.example} aria-labelledby="example-title">
-          <h2 id="example-title">{ice || water ? "Waarom zie ik soms geen score?" : "Vergelijk twee uren"}</h2>
-          {ice ? (
+          <h2 id="example-title">{swim || ice || !guide.personalAdvice ? "Waarom zie ik soms geen score?" : "Vergelijk twee uren"}</h2>
+          {swim ? (
+            <>
+              <p>{MISSING_WATER_TEMPERATURE_REASON}</p>
+              <p>
+                Dat voorbeeld gaat over een ontbrekende meting, niet over een live advies. Zonder die watertemperatuur,
+                of zonder officiële zwemplek, is er geen score en geen beste tijdvak.
+              </p>
+            </>
+          ) : ice ? (
             <>
               <p>
-                Stel dat het vannacht ongeveer 5 °C heeft gevroren. Zonder metingen van de dikte en kwaliteit van het
-                natuurijs geeft WeerSport geen score. Een temperatuur- of windpercentage zegt niets over de
-                draagkracht van het ijs.
+                Stel dat het vannacht heeft gevroren. Zonder metingen van de dikte en kwaliteit van het natuurijs geeft
+                WeerSport geen score. Vorst alleen rechtvaardigt geen aanbeveling.
               </p>
               <p>
                 Kijk bij de lokale ijsclub of een baan is vrijgegeven voordat je het ijs op gaat. UV en officiële
                 waarschuwingen blijven los van dit advies zichtbaar.
               </p>
             </>
-          ) : water ? (
+          ) : (
             <>
-              <p>
-                Stel dat de lucht {exampleTemp} °C is en de wind {windKmh} km/u. Ontbreekt de benodigde informatie over
-                het water
-                {sport.id === "openwaterzwemmen"
-                  ? " — watertemperatuur, zwemwaterkwaliteit en de exacte zwemplek"
-                  : " of de plek waar je wilt varen of surfen"}
-                , dan krijg je geen score. WeerSport zet dan geen fictief gunstig cijfer.
-              </p>
-              <p>
-                Informatie die de app verwerkt (luchttemperatuur, wind, regenkans) verschilt van wat je lokaal moet
-                controleren (watercondities, spotregels, getij of kwaliteit). UV en officiële waarschuwingen staan apart.
-              </p>
+              <p>{guide.explanation}</p>
+              <p>Er is geen puntenvoorbeeld, omdat een vrijgegeven beslisregel ontbreekt.</p>
             </>
-          ) : landExample ? (
-            <>
-              <p>{landExample.intro}</p>
-              <p className={styles.exampleLabel}>Rekenvoorbeeld · geen live analyse</p>
-              <dl className={styles.hours}>
-                {landExample.hours.map((hour) => (
-                  <div key={hour.label}>
-                    <dt>
-                      {hour.label}
-                      {landExample.factor === "temperature"
-                        ? ` · ${hour.temperatureC} °C`
-                        : landExample.factor === "wind"
-                          ? ` · ${hour.windKmh} km/u wind`
-                          : ` · ${hour.rainPct}% regenkans`}
-                    </dt>
-                    <dd>{hour.score} / 100</dd>
-                  </div>
-                ))}
-              </dl>
-              <p>{landExample.conclusion}</p>
-            </>
-          ) : null}
+          )}
         </section>
 
         <section aria-labelledby="weights-title">
           <h2 id="weights-title">Wat telt mee voor {sport.name.toLowerCase()}?</h2>
           <p>
-            {ice
-              ? "Het voorlopige weerprofiel gebruikt deze verdeling. Een berekening op papier zegt niets over de draagkracht van natuurijs."
-              : "WeerSport geeft elk uur punten voor drie dingen. Hoe groter het aandeel, hoe sterker dat onderdeel meetelt."}
+            Model {guide.modelVersion}. Persoonlijk advies is {guide.personalAdvice ? "vrijgegeven" : "niet vrijgegeven"}.
           </p>
-          <dl className={styles.weights}>
-            {factors.map(([name, weight]) => (
-              <div key={name}>
-                <dt>{name}</dt>
-                <dd>{Math.round(weight * 100)}%</dd>
-              </div>
+          <h3>Al verwerkt</h3>
+          {guide.applied.length === 0 ? (
+            <p>Nog geen factor wordt in een vrijgegeven score verwerkt.</p>
+          ) : (
+            <ul>
+              {guide.applied.map((factor) => (
+                <li key={factor.id}>
+                  <strong>{factor.label}.</strong> {factor.explanation}
+                </li>
+              ))}
+            </ul>
+          )}
+          <h3>Nog niet verwerkt of ontbrekend</h3>
+          <ul>
+            {guide.withheld.map((factor) => (
+              <li key={factor.id}>
+                <strong>{factor.label}.</strong> {factor.explanation}
+              </li>
             ))}
-          </dl>
-          <details>
-            <summary>Bekijk de berekening</summary>
-            <p>
-              Bij {profile.idealTempC.join(" tot ")} °C en {profile.idealWindKmh.join(" tot ")} km/u krijgen
-              temperatuur en wind elk hun volle punten. Buiten die bereiken lopen de punten terug. Regenpunten hangen
-              af van de kans op neerslag en hoe zwaar een bui voor deze sport doorwerkt.
-            </p>
-            <p>
-              Vermenigvuldig de drie deelscores met hun aandeel, tel ze op en rond af op een heel getal. De verdeling
-              is voorlopig. De percentages geven aan wat meetelt in het model.
-            </p>
-          </details>
+            {guide.missing.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </section>
 
         <section aria-labelledby="howto-title">
           <h2 id="howto-title">Hoe lees ik het advies?</h2>
           <p>
-            {ice || water
-              ? "Ontbreken essentiële gegevens, dan verschijnt er geen aanbevolen sportmoment op basis van een score."
-              : "WeerSport vergelijkt de beschikbare uren en wijst het uur met de hoogste score aan. Rond dat uur zie je een tijdvak. Kijk ook naar de uren ernaast als je langer buiten blijft."}
+            {guide.personalAdvice
+              ? "WeerSport vergelijkt aaneengesloten uren in het gevraagde tijdvak. Het getoonde cijfer, de badge en de toelichting komen uit hetzelfde venster."
+              : "Ontbreken essentiële gegevens of een vrijgegeven beslisregel, dan is er geen score en geen aanbevolen sportmoment."}
           </p>
           <p>
             UV en officiële waarschuwingen staan los van de score. Controleer de actuele waarschuwingen bij het{" "}
-            <a href="https://www.knmi.nl/nederland-nu/weer/waarschuwingen">KNMI</a>. Een hoge weerscore zegt hoe goed
-            het verwachte weer bij deze sport past — geen veiligheidsgarantie.
+            <a href="https://www.knmi.nl/nederland-nu/weer/waarschuwingen">KNMI</a>.
           </p>
+          <p>{profile.caveats}</p>
         </section>
 
         <Link href={`/?sport=${sport.id}#planner`} className={`button button-dark ${styles.plannerCta}`}>

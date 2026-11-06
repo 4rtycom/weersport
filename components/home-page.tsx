@@ -28,6 +28,7 @@ export function HomePage({
   const [sportId, setSportId] = useState(draft?.sportId ?? "fietsen");
   const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
   const [placeId, setPlaceId] = useState(draft?.placeId ?? "");
+  const [spotId, setSpotId] = useState<string | null>(draft?.spotId ?? null);
   const [period, setPeriod] = useState<(typeof periods)[number]>(draft?.period ?? "Komende 48 uur");
   const [notice, setNotice] = useState(() => {
     if (resumed && draft) {
@@ -46,7 +47,13 @@ export function HomePage({
     const response = await fetch("/api/zoeken", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sportId, placeId, placeLabel: location, period }),
+      body: JSON.stringify({
+        sportId,
+        placeId,
+        placeLabel: location,
+        period,
+        spotId: sportId === "openwaterzwemmen" ? spotId : null,
+      }),
     });
     const data = (await response.json().catch(() => ({}))) as { error?: string; next?: string; booked?: boolean };
     if (!response.ok || !data.next || data.booked !== false) {
@@ -118,7 +125,13 @@ export function HomePage({
                 Kies je buitensport
               </label>
               <div id="sport-label">
-                <SportSelect value={sportId} onChange={setSportId} />
+                <SportSelect
+                  value={sportId}
+                  onChange={(next) => {
+                    if (next !== sportId) setSpotId(null);
+                    setSportId(next);
+                  }}
+                />
               </div>
             </div>
             <div>
@@ -131,6 +144,7 @@ export function HomePage({
                 onChange={(next) => {
                   setLocation(next.label);
                   setPlaceId(next.placeId);
+                  if (next.placeId !== placeId) setSpotId(null);
                 }}
               />
             </div>
@@ -365,7 +379,7 @@ export function HomePage({
             <h2>Ook zichtbaar zijn als sportpartner?</h2>
             <p>Sponsoring is duidelijk herkenbaar en beïnvloedt nooit de weerscore.</p>
           </div>
-          <a href="#planner">Samenwerken →</a>
+          <a href="/sponsoring">Samenwerken →</a>
         </aside>
       </main>
 
@@ -380,6 +394,7 @@ export function HomePage({
           <Link href="/privacy">Privacy</Link>
           <Link href="/voorwaarden">Voorwaarden</Link>
           <Link href="/support">Support</Link>
+          <Link href="/sponsoring">Samenwerken</Link>
         </nav>
       </footer>
       </>

@@ -116,9 +116,13 @@ const land = await post("/api/moment", {
   placeLabel: "Amsterdam",
   period: "Komende 48 uur",
 });
-if (!["PENDING_PHASE_04", "SCORED"].includes(land.data.snapshot.suitability.kind)) {
-  throw new Error("Land sport should expose PENDING_PHASE_04 or SCORED suitability");
+if (land.data.snapshot.suitability.kind !== "NO_SCORE") {
+  throw new Error("Land sport without a released rule must NO_SCORE");
 }
+if (!land.data.snapshot.suitability.modelVersion) {
+  throw new Error("Land NO_SCORE must name its model version");
+}
+if (land.data.booked !== false) throw new Error("Withheld land advice must not book an analysis");
 if (land.data.snapshot.weather.status !== "READY" || land.data.snapshot.weather.value?.temperatureC === null) {
   throw new Error("Live weather missing for land sport");
 }

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/auth/db";
 import type { SearchDraft } from "@/lib/draft";
+import { getScoreProfile } from "@/lib/scoring/profiles";
 import { findSport } from "@/lib/sports";
 import { WATER_CRITICAL_SPORTS, ICE_CRITICAL_SPORTS } from "@/lib/data/types";
 import {
@@ -57,7 +58,16 @@ export function ensureMomentsSchema() {
       updated_at TEXT
     );
   `);
+  ensureColumn("planned_moments", "model_version", "TEXT");
+  ensureColumn("planned_moments", "spot_id", "TEXT");
   migrated = true;
+}
+
+function ensureColumn(table: string, column: string, definition: string) {
+  const columns = db().prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (!columns.some((item) => item.name === column)) {
+    db().exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
 }
 
 function nowIso() {
@@ -85,6 +95,9 @@ function mapMoment(row: Record<string, unknown>): PlannedMoment {
     updatedAt: String(row.updated_at),
     lastSnapshotAt: row.last_snapshot_at ? String(row.last_snapshot_at) : null,
     lastScoreLabel: row.last_score_label ? String(row.last_score_label) : null,
+    modelVersion: row.model_version ? String(row.model_version) : null,
+    spotId: row.spot_id ? String(row.spot_id) : null,
+    archive: !row.model_version || String(row.model_version) !== getScoreProfile(sport.id).modelVersion,
   };
 }
 
@@ -130,6 +143,7 @@ export function createPlannedMoment(
     note?: string;
     lastSnapshotAt?: string | null;
     lastScoreLabel?: string | null;
+    modelVersion?: string | null;
   },
 ) {
   ensureMomentsSchema();
@@ -139,8 +153,9 @@ export function createPlannedMoment(
     .prepare(
       `INSERT INTO planned_moments (
         id, user_id, sport_id, place_id, place_label, period, window_label,
-        planned_start, planned_end, note, last_snapshot_at, last_score_label, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        planned_start, planned_end, note, last_snapshot_at, last_score_label,
+        model_version, spot_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       id,
@@ -155,6 +170,8 @@ export function createPlannedMoment(
       input.note ?? "",
       input.lastSnapshotAt ?? null,
       input.lastScoreLabel ?? null,
+      input.modelVersion ?? getScoreProfile(input.draft.sportId).modelVersion,
+      input.draft.spotId,
       stamp,
       stamp,
     );
@@ -313,6 +330,7 @@ export function draftFromMoment(moment: PlannedMoment): SearchDraft {
     placeId: moment.placeId,
     placeLabel: moment.placeLabel,
     period: moment.period,
+    spotId: moment.spotId,
   };
 }
 
@@ -323,5 +341,6 @@ export function draftFromSearch(search: SavedSearch): SearchDraft {
     placeId: search.placeId,
     placeLabel: search.placeLabel,
     period: search.period,
+    spotId: null,
   };
 }

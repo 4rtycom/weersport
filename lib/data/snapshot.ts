@@ -22,13 +22,24 @@ export async function buildForecastSnapshot(draft: SearchDraft): Promise<Forecas
     fetchZwemwater(draft.placeLabel),
   ]);
 
-  const waterLinked = water.status === "READY" || water.status === "PARTIAL";
-  const swimLinked = swim.status === "READY" || swim.status === "PARTIAL";
+  const linked = water.status !== "NOT_LINKED" && swim.status !== "NOT_LINKED";
   const suitability = scoreSportHours({
     sportId: sport.id,
     hours: weatherPair.weather.value?.hours ?? [],
-    waterLinked,
-    swimLinked,
+    placeId: draft.placeId,
+    spotId: draft.spotId,
+    swim:
+      sport.id === "openwaterzwemmen"
+        ? {
+            placeId: draft.placeId,
+            spotId: draft.spotId,
+            spotClass: draft.spotId ? "official" : "missing",
+            waterKind: water.value?.waterKind ?? null,
+            coverage: linked ? (water.status === "PARTIAL" || swim.status === "PARTIAL" ? "insufficient" : "ok") : "unlinked",
+            readings: [],
+            now: new Date(),
+          }
+        : null,
   });
 
   const sources = [
@@ -51,6 +62,7 @@ export async function buildForecastSnapshot(draft: SearchDraft): Promise<Forecas
     placeId: draft.placeId,
     placeLabel: draft.placeLabel,
     period: draft.period,
+    spotId: draft.spotId,
     generatedAt: new Date().toISOString(),
     weather: weatherPair.weather,
     uv: weatherPair.uv,
