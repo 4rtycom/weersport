@@ -33,9 +33,6 @@ export function HomePage({
     if (resumed && draft) {
       return `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`;
     }
-    if (preselectedSportId) {
-      return `Sport voorgeselecteerd: ${findSport(preselectedSportId).name}. Kies je plek en zoek je sportmoment — er start nog geen analyse.`;
-    }
     return "";
   });
   const [pending, setPending] = useState(false);
@@ -166,7 +163,9 @@ export function HomePage({
           </p>
           <p className="status" role="status">
             {notice ||
-              `Geselecteerd: ${findSport(sportId).name}. Het voorbeeld hieronder blijft het fictieve fietsmoment en telt niet als analyse.`}
+              (preselectedSportId && sportId === preselectedSportId
+                ? `Sport voorgeselecteerd: ${findSport(preselectedSportId).name}. Kies je plek en zoek je sportmoment — er start nog geen analyse.`
+                : `Geselecteerd: ${findSport(sportId).name}. Het voorbeeld hieronder blijft het fictieve fietsmoment en telt niet als analyse.`)}
           </p>
         </section>
 
