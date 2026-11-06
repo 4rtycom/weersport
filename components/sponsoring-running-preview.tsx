@@ -51,7 +51,7 @@ export function SponsoringRunningPreview({ sportName }: { sportName: string }) {
               <p className={styles.sponsored}>Gesponsord</p>
               <p className={styles.shop}>Loopatelier Ede</p>
               <p className={styles.shopLine}>Vind de trailschoen die bij je past.</p>
-              <p className={styles.fictional}>Voorbeeld van een lokale partner</p>
+              <p className={styles.fictional}>Fictieve partner</p>
             </div>
           </div>
         </div>
