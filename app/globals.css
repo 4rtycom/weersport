@@ -544,6 +544,28 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   padding: 16px;
   min-height: 148px;
 }
+.catalog-card-link {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 148px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.catalog-card-link:hover,
+.catalog-card-link:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(11, 37, 48, 0.12);
+  outline: 3px solid #216c69;
+  outline-offset: 3px;
+}
+.catalog-card-action {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-text-primary);
+}
 .catalog-card h3 { margin-top: 12px; font-size: 18px; }
 .catalog-card p { margin-top: 6px; font-size: 13px; }
 

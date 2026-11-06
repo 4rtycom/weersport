@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Alle 24 buitensporten",
-  description: "De zes sportfamilies en 24 Nederlandse buitensporten van WeerSport, met de goedgekeurde iconen.",
+  description: "De zes sportfamilies en 24 Nederlandse buitensporten van WeerSport, met uitleg per sportgids.",
 };
 
 export default async function SportenPage() {
@@ -22,7 +22,7 @@ export default async function SportenPage() {
         <div className="catalog-intro">
           <p className="eyebrow eyebrow-lime">Buitensporten in Nederland</p>
           <h1>Alle 24 sporten</h1>
-          <p>Kies je sport en ontdek hoe WeerSport het weeradvies berekent.</p>
+          <p>Open een sportgids om te zien hoe WeerSport het weeradvies berekent. Dat kost geen analyse.</p>
         </div>
       </div>
       <main id="inhoud" className="catalog">
@@ -36,11 +36,14 @@ export default async function SportenPage() {
             </div>
             <ul>
               {sportsInFamily(family.id).map((sport) => (
-                <li key={sport.id} className="catalog-card">
-                  <span className="icon-badge icon-badge-lg">
-                    <SportIcon src={sport.icon} size={36} label="" />
-                  </span>
-                  <h3><Link href={`/sporten/${sport.id}`}>{sport.name}</Link></h3>
+                <li key={sport.id}>
+                  <Link className="catalog-card catalog-card-link" href={`/sporten/${sport.id}`}>
+                    <span className="icon-badge icon-badge-lg">
+                      <SportIcon src={sport.icon} size={36} label="" />
+                    </span>
+                    <h3>{sport.name}</h3>
+                    <span className="catalog-card-action">Bekijk weeradvies →</span>
+                  </Link>
                 </li>
               ))}
             </ul>

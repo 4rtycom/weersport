@@ -1,7 +1,14 @@
 /** Everyday decisions to put each weather profile in context. */
 export const guideCopy: Record<string, [string, string]> = {
   fietsen: ["Wanneer fiets ik het prettigst naar huis?", "Vergelijk de regenkans voor je heen- én terugweg. Het model kent de richting van je route niet."],
-  wielrennen: ["Welk uur past bij mijn rit over de dijk?", "Wind telt zwaar voor wielrennen. Kijk voor een open dijk ook naar de windrichting en windstoten langs je route. De score gebruikt de verwachte windsnelheid."],
+  wielrennen: [
+    "Welk uur past bij mijn rit over de dijk?",
+    "Wind telt zwaar voor wielrennen. De score gebruikt de verwachte windsnelheid; windrichting en stoten langs je route check je lokaal.",
+  ],
+  openwaterzwemmen: [
+    "Het is warm buiten. Wat weten we over het zwemwater?",
+    "Luchttemperatuur zegt weinig over het water. Zonder watertemperatuur en zwemwaterkwaliteit op jouw exacte zwemplek geeft WeerSport geen score.",
+  ],
   gravelbiken: ["Wanneer plan ik mijn rit over grindpaden?", "Een droger uur krijgt meer punten. Een grindpad kan na een eerdere bui nog nat zijn."],
   mountainbiken: ["Maakt een droge middag mijn trail beter?", "Regenkans telt voor de helft mee. Controleer ook of de route open is: wortels en bochten kunnen na een bui glad blijven."],
   hardlopen: ["Loop ik prettiger in de ochtend of later op de dag?", "Temperatuur telt het zwaarst. Vergelijk twee uren met dezelfde wind en regenkans om te zien wat een warmere middag doet."],
@@ -19,7 +26,6 @@ export const guideCopy: Record<string, [string, string]> = {
   suppen: ["Welk moment past bij mijn rondje op de SUP?", "Wind kan je op de heenweg helpen en op de terugweg tegenwerken. Kijk naar de omstandigheden langs beide delen van je route."],
   kajakken: ["Wat vertelt het weer over mijn peddeltocht?", "Wind en luchttemperatuur wegen even zwaar. Controleer ook de stroming en eventuele beperkingen op jouw vaarroute."],
   roeien: ["Kan ik mijn training op open water plannen?", "Op een open stuk voelt dwarswind anders dan langs de oever. Neem de vaarregels van je vereniging mee in je besluit."],
-  openwaterzwemmen: ["Het is warm buiten. Wat weten we over het zwemwater?", "De thermometer op de kant vertelt weinig over het water. Controleer de watertemperatuur en de actuele status van de exacte zwemplek."],
   skeeleren: ["Is dit een handig uur voor een rondje op skates?", "Regenkans telt het zwaarst. Controleer ook het asfalt: schaduwrijke stukken kunnen na een bui langer nat blijven."],
   paardrijden: ["Wanneer plan ik een buitenrit?", "Temperatuur en regenkans wegen even zwaar. Bekijk bij vertrek hoe de bodem van je ruiterpad erbij ligt."],
   schaatsen: ["Het heeft gevroren. Wat zegt dat over het ijs?", "Vorst vertelt hoe koud de lucht was. Voor een besluit over natuurijs heb je lokale informatie over ijsdikte en ijskwaliteit nodig."],
