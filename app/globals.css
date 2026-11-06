@@ -247,15 +247,21 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   font-weight: 600;
 }
 .text-field input:focus, .text-field select:focus { outline: none; }
+.text-field:focus-within,
+.sport-select-button:focus-visible,
+.sport-search:focus-visible,
+.place-option:focus-visible,
+.sport-option:focus-visible {
+  outline: 3px solid #216c69;
+  outline-offset: 3px;
+}
 .planner-cta { width: 100%; border-radius: 16px; min-height: 53px; }
 .planner-note {
-  display: grid;
-  gap: 4px;
   margin-top: 12px;
   color: var(--ws-text-secondary);
   font-size: 12px;
+  line-height: 1.45;
 }
-.planner-note-long { display: none; }
 .status { min-height: 1.2em; margin-top: 8px; color: var(--ws-teal); font-size: 13px; font-weight: 600; }
 
 .sport-select { position: relative; }
@@ -603,7 +609,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .hero-copy { margin-top: 48px; max-width: 650px; }
   .hero h1 { font-size: 48px; line-height: 1.08; letter-spacing: -1.4px; }
   .hero-lead-desktop { display: block; font-size: 16px; }
-  .hero-lead-mobile, .planner-title, .planner-note-short, .editorial { display: none; }
+  .hero-lead-mobile, .planner-title, .editorial { display: none; }
   .hero-cta { min-height: 62px; width: fit-content; }
   .hero-photo {
     display: block;
@@ -611,17 +617,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
     margin-top: 28px;
   }
   .hero-photo img { height: 420px; border-radius: 28px; }
-  .weather-chip, .hero-photo figcaption {
-    position: absolute;
-    background: var(--ws-accent-action);
-    color: var(--ws-text-primary);
-    border-radius: 22px;
-  }
-  .weather-chip { top: 24px; right: 24px; width: 145px; padding: 10px 16px 12px; }
-  .weather-sun { display: block; color: var(--ws-text-primary); }
-  .weather-temp { font-size: 38px; font-weight: 800; line-height: 1; }
-  .weather-note { font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
   .hero-photo figcaption {
+    position: absolute;
     left: 24px;
     bottom: 24px;
     width: min(270px, 70%);
@@ -651,8 +648,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
     gap: 18px;
   }
   .planner-cta { width: auto; min-height: 66px; grid-column: auto; }
-  .planner-note { display: flex; gap: 28px; border-top: 1px solid var(--ws-line); padding-top: 14px; }
-  .planner-note-long { display: inline; }
+  .planner-note { border-top: 1px solid var(--ws-line); padding-top: 14px; }
   .families { padding: 28px; }
   .family-grid { grid-template-columns: repeat(3, 1fr); }
   .showcase {
@@ -845,6 +841,15 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .auth-panel h2 { color: var(--ws-text-primary); font-size: 20px; letter-spacing: 0; text-transform: none; line-height: 25px; }
 .auth-panel p, .auth-draft span, .auth-draft small { display: block; margin-top: 10px; color: var(--ws-text-secondary); font-size: 13px; line-height: 17px; font-weight: 500; }
 .auth-draft strong { display: block; margin-top: 12px; font-size: 18px; line-height: 23px; }
+.auth-edit {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 8px;
+  color: var(--ws-teal);
+  font-size: 14px;
+  font-weight: 700;
+}
 .auth-draft small { color: var(--ws-teal); font-size: 10px; }
 .auth-error {
   margin-top: 12px;

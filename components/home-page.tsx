@@ -12,6 +12,10 @@ import type { SearchDraft } from "@/lib/draft";
 
 const hours = ["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
 const mobileHours = new Set(["08:00", "10:00", "12:00", "16:00"]);
+const fixedPeriod = periods[0];
+/** Identical on every breakpoint: what is free, and when a free account is required. */
+const plannerAccessNote =
+  "Gratis en zonder account: de homepage, de sportgidsen en het fictieve voorbeeld. Een gratis account is nodig om een zoekopdracht te bewaren en een analyse te starten. Alleen locaties in Nederland.";
 
 export function HomePage({
   viewerName = null,
@@ -29,7 +33,7 @@ export function HomePage({
   const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
   const [placeId, setPlaceId] = useState(draft?.placeId ?? "");
   const [spotId, setSpotId] = useState<string | null>(draft?.spotId ?? null);
-  const [period, setPeriod] = useState<(typeof periods)[number]>(draft?.period ?? "Komende 48 uur");
+  const period = fixedPeriod;
   const [notice, setNotice] = useState(() => {
     if (resumed && draft) {
       return `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`;
@@ -96,16 +100,6 @@ export function HomePage({
         </div>
         <figure className="hero-photo">
           <img src="/home/hero.png" alt="Fietser op een duinweg aan de Nederlandse kust." />
-          <div className="weather-chip">
-            <svg className="weather-sun" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-              <circle cx="14" cy="14" r="4.5" fill="currentColor" />
-              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M14 3v3M14 22v3M3 14h3M22 14h3M6.2 6.2l2.1 2.1M19.7 19.7l2.1 2.1M21.8 6.2l-2.1 2.1M8.3 19.7l-2.1 2.1" />
-              </g>
-            </svg>
-            <p className="weather-temp">16°</p>
-            <p className="weather-note">Fictief · NL</p>
-          </div>
           <figcaption>
             <p>Buiten begint hier</p>
             <strong>Meer sport. Minder twijfel.</strong>
@@ -121,18 +115,18 @@ export function HomePage({
           </h2>
           <form className="planner-grid" onSubmit={onSearch}>
             <div>
-              <label className="field-label" htmlFor="sport-label">
+              <label className="field-label" id="sport-label" htmlFor="sport">
                 Kies je buitensport
               </label>
-              <div id="sport-label">
-                <SportSelect
-                  value={sportId}
-                  onChange={(next) => {
-                    if (next !== sportId) setSpotId(null);
-                    setSportId(next);
-                  }}
-                />
-              </div>
+              <SportSelect
+                id="sport"
+                labelId="sport-label"
+                value={sportId}
+                onChange={(next) => {
+                  if (next !== sportId) setSpotId(null);
+                  setSportId(next);
+                }}
+              />
             </div>
             <div>
               <label className="field-label" htmlFor="locatie">
@@ -153,31 +147,14 @@ export function HomePage({
                 Wanneer?
               </label>
               <div className="text-field">
-                <select
-                  id="periode"
-                  name="periode"
-                  value={period}
-                  onChange={(event) => setPeriod(event.target.value as (typeof periods)[number])}
-                >
-                  {periods.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                <input id="periode" name="periode" value={period} readOnly aria-readonly="true" />
               </div>
             </div>
             <button className="button button-dark planner-cta" type="submit" disabled={pending}>
               Bekijk mijn WeerSport-moment →
             </button>
           </form>
-          <p className="planner-note">
-            <span>Gratis account nodig bij zoeken</span>
-            <span className="planner-note-long">
-              Alleen locaties in Nederland · Voorbeeldadvies; data en bronnen volgen bij livegang
-            </span>
-            <span className="planner-note-short">Alleen Nederland · Gratis, zonder account</span>
-          </p>
+          <p className="planner-note">{plannerAccessNote}</p>
           <p className="status" role="status">
             {notice ||
               `Geselecteerd: ${findSport(sportId).name}. Het voorbeeld hieronder blijft het fictieve fietsmoment en telt niet als analyse.`}
@@ -225,6 +202,10 @@ export function HomePage({
             </h2>
             <p>
               WeerSport vertaalt de voorspelling naar één handig tijdvak voor jouw sport. Inclusief de reden waarom.
+            </p>
+            <p>
+              Het kaartje hiernaast is een fictief fietsvoorbeeld. Het staat los van de planner en gebruikt geen echte
+              temperatuur of score.
             </p>
           </div>
           <article className="signature" id="moment" aria-labelledby="moment-title">

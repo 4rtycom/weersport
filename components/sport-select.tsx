@@ -4,20 +4,36 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import { SportIcon } from "@/components/sport-icon";
 import { families, findSport, sports, sportsInFamily } from "@/lib/sports";
 
+function scrollOptionIntoView(list: HTMLElement, option: HTMLElement) {
+  const listRect = list.getBoundingClientRect();
+  const optionRect = option.getBoundingClientRect();
+  if (optionRect.top < listRect.top) {
+    list.scrollTop -= listRect.top - optionRect.top;
+  } else if (optionRect.bottom > listRect.bottom) {
+    list.scrollTop += optionRect.bottom - listRect.bottom;
+  }
+}
+
 type SportSelectProps = {
+  id?: string;
+  labelId?: string;
   value: string;
   onChange: (sportId: string) => void;
 };
 
-export function SportSelect({ value, onChange }: SportSelectProps) {
+export function SportSelect({ id, labelId, value, onChange }: SportSelectProps) {
   const selected = findSport(value);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const scrollTargetRef = useRef<string | null>(null);
   const listId = useId();
-  const buttonId = useId();
+  const generatedButtonId = useId();
+  const buttonId = id ?? generatedButtonId;
+  const valueId = `${buttonId}-value`;
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -38,6 +54,23 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
     if (open) searchRef.current?.focus();
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const sportId = scrollTargetRef.current;
+    const list = listRef.current;
+    if (!sportId || !list) return;
+    const option = document.getElementById(`${listId}-option-${sportId}`);
+    if (option) scrollOptionIntoView(list, option);
+  }, [open, listId]);
+
+  function scrollIndexIntoView(index: number) {
+    const sport = filtered[index];
+    const list = listRef.current;
+    if (!sport || !list) return;
+    const option = document.getElementById(`${listId}-option-${sport.id}`);
+    if (option) scrollOptionIntoView(list, option);
+  }
+
   function choose(sportId: string) {
     onChange(sportId);
     setOpen(false);
@@ -52,10 +85,14 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
       document.getElementById(buttonId)?.focus();
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((index) => Math.min(index + 1, Math.max(filtered.length - 1, 0)));
+      const next = Math.min(activeIndex + 1, Math.max(filtered.length - 1, 0));
+      setActiveIndex(next);
+      scrollIndexIntoView(next);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((index) => Math.max(index - 1, 0));
+      const next = Math.max(activeIndex - 1, 0);
+      setActiveIndex(next);
+      scrollIndexIntoView(next);
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (filtered[activeIndex]) choose(filtered[activeIndex].id);
@@ -78,15 +115,20 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
+        aria-labelledby={labelId ? `${labelId} ${valueId}` : undefined}
         onClick={() => {
+          const nextIndex = Math.max(filtered.findIndex((sport) => sport.id === selected.id), 0);
+          scrollTargetRef.current = filtered[nextIndex]?.id ?? null;
+          setActiveIndex(nextIndex);
           setOpen((current) => !current);
-          setActiveIndex(Math.max(filtered.findIndex((sport) => sport.id === selected.id), 0));
         }}
       >
         <span className="icon-badge">
           <SportIcon src={selected.icon} size={24} />
         </span>
-        <span className="sport-select-label">{selected.name}</span>
+        <span className="sport-select-label" id={valueId}>
+          {selected.name}
+        </span>
         <span className="chevron" aria-hidden="true">
           ⌄
         </span>
@@ -108,8 +150,12 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
             }}
             onKeyDown={onSearchKey}
             autoComplete="off"
+            aria-controls={listId}
+            aria-activedescendant={
+              filtered[activeIndex] ? `${listId}-option-${filtered[activeIndex].id}` : undefined
+            }
           />
-          <ul id={listId} className="sport-list" role="listbox" aria-label="Buitensporten">
+          <ul id={listId} ref={listRef} className="sport-list" role="listbox" aria-label="Buitensporten">
             {groups.map((group) => (
               <li key={group.family.id}>
                 <p className="sport-group" id={`${listId}-${group.family.id}`}>
