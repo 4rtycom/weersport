@@ -20,6 +20,11 @@ export type RequiredSourceField = {
   field: string | null;
   /** True only when a gate in this repo can read the field. A description is not enough. */
   measurable: boolean;
+  /**
+   * False when the column is only a rejected stand-in, not an input the result is waiting on.
+   * A tide clock is not a missing kitesurf measurement.
+   */
+  required: boolean;
 };
 
 export type ProfileBlock = {
@@ -90,8 +95,9 @@ function field(
   bundle: SourceBundleName,
   name: string | null,
   measurable: boolean,
+  required = true,
 ): RequiredSourceField {
-  return { id, label, bundle, field: name, measurable };
+  return { id, label, bundle, field: name, measurable, required };
 }
 
 function applied(id: string, label: string, explanation: string): ProfileFactor {
@@ -470,7 +476,7 @@ const seeds: Seed[] = [
       field("launch", "lanceerzijde", "none", null, false),
       field("windDirection", "windrichting", "none", null, false),
       field("gusts", "vlagerigheid", "none", null, false),
-      field("tide", "getij", "water", "tideTime", false),
+      field("tide", "getij", "water", "tideTime", false, false),
     ],
     blocks: [
       block("no-launch", "Zonder windrichting, lanceerzijde en spotregels is er geen kitesurfmoment."),

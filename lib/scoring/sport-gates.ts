@@ -32,7 +32,9 @@ const FIELD_UNIT: Record<WaterGateField, { unit: string; min: number; max: numbe
 };
 
 function unmeasuredLabels(profile: SportDecisionProfile) {
-  return profile.requiredFields.filter((field) => !field.measurable).map((field) => field.label);
+  return profile.requiredFields
+    .filter((field) => field.required && !field.measurable)
+    .map((field) => field.label);
 }
 
 function fieldLabel(profile: SportDecisionProfile, field: WaterGateField) {

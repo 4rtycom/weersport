@@ -469,6 +469,13 @@ for (const sport of sports) {
     assert.equal(blocked.horizon?.requestedHours, 48);
     assert.equal(snapshotConsumesQuota(fakeSnapshot(blocked, sport.id)), false);
     assert.equal(snapshotConsumesQuota(fakeSnapshot(stillBlocked, sport.id)), false);
+    if (sport.id === "kitesurfen") {
+      assert.equal(profile.requiredFields.find((item) => item.field === "tideTime")?.required, false);
+      assert.equal(blocked.missing?.includes("getij"), false);
+      assert.equal(stillBlocked.missing?.includes("getij"), false);
+      assert.equal(blocked.missing?.includes("windrichting"), true);
+      assert.equal(blocked.missing?.includes("lanceerzijde"), true);
+    }
     if (gate.tideReason) {
       const tide = scoreSportHours({
         sportId: sport.id,
@@ -486,6 +493,10 @@ for (const sport of sports) {
       assert.notEqual(tide.reason, blocked.reason);
       assert.equal(tide.blocked, true);
       assert.equal(snapshotConsumesQuota(fakeSnapshot(tide, sport.id)), false);
+      if (sport.id === "kitesurfen" && tide.kind === "NO_SCORE") {
+        assert.equal(tide.missing?.includes("windrichting"), true);
+        assert.equal(tide.missing?.includes("lanceerzijde"), true);
+      }
     }
     continue;
   }

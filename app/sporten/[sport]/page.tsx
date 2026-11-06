@@ -116,11 +116,13 @@ export default async function SportGuide({ params }: Props) {
             {guide.requiredFields.map((field) => (
               <li key={field.id}>
                 <strong>{field.label}.</strong>{" "}
-                {field.measurable
-                  ? "Dit veld bestaat op een bron in deze versie. Zonder geldige meting blijft het geblokkeerd, en een geldige meting is nog geen score."
-                  : field.field
-                    ? "Dit veld staat op een bron, maar het is voor deze sport geen meting van de ontbrekende factor. Het advies blijft geblokkeerd."
-                    : "Dit veld zit niet in de gekoppelde bronnen. Het advies blijft daarom geblokkeerd."}
+                {field.required === false
+                  ? "Dit veld is geen vereiste invoer. Een waarde hier vervangt de ontbrekende factor niet."
+                  : field.measurable
+                    ? "Dit veld bestaat op een bron in deze versie. Zonder geldige meting blijft het geblokkeerd, en een geldige meting is nog geen score."
+                    : field.field
+                      ? "Dit veld staat op een bron, maar het is voor deze sport geen meting van de ontbrekende factor. Het advies blijft geblokkeerd."
+                      : "Dit veld zit niet in de gekoppelde bronnen. Het advies blijft daarom geblokkeerd."}
               </li>
             ))}
           </ul>
