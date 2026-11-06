@@ -4,7 +4,8 @@ import { AccountShell } from "@/components/account/account-shell";
 import { RefundButton } from "@/components/billing/refund-button";
 import { readSession } from "@/lib/auth/cookies";
 import { getEntitlement } from "@/lib/billing/entitlement";
-import { listInvoices, mollieMode } from "@/lib/billing/mollie";
+import { listInvoices } from "@/lib/billing/mollie";
+import { billingMode, billingModeLabel } from "@/lib/billing/mollie-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function FactureringPage() {
         <div>
           <h1>Facturering</h1>
           <p className="account-lead">
-            Mollie-modus: {mollieMode()}. Facturen verschijnen na geverifieerde betaling. Geen ruwe betaalgegevens in
+            Mollie-modus: {billingModeLabel()}. Facturen verschijnen na geverifieerde betaling. Geen ruwe betaalgegevens in
             WeerSport.
           </p>
         </div>
@@ -55,7 +56,7 @@ export default async function FactureringPage() {
                   € {(invoice.amount_cents / 100).toFixed(2)} · {invoice.status}
                 </p>
                 <p className="account-age">{formatStamp(invoice.issued_at)}</p>
-                {invoice.status === "paid" && mollieMode() === "sandbox-local" ? (
+                {invoice.status === "paid" && billingMode() === "sandbox-local" ? (
                   <RefundButton invoiceId={invoice.id} />
                 ) : null}
               </li>

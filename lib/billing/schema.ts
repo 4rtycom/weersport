@@ -60,6 +60,7 @@ export function ensureBillingSchema() {
       state TEXT NOT NULL,
       mollie_subscription_id TEXT,
       mollie_customer_id TEXT,
+      mollie_mandate_id TEXT,
       current_period_start TEXT,
       current_period_end TEXT,
       cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
@@ -87,5 +88,15 @@ export function ensureBillingSchema() {
       payload_json TEXT NOT NULL
     );
   `);
+  ensureColumn("billing_subscriptions", "mollie_mandate_id", "TEXT");
   ready = true;
+}
+
+function ensureColumn(table: string, column: string, ddl: string) {
+  const cols = db()
+    .prepare(`PRAGMA table_info(${table})`)
+    .all() as Array<{ name: string }>;
+  if (!cols.some((col) => col.name === column)) {
+    db().exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  }
 }

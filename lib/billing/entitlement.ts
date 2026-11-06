@@ -44,7 +44,8 @@ export function isProActive(userId: string, at = new Date()) {
   const row = getSubscriptionRow(userId);
   if (!row) return false;
   if (row.plan !== "pro") return false;
-  if (row.state === "subscription_active" || row.state === "cancel_requested") {
+  // past_due keeps access until paid-through end; refunded/cancelled do not.
+  if (row.state === "subscription_active" || row.state === "cancel_requested" || row.state === "past_due") {
     if (row.current_period_end && new Date(row.current_period_end).getTime() < at.getTime()) {
       return false;
     }
