@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { accountFromSession, confirmPrototypeVerification, resendVerification } from "@/lib/auth/service";
+import {
+  accountFromSession,
+  confirmPrototypeVerification,
+  resendVerification,
+  rollbackResendVerification,
+} from "@/lib/auth/service";
 import { clearDevMail, SESSION_COOKIE, writeDevMail } from "@/lib/auth/cookies";
 import {
   authIsClosed,
@@ -38,19 +43,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ next: "/auth/hervat" });
   }
 
-  const token = resendVerification(account.id);
-  if (!token) return NextResponse.json({ error: "Dit adres is al geverifieerd.", next: "/auth/hervat" });
+  const issued = resendVerification(account.id);
+  if (!issued) return NextResponse.json({ error: "Dit adres is al geverifieerd.", next: "/auth/hervat" });
 
   const response = NextResponse.json({ ok: true });
   clearDevMail(response, request);
 
   if (authUsesInbox()) {
-    const mailed = await sendAuthMail({ to: account.email, purpose: "verify", token });
+    const mailed = await sendAuthMail({ to: account.email, purpose: "verify", token: issued.token });
     if (!mailed.ok) {
+      rollbackResendVerification(account.id, issued.token, issued.previousTokens);
       return NextResponse.json({ error: mailed.error ?? "Versturen mislukt." }, { status: 502 });
     }
   } else if (authUsesMailbox()) {
-    writeDevMail(response, request, `/auth/verifieer/bevestig?token=${encodeURIComponent(token)}`);
+    writeDevMail(response, request, `/auth/verifieer/bevestig?token=${encodeURIComponent(issued.token)}`);
   }
   return response;
 }

@@ -48,10 +48,16 @@ export async function POST(request: Request) {
   if (authUsesInbox()) {
     const mailed = await sendAuthMail({ to: result.account.email, purpose: "verify", token: result.token });
     if (!mailed.ok) {
-      return NextResponse.json(
-        { error: mailed.error ?? "Verificatiemail kon niet worden verstuurd." },
+      const failed = NextResponse.json(
+        {
+          error: mailed.error ?? "Verificatiemail kon niet worden verstuurd.",
+          next: "/auth/verifieer?fout=mail",
+        },
         { status: 502 },
       );
+      writeSession(failed, request, result.session);
+      clearDevMail(failed, request);
+      return failed;
     }
   } else if (authUsesMailbox()) {
     writeDevMail(response, request, `/auth/verifieer/bevestig?token=${encodeURIComponent(result.token)}`);

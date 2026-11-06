@@ -29,6 +29,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
         mailPath={link}
         authClosed={closed}
         delivery={authDeliveryMode()}
+        sendFailed={params.fout === "mail"}
       />
     </AuthShell>
   );

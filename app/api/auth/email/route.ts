@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { accountFromSession, changeUnverifiedEmail } from "@/lib/auth/service";
+import { accountFromSession, changeUnverifiedEmail, rollbackUnverifiedEmailChange } from "@/lib/auth/service";
 import { clearDevMail, SESSION_COOKIE, writeDevMail } from "@/lib/auth/cookies";
 import {
   authIsClosed,
@@ -36,6 +36,12 @@ export async function POST(request: Request) {
   if (authUsesInbox()) {
     const mailed = await sendAuthMail({ to: result.email, purpose: "verify", token: result.token });
     if (!mailed.ok) {
+      rollbackUnverifiedEmailChange(account.id, {
+        previousEmail: result.previousEmail,
+        previousTokens: result.previousTokens,
+        issuedEmail: result.email,
+        issuedToken: result.token,
+      });
       return NextResponse.json({ error: mailed.error ?? "Versturen mislukt." }, { status: 502 });
     }
   } else if (authUsesMailbox()) {

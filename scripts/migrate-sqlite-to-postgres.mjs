@@ -68,5 +68,14 @@ for (const table of tables) {
   console.log(`${table}: migrated ${inserted} rows`);
 }
 
+// Explicit ids do not advance BIGSERIAL. Keep the next login-attempt insert past migrated rows.
+await pool.query(`
+  SELECT setval(
+    pg_get_serial_sequence('login_attempts', 'id')::regclass,
+    COALESCE((SELECT MAX(id) FROM login_attempts), 1),
+    EXISTS (SELECT 1 FROM login_attempts)
+  )
+`);
+
 await pool.end();
 console.log("migration complete — keep SQLite read-only until cutover reconciliation is signed off");

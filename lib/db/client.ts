@@ -12,6 +12,7 @@ const globalStore = globalThis as unknown as {
   weersportPgPool?: pg.Pool;
   weersportSqlite?: SqliteDb;
   weersportSchemaReady?: boolean;
+  weersportSqliteSchemaReady?: boolean;
 };
 
 const pgTx = new AsyncLocalStorage<pg.PoolClient>();
@@ -326,6 +327,7 @@ async function ensureSchema() {
   } else {
     sqliteDb().exec(SQLITE_SCHEMA);
     invalidateOutstandingSqliteTokens();
+    globalStore.weersportSqliteSchemaReady = true;
   }
   globalStore.weersportSchemaReady = true;
 }
@@ -336,17 +338,18 @@ async function ensureSchema() {
  * sync auth/moments/billing keep using this file store in Phase 1.
  */
 export function legacySqlite() {
-  if (!globalStore.weersportSchemaReady || storeMode() === "postgres") {
-    // Always ensure the local SQLite schema for sync callers, even when Postgres
-    // is configured for migration readiness / mail log experiments.
+  if (!globalStore.weersportSqliteSchemaReady) {
+    // Ensure the local SQLite schema once per process for sync callers, including
+    // when DATABASE_URL is set only for migration tooling.
     sqliteDb().exec(SQLITE_SCHEMA);
     try {
       invalidateOutstandingSqliteTokens();
+      globalStore.weersportSqliteSchemaReady = true;
+      if (storeMode() !== "postgres") {
+        globalStore.weersportSchemaReady = true;
+      }
     } catch {
-      // first boot race
-    }
-    if (storeMode() !== "postgres") {
-      globalStore.weersportSchemaReady = true;
+      // first boot race — leave the flag unset so a later call can finish
     }
   }
   return sqliteDb();

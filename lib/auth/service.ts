@@ -147,6 +147,39 @@ export function saveDraft(userId: string, draft: SearchDraft) {
   db().prepare("UPDATE users SET draft_json = ? WHERE id = ?").run(JSON.stringify(draft), userId);
 }
 
+type StoredToken = { token_hash: string; expires_at: string };
+
+function unusedTokens(userId: string, purpose: "verify" | "reset") {
+  return db()
+    .prepare("SELECT token_hash, expires_at FROM tokens WHERE user_id = ? AND purpose = ? AND used_at IS NULL")
+    .all(userId, purpose) as StoredToken[];
+}
+
+function withImmediate(fn: (database: ReturnType<typeof db>) => void) {
+  const database = db();
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    fn(database);
+    database.exec("COMMIT");
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+function restoreUnusedTokens(
+  database: ReturnType<typeof db>,
+  userId: string,
+  purpose: "verify" | "reset",
+  tokens: StoredToken[],
+) {
+  database.prepare("DELETE FROM tokens WHERE user_id = ? AND purpose = ? AND used_at IS NULL").run(userId, purpose);
+  const insert = database.prepare(
+    "INSERT INTO tokens (token_hash, user_id, purpose, expires_at, used_at) VALUES (?, ?, ?, ?, NULL)",
+  );
+  for (const token of tokens) insert.run(token.token_hash, userId, purpose, token.expires_at);
+}
+
 function issueToken(userId: string, purpose: "verify" | "reset") {
   db().prepare("DELETE FROM tokens WHERE user_id = ? AND purpose = ? AND used_at IS NULL").run(userId, purpose);
   const token = newToken();
@@ -160,7 +193,19 @@ export function resendVerification(userId: string) {
   const user = userById(userId);
   if (!user) return null;
   if (user.email_verified_at) return null;
-  return issueToken(userId, "verify");
+  const previousTokens = unusedTokens(userId, "verify");
+  return { token: issueToken(userId, "verify"), previousTokens };
+}
+
+export function rollbackResendVerification(userId: string, issuedToken: string, previousTokens: StoredToken[]) {
+  const user = userById(userId);
+  if (!user || user.email_verified_at) return;
+  const current = unusedTokens(userId, "verify");
+  const issuedHash = hashToken(issuedToken);
+  if (!current.some((token) => token.token_hash === issuedHash)) return;
+  withImmediate((database) => {
+    restoreUnusedTokens(database, userId, "verify", previousTokens);
+  });
 }
 
 export function changeUnverifiedEmail(userId: string, emailInput: string) {
@@ -173,8 +218,26 @@ export function changeUnverifiedEmail(userId: string, emailInput: string) {
   if (existing && existing.id !== userId) {
     return { ok: false as const, error: "Dit e-mailadres heeft al een account. Log in of herstel je wachtwoord." };
   }
+  const previousEmail = user.email;
+  const previousTokens = unusedTokens(userId, "verify");
   db().prepare("UPDATE users SET email = ? WHERE id = ?").run(email, userId);
-  return { ok: true as const, token: issueToken(userId, "verify"), email };
+  return { ok: true as const, token: issueToken(userId, "verify"), email, previousEmail, previousTokens };
+}
+
+export function rollbackUnverifiedEmailChange(
+  userId: string,
+  snapshot: { previousEmail: string; previousTokens: StoredToken[]; issuedEmail: string; issuedToken: string },
+) {
+  const user = userById(userId);
+  if (!user || user.email_verified_at || user.email !== snapshot.issuedEmail) return;
+  const issuedHash = hashToken(snapshot.issuedToken);
+  if (!unusedTokens(userId, "verify").some((token) => token.token_hash === issuedHash)) return;
+  withImmediate((database) => {
+    database
+      .prepare("UPDATE users SET email = ? WHERE id = ? AND email_verified_at IS NULL")
+      .run(snapshot.previousEmail, userId);
+    restoreUnusedTokens(database, userId, "verify", snapshot.previousTokens);
+  });
 }
 
 function consume(raw: string, purpose: "verify" | "reset") {

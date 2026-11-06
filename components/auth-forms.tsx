@@ -115,7 +115,7 @@ export function RegisterForm() {
     setError("");
     const result = await postJson("/api/auth/registreren", { name, email, password, terms });
     setPending(false);
-    if (!result.ok || !result.data.next) {
+    if (!result.data.next) {
       setError(result.data.error ?? "Account aanmaken is niet gelukt.");
       return;
     }
@@ -194,11 +194,13 @@ export function VerifyActions({
   mailPath,
   authClosed = false,
   delivery = "mailbox",
+  sendFailed = false,
 }: {
   email: string;
   mailPath: string | null;
   authClosed?: boolean;
   delivery?: "closed" | "inbox" | "mailbox";
+  sendFailed?: boolean;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -251,12 +253,18 @@ export function VerifyActions({
       <h1>Controleer je e-mail.</h1>
       <p className="auth-lead">Verifieer je adres om veilig verder te gaan.</p>
       <div className="auth-panel">
-        <h2>E-mailverificatie verzonden</h2>
+        <h2>{sendFailed ? "Account aangemaakt" : "E-mailverificatie verzonden"}</h2>
         <p>
-          Open de link in je mailbox voor {email}. Daarna ga je automatisch verder met de eerder gekozen sport, locatie
-          en periode.
+          {sendFailed
+            ? `We konden nog geen verificatielink naar ${email} sturen. Vraag hieronder een nieuwe mail aan. Daarna ga je verder met de eerder gekozen sport, locatie en periode.`
+            : `Open de link in je mailbox voor ${email}. Daarna ga je automatisch verder met de eerder gekozen sport, locatie en periode.`}
         </p>
       </div>
+      {sendFailed ? (
+        <p className="auth-error" role="alert">
+          De verificatiemail kon niet worden verstuurd. Vraag hieronder een nieuwe mail aan.
+        </p>
+      ) : null}
       {error ? (
         <p className="auth-error" role="alert">
           {error}
@@ -270,7 +278,7 @@ export function VerifyActions({
         </p>
       ) : (
         <>
-          {delivery === "inbox" ? (
+          {delivery === "inbox" && !sendFailed ? (
             <p className="auth-inline-note">
               We hebben een beveiligde link naar {email} gestuurd. Er verschijnt geen token in deze browser.
             </p>

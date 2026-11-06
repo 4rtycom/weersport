@@ -11,13 +11,19 @@ export async function GET() {
   const started = Date.now();
   let database: "ok" | "error" = "ok";
   try {
-    // Runtime identity still uses sync SQLite in Phase 1; also probe Postgres when configured.
+    // Request-path identity still uses sync SQLite until the async cutover.
     db().prepare("SELECT 1 AS ok").get();
-    if (storeMode() === "postgres") {
-      await query("SELECT 1 AS ok");
-    }
   } catch {
     database = "error";
+  }
+  let durableStore: "ok" | "error" | "skipped" = "skipped";
+  if (storeMode() === "postgres") {
+    durableStore = "ok";
+    try {
+      await query("SELECT 1 AS ok");
+    } catch {
+      durableStore = "error";
+    }
   }
   const status = database === "ok" ? 200 : 503;
   return NextResponse.json(
@@ -29,6 +35,7 @@ export async function GET() {
         database,
         store: storeMode(),
         durable: isDurableStore(),
+        durableStore,
         authDelivery: authDeliveryMode(),
         mailDriver: mailDriver(),
       },
