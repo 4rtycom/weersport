@@ -24,7 +24,7 @@ export function SponsorCard({
         <div className="sponsor-moment-copy">
           <p className="sponsor-moment-kicker">{`Gesponsord  ·  ${partner}`}</p>
           <h3>{headline}</h3>
-          <p>{body}</p>
+          <p className="sponsor-moment-body">{body}</p>
           {fictional ? <p className="sponsor-moment-note">Fictieve partner</p> : null}
         </div>
       </aside>

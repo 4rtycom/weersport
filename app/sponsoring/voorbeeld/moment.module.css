@@ -354,13 +354,6 @@
   min-width: 0;
   padding: 11px 16px 16px;
 }
-.page :global(.sponsor-moment-kicker) {
-  margin: 0;
-  color: #385741;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.23;
-}
 .page :global(.sponsor-moment) h3 {
   margin: 6px 0 0;
   font-size: 22px;
@@ -368,16 +361,25 @@
   line-height: 1.2;
   letter-spacing: -0.03em;
 }
-.page :global(.sponsor-moment-copy) p {
+.page :global(.sponsor-moment-copy) p:global(.sponsor-moment-kicker) {
+  margin: 0;
+  color: #385741;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.23;
+}
+.page :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) {
   margin: 8px 0 0;
+  color: #0b2934;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.35;
 }
-.page :global(.sponsor-moment-note) {
-  margin-top: 18px;
+.page :global(.sponsor-moment-copy) p:global(.sponsor-moment-note) {
+  margin: 18px 0 0;
   color: #4b6870;
   font-size: 12px;
+  font-weight: 400;
   line-height: 1.23;
 }
 
@@ -471,11 +473,12 @@
     margin-top: 8px;
     font-size: 30px;
   }
-  .page :global(.sponsor-moment-copy) p { font-size: 16px; }
-  .page :global(.sponsor-moment-note) {
+  .page :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) { font-size: 16px; }
+  .page :global(.sponsor-moment-copy) p:global(.sponsor-moment-note) {
     margin-top: auto;
     padding-top: 12px;
     font-size: 12px;
+    font-weight: 400;
   }
 }
 

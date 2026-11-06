@@ -41,6 +41,7 @@ type Receipt = {
 };
 
 const SPONSOR_DRAFT_KEY = "weersport-sponsor-campaign";
+const SPONSOR_RECEIPT_KEY = "weersport-sponsor-receipt";
 
 type CampaignDraft = {
   step: "campaign" | "contact";
@@ -78,6 +79,30 @@ function readSponsorDraft(): CampaignDraft | null {
       organisation: text(data.organisation),
       name: text(data.name),
       email: text(data.email),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function readSponsorReceipt(): Receipt | null {
+  try {
+    const raw = sessionStorage.getItem(SPONSOR_RECEIPT_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as Partial<Receipt>;
+    if (!data || typeof data !== "object") return null;
+    if (!text(data.id) || !text(data.title) || !text(data.detail)) return null;
+    if (data.areaKind !== "place" && data.areaKind !== "radius") return null;
+    return {
+      id: text(data.id),
+      sportName: text(data.sportName),
+      placeLabel: text(data.placeLabel),
+      areaKind: data.areaKind,
+      radiusKm: typeof data.radiusKm === "number" ? data.radiusKm : null,
+      startDate: text(data.startDate),
+      endDate: text(data.endDate),
+      title: text(data.title),
+      detail: text(data.detail),
     };
   } catch {
     return null;
@@ -148,6 +173,14 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
   }, [step]);
 
   useEffect(() => {
+    const storedReceipt = readSponsorReceipt();
+    if (storedReceipt) {
+      skipFocus.current = true;
+      setReceipt(storedReceipt);
+      setStep("received");
+      setDraftReady(true);
+      return;
+    }
     const draft = readSponsorDraft();
     if (draft) {
       skipFocus.current = draft.step === "contact";
@@ -168,10 +201,12 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
 
   useEffect(() => {
     if (!draftReady) return;
-    if (step === "received") {
+    if (step === "received" && receipt) {
+      sessionStorage.setItem(SPONSOR_RECEIPT_KEY, JSON.stringify(receipt));
       sessionStorage.removeItem(SPONSOR_DRAFT_KEY);
       return;
     }
+    if (step === "received") return;
     const draft: CampaignDraft = {
       step: step === "contact" ? "contact" : "campaign",
       sportId,
@@ -185,10 +220,12 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
       name,
       email,
     };
+    sessionStorage.removeItem(SPONSOR_RECEIPT_KEY);
     sessionStorage.setItem(SPONSOR_DRAFT_KEY, JSON.stringify(draft));
   }, [
     draftReady,
     step,
+    receipt,
     sportId,
     placeQuery,
     placeId,
