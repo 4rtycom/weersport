@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { PlaceField } from "@/components/place-field";
 import { SponsoringRunningPreview } from "@/components/sponsoring-running-preview";
 import { placeSelectionLabel } from "@/lib/place-label";
@@ -39,6 +40,50 @@ type Receipt = {
   detail: string;
 };
 
+const SPONSOR_DRAFT_KEY = "weersport-sponsor-campaign";
+
+type CampaignDraft = {
+  step: "campaign" | "contact";
+  sportId: string;
+  placeQuery: string;
+  placeId: string;
+  placeLabel: string;
+  areaChoice: string;
+  start: string;
+  weeks: string;
+  organisation: string;
+  name: string;
+  email: string;
+};
+
+function text(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function readSponsorDraft(): CampaignDraft | null {
+  try {
+    const raw = sessionStorage.getItem(SPONSOR_DRAFT_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as Partial<CampaignDraft>;
+    if (!data || typeof data !== "object") return null;
+    return {
+      step: data.step === "contact" ? "contact" : "campaign",
+      sportId: text(data.sportId),
+      placeQuery: text(data.placeQuery),
+      placeId: text(data.placeId),
+      placeLabel: text(data.placeLabel),
+      areaChoice: text(data.areaChoice),
+      start: text(data.start),
+      weeks: text(data.weeks),
+      organisation: text(data.organisation),
+      name: text(data.name),
+      email: text(data.email),
+    };
+  } catch {
+    return null;
+  }
+}
+
 const fieldOrder = ["sport", "region", "area", "start", "weeks", "organisation", "name", "email", "form"] as const;
 
 const fieldIds: Record<(typeof fieldOrder)[number], string> = {
@@ -73,6 +118,8 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
   const lock = useRef(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const skipFocus = useRef(false);
   const attempt = useRef<{ key: string; body: string } | null>(null);
   const mounted = useRef(false);
   const statusId = useId();
@@ -93,8 +140,66 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
       mounted.current = true;
       return;
     }
+    if (skipFocus.current) {
+      skipFocus.current = false;
+      return;
+    }
     titleRef.current?.focus();
   }, [step]);
+
+  useEffect(() => {
+    const draft = readSponsorDraft();
+    if (draft) {
+      skipFocus.current = draft.step === "contact";
+      setStep(draft.step);
+      setSportId(draft.sportId);
+      setPlaceQuery(draft.placeQuery);
+      setPlaceId(draft.placeId);
+      setPlaceLabel(draft.placeLabel);
+      setAreaChoice(draft.areaChoice);
+      setStart(draft.start);
+      setWeeks(draft.weeks);
+      setOrganisation(draft.organisation);
+      setName(draft.name);
+      setEmail(draft.email);
+    }
+    setDraftReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    if (step === "received") {
+      sessionStorage.removeItem(SPONSOR_DRAFT_KEY);
+      return;
+    }
+    const draft: CampaignDraft = {
+      step: step === "contact" ? "contact" : "campaign",
+      sportId,
+      placeQuery,
+      placeId,
+      placeLabel,
+      areaChoice,
+      start,
+      weeks,
+      organisation,
+      name,
+      email,
+    };
+    sessionStorage.setItem(SPONSOR_DRAFT_KEY, JSON.stringify(draft));
+  }, [
+    draftReady,
+    step,
+    sportId,
+    placeQuery,
+    placeId,
+    placeLabel,
+    areaChoice,
+    start,
+    weeks,
+    organisation,
+    name,
+    email,
+  ]);
 
   function focusError(next: Errors) {
     const key = fieldOrder.find((item) => next[item]);
@@ -233,6 +338,9 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
         {title}
       </h1>
       <p className={styles.lead}>{lead}</p>
+      <p className={styles.momentLink}>
+        <Link href="/sponsoring/voorbeeld">Bekijk volledige momentpagina · Fietsen</Link>
+      </p>
       {step === "received" && receipt ? (
         <div className={styles.receipt} role="status">
           <p className={styles.receiptLabel}>Je aangevraagde plaatsing</p>
