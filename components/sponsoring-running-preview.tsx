@@ -10,8 +10,9 @@ export function SponsoringRunningPreview({ sportName }: { sportName: string }) {
   const otherSport = sportName !== "" && sportName !== "Hardlopen";
 
   return (
-    <div className={styles.aside}>
-      <h2>Zo ziet een sporter je merk</h2>
+    <aside id="plaatsing" className={styles.aside} tabIndex={-1}>
+      <h2>Je plek op de sportpagina</h2>
+      <p className={styles.exampleNote}>Hier ziet een hardloper in Ede de lokale loopwinkel, direct onder het advies.</p>
       {otherSport ? (
         <p className={styles.exampleNote}>Dit is een hardloopvoorbeeld. Je aanvraag blijft voor {sportName}.</p>
       ) : null}
@@ -21,7 +22,6 @@ export function SponsoringRunningPreview({ sportName }: { sportName: string }) {
             src="/sponsoring/hardlopen-heide.webp"
             alt="Twee hardlopers op een nat zandpad door de heide."
             fill
-            priority
             sizes="(max-width: 899px) calc(100vw - 40px), 514px"
             style={{ objectFit: "cover", objectPosition: "center 32%" }}
           />
@@ -51,11 +51,11 @@ export function SponsoringRunningPreview({ sportName }: { sportName: string }) {
               <p className={styles.sponsored}>Gesponsord</p>
               <p className={styles.shop}>Loopatelier Ede</p>
               <p className={styles.shopLine}>Vind de trailschoen die bij je past.</p>
-              <p className={styles.fictional}>Fictieve partner</p>
+              <p className={styles.fictional}>Voorbeeld van een lokale partner</p>
             </div>
           </div>
         </div>
       </figure>
-    </div>
+    </aside>
   );
 }
