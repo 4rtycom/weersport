@@ -67,7 +67,7 @@ export default async function FactureringPage() {
       <section className="account-panel">
         <h2>Support & terugbetalingen</h2>
         <p>Beleid en contactroutes voor refunds en geschillen staan op de supportpagina.</p>
-        <Link href="/support/terugbetaling">Bekijk terugbetalingsbeleid →</Link>
+        <Link href="/support/terugbetaling?van=/account/facturering">Bekijk terugbetalingsbeleid →</Link>
       </section>
     </AccountShell>
   );

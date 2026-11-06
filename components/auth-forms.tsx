@@ -175,8 +175,8 @@ export function RegisterForm() {
       <label className="auth-check">
         <input type="checkbox" checked={terms} onChange={(event) => setTerms(event.target.checked)} />
         <span>
-          Ik ga akkoord met de <Link href="/voorwaarden">voorwaarden</Link> en het{" "}
-          <Link href="/privacy">privacybeleid</Link>.
+          Ik ga akkoord met de <Link href="/voorwaarden?van=/auth/registreren">voorwaarden</Link> en het{" "}
+          <Link href="/privacy?van=/auth/registreren">privacybeleid</Link>.
         </span>
       </label>
       <button className="button button-dark auth-button" type="submit" disabled={pending}>
