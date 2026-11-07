@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { PlaceField } from "@/components/place-field";
-import { SponsoringRunningPreview } from "@/components/sponsoring-running-preview";
+import { FietsMomentPage } from "@/components/fiets-moment-page";
 import { placeSelectionLabel } from "@/lib/place-label";
 import {
   AREA_CHOICES,
@@ -375,9 +374,6 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
         {title}
       </h1>
       <p className={styles.lead}>{lead}</p>
-      <p className={styles.momentLink}>
-        <Link href="/sponsoring/voorbeeld">Bekijk volledige momentpagina · Fietsen</Link>
-      </p>
       {step === "received" && receipt ? (
         <div className={styles.receipt} role="status">
           <p className={styles.receiptLabel}>Je aangevraagde plaatsing</p>
@@ -658,7 +654,9 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
               </button>
             )}
           </div>
-          <SponsoringRunningPreview sportName={sportName} />
+          <div className={styles.showcase}>
+            <FietsMomentPage embedded />
+          </div>
         </form>
       )}
     </>

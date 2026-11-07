@@ -66,6 +66,13 @@
   display: grid;
   gap: 14px;
 }
+.embed {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+}
 .hero {
   background: white;
   border-radius: 20px;
@@ -109,6 +116,13 @@
   font-size: 21px;
   font-weight: 700;
   line-height: 1.23;
+  letter-spacing: -0.02em;
+}
+.exampleTitle {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 1em;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 .window {
@@ -328,7 +342,7 @@
   height: 24px;
 }
 
-.page :global(.sponsor-moment) {
+.shell :global(.sponsor-moment) {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   background: #e5ebda;
@@ -336,46 +350,46 @@
   overflow: hidden;
   color: #0b2934;
 }
-.page :global(.sponsor-moment-photo) {
+.shell :global(.sponsor-moment-photo) {
   height: 114px;
   background: #c9d6c7;
   overflow: hidden;
 }
-.page :global(.sponsor-moment-photo) img {
+.shell :global(.sponsor-moment-photo) img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: 50% 58%;
 }
-.page :global(.sponsor-moment-copy) {
+.shell :global(.sponsor-moment-copy) {
   display: flex;
   flex-direction: column;
   min-width: 0;
   padding: 11px 16px 16px;
 }
-.page :global(.sponsor-moment) h3 {
+.shell :global(.sponsor-moment) h3 {
   margin: 6px 0 0;
   font-size: 22px;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.03em;
 }
-.page :global(.sponsor-moment-copy) p:global(.sponsor-moment-kicker) {
+.shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-kicker) {
   margin: 0;
   color: #385741;
   font-size: 13px;
   font-weight: 700;
   line-height: 1.23;
 }
-.page :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) {
+.shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) {
   margin: 8px 0 0;
   color: #0b2934;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.35;
 }
-.page :global(.sponsor-moment-copy) p:global(.sponsor-moment-note) {
+.shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-note) {
   margin: 18px 0 0;
   color: #4b6870;
   font-size: 12px;
@@ -458,27 +472,47 @@
     padding: 11px 14px;
     font-size: 14px;
   }
-  .page :global(.sponsor-moment) {
+  .shell :global(.sponsor-moment) {
     grid-template-columns: 280px minmax(0, 1fr);
     min-height: 155px;
   }
-  .page :global(.sponsor-moment-photo) {
+  .shell :global(.sponsor-moment-photo) {
     height: auto;
     min-height: 155px;
   }
-  .page :global(.sponsor-moment-copy) {
+  .shell :global(.sponsor-moment-copy) {
     padding: 17px 24px 14px 26px;
   }
-  .page :global(.sponsor-moment) h3 {
+  .shell :global(.sponsor-moment) h3 {
     margin-top: 8px;
     font-size: 30px;
   }
-  .page :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) { font-size: 16px; }
-  .page :global(.sponsor-moment-copy) p:global(.sponsor-moment-note) {
+  .shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) { font-size: 16px; }
+  .shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-note) {
     margin-top: auto;
     padding-top: 12px;
     font-size: 12px;
     font-weight: 400;
+  }
+
+  /* Compact the wide-screen type when the moment sits in a narrow column.
+     Below 800px the base sizes stay, so a stacked phone card is not enlarged. */
+  @container (max-width: 740px) {
+    .embed .hero { padding: 18px 16px 14px; }
+    .embed .heroMain { grid-template-columns: minmax(0, 1fr) 92px; }
+    .embed .window { font-size: 40px; white-space: nowrap; }
+    .embed .hero h1 { font-size: 22px; }
+    .embed .reason { font-size: 15px; max-width: none; }
+    .embed .score { min-height: 96px; padding: 6px 8px 8px; }
+    .embed .score strong { font-size: 40px; }
+    .embed .hours li { font-size: 11px; }
+    .embed .hours li:first-child { transform: translateX(0); }
+    .embed .hours li:last-child { transform: translateX(-100%); }
+    .embed.shell :global(.sponsor-moment) {
+      grid-template-columns: minmax(132px, 34%) minmax(0, 1fr);
+    }
+    .embed.shell :global(.sponsor-moment) h3 { font-size: 22px; }
+    .embed.shell :global(.sponsor-moment-copy) p:global(.sponsor-moment-body) { font-size: 14px; }
   }
 }
 
