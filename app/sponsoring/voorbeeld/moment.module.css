@@ -118,6 +118,13 @@
   line-height: 1.23;
   letter-spacing: -0.02em;
 }
+.exampleTitle {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 1em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
 .window {
   margin: 6px 0 0;
   font-size: 30px;

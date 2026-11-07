@@ -5,7 +5,7 @@ import { SponsorCard } from "@/components/sponsor-card";
 import { fietsVoorbeeld } from "@/lib/sponsoring/fiets-voorbeeld";
 import styles from "@/app/sponsoring/voorbeeld/moment.module.css";
 
-function FietsMomentContent() {
+function FietsMomentContent({ embedded = false }: { embedded?: boolean }) {
   const moment = fietsVoorbeeld;
 
   return (
@@ -17,7 +17,10 @@ function FietsMomentContent() {
           </div>
           <div className={styles.heroMain}>
             <div>
-              <h1>{moment.title}</h1>
+              <h1>
+                {embedded ? <span className={styles.exampleTitle}>Voorbeeld · fictief</span> : null}
+                {moment.title}
+              </h1>
               <p className={styles.window}>{moment.window}</p>
               <p className={styles.reason}>{moment.explanation}</p>
             </div>
@@ -89,7 +92,7 @@ export function FietsMomentPage({ embedded = false }: { embedded?: boolean }) {
   if (embedded) {
     return (
       <div className={`${styles.embed} ${styles.shell}`}>
-        <FietsMomentContent />
+        <FietsMomentContent embedded />
       </div>
     );
   }

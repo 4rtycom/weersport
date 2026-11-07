@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { PlaceField } from "@/components/place-field";
 import { FietsMomentPage } from "@/components/fiets-moment-page";
 import { placeSelectionLabel } from "@/lib/place-label";
@@ -375,9 +374,6 @@ export function SponsoringForm({ sports }: { sports: { id: string; name: string 
         {title}
       </h1>
       <p className={styles.lead}>{lead}</p>
-      <p className={styles.momentLink}>
-        <Link href="/sponsoring/voorbeeld">Bekijk volledige momentpagina · Fietsen</Link>
-      </p>
       {step === "received" && receipt ? (
         <div className={styles.receipt} role="status">
           <p className={styles.receiptLabel}>Je aangevraagde plaatsing</p>

@@ -58,6 +58,9 @@ for (const token of ["Stel je campagne samen", "Sponsoraanvraag versturen", "Jou
 if (html.includes("Je ochtendrun") || html.includes("Zo ziet een sporter je merk")) {
   throw new Error("Sponsoring HTML still shows the hardlopen preview");
 }
+if (html.includes("Bekijk volledige momentpagina")) {
+  throw new Error("Sponsoring HTML still links to the full moment page");
+}
 if (html.includes("€99") || html.includes("Vraag een pilot aan")) throw new Error("Sponsoring HTML still shows the pilot price");
 
 const bad = await fetch(new URL("/api/sponsoring", base), {

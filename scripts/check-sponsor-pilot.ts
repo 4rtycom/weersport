@@ -860,7 +860,7 @@ for (const token of [
   "Stel je campagne samen",
   "Verder naar contactgegevens",
   "Sponsoraanvraag versturen",
-  "Bekijk volledige momentpagina",
+  "Voorbeeld · fictief",
   "Jouw WeerSport-moment",
   "10:00 – 12:00",
   "Fietswerk Amsterdam",
@@ -869,7 +869,7 @@ for (const token of [
 ]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
-for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede"]) {
+for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede", "Bekijk volledige momentpagina"]) {
   if (html.includes(removed)) throw new Error(`Live sponsoring HTML still shows ${removed}`);
 }
 for (const banned of ["€99", "Vraag een pilot aan", "Bespreek maatwerk", "adsbygoogle"]) {
