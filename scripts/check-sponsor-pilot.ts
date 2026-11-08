@@ -46,6 +46,14 @@ for (const banned of ["€99", "Vraag een pilot aan", "Vraag informatie over de 
 if (!momentPage.includes("try {") || !momentPage.includes("resolveCommercialBlocks")) {
   throw new Error("Moment page must isolate commercial selection");
 }
+const adviceAt = momentView.indexOf("moment-score-card");
+const commercialAt = momentView.indexOf("commercial.stack");
+const saveAt = momentView.indexOf("bewaar-title");
+const sourcesAt = momentView.indexOf("bronnen-title");
+const adsAt = momentView.indexOf("<AdsHost");
+if (!(adviceAt >= 0 && adviceAt < commercialAt && commercialAt < saveAt && sourcesAt < adsAt)) {
+  throw new Error("Affiliate tip and sponsors must follow the advice and precede the long blocks");
+}
 if (home.includes("resolveSponsorSlot") || home.includes("SponsorMeasure")) {
   throw new Error("Homepage must not place a sponsor");
 }

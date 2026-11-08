@@ -189,6 +189,15 @@ export function MomentView({
           </aside>
         </div>
 
+        {commercialBlocks?.affiliate || (commercialBlocks?.sponsors.length ?? 0) > 0 ? (
+          <div className={commercial.stack}>
+            {commercialBlocks?.affiliate ? (
+              <AffiliateTip tip={commercialBlocks.affiliate} sportId={snapshot.sportId} measure={consentGranted} />
+            ) : null}
+            <SportSponsors sponsors={commercialBlocks?.sponsors ?? []} />
+          </div>
+        ) : null}
+
         <section className="moment-card" aria-labelledby="bewaar-title">
           <p className="eyebrow">Opslaan zonder verbruik</p>
           <h2 id="bewaar-title">Bewaar dit sportmoment</h2>
@@ -273,12 +282,6 @@ export function MomentView({
           </ul>
         </section>
 
-        <div className={commercial.stack}>
-          {commercialBlocks?.affiliate ? (
-            <AffiliateTip tip={commercialBlocks.affiliate} sportId={snapshot.sportId} measure={consentGranted} />
-          ) : null}
-          <SportSponsors sponsors={commercialBlocks?.sponsors ?? []} />
-        </div>
         {ads ? (
           <AdsHost
             decision={ads.decision}
