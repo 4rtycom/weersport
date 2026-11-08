@@ -10,45 +10,41 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const page = readFileSync(new URL("../app/sponsoring/page.tsx", import.meta.url), "utf8");
-const form = readFileSync(new URL("../components/sponsoring-form.tsx", import.meta.url), "utf8");
-const preview = readFileSync(new URL("../components/sponsoring-running-preview.tsx", import.meta.url), "utf8");
+const form = readFileSync(new URL("../components/sponsor-signup.tsx", import.meta.url), "utf8");
 const momentPage = readFileSync(new URL("../app/moment/page.tsx", import.meta.url), "utf8");
+const momentView = readFileSync(new URL("../components/moment-view.tsx", import.meta.url), "utf8");
+const sponsors = readFileSync(new URL("../components/sport-sponsors.tsx", import.meta.url), "utf8");
+const affiliate = readFileSync(new URL("../components/affiliate-tip.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
-const screen = `${page}\n${form}\n${preview}`;
+const screen = `${page}\n${form}\n${momentView}\n${sponsors}\n${affiliate}`;
 for (const token of [
-  "Stel je campagne samen",
-  "Verder naar contactgegevens",
-  "Controleer je aanvraag",
-  "Keuzes wijzigen",
-  "Sponsoraanvraag versturen",
-  "Aanvraag ontvangen",
-  "Aanvraagnummer",
-  "Voorbeeld met demogegevens",
-  "Je ochtendrun",
-  "hardlopen-heide.webp",
-  "trailschoen.webp",
-  "Loopatelier Ede",
-  "Fictieve partner",
+  "Word sportsponsor",
+  "Kies uit 24 sporten",
+  "Gebruik mijn selectie",
+  "Factuurgegevens",
+  "Betalen met iDEAL",
   "role=\"alert\"",
-  "role=\"status\"",
+  "aria-live=\"polite\"",
+  "Onze sportsponsors",
+  "Advertentie · affiliatelink",
 ]) {
   if (!screen.includes(token)) throw new Error(`Sponsoring screen missing ${token}`);
+}
+if (momentView.includes("SponsorMeasure") || screen.includes("Stel je campagne samen")) {
+  throw new Error("Old campaign surface is still rendered");
 }
 const campaignSource = readFileSync(new URL("../lib/sponsoring/campaign.ts", import.meta.url), "utf8");
 const storeSource = readFileSync(new URL("../lib/sponsoring/store.ts", import.meta.url), "utf8");
 if (!campaignSource.includes("campaign_v1") || !storeSource.includes("idempotency_key") || !storeSource.includes("message: null")) {
   throw new Error("Campaign storage lost its type, idempotency key or empty message");
 }
-for (const banned of ["€99", "Vraag een pilot aan", "Vraag informatie over de pilot", "Bespreek maatwerk", "gratis"]) {
-  if (page.includes(banned) || form.includes(banned) || preview.includes(banned)) {
+for (const banned of ["€99", "Vraag een pilot aan", "Vraag informatie over de pilot", "Bespreek maatwerk", "Stel je campagne samen"]) {
+  if (page.includes(banned) || form.includes(banned)) {
     throw new Error(`Public sponsoring still shows ${banned}`);
   }
 }
-if (preview.includes("https://") || preview.includes("meet") || preview.includes("forecast") || preview.includes("scoreSportHours")) {
-  throw new Error("Running preview must stay a fixed fixture without a forecast or shop link");
-}
-if (!momentPage.includes("try {") || !momentPage.includes("resolveSponsorSlot")) {
-  throw new Error("Moment page must isolate sponsor selection");
+if (!momentPage.includes("try {") || !momentPage.includes("resolveCommercialBlocks")) {
+  throw new Error("Moment page must isolate commercial selection");
 }
 if (home.includes("resolveSponsorSlot") || home.includes("SponsorMeasure")) {
   throw new Error("Homepage must not place a sponsor");
@@ -856,17 +852,7 @@ async function post(pathname: string, body: unknown) {
 }
 
 const html = await (await request("/sponsoring")).text();
-for (const token of [
-  "Stel je campagne samen",
-  "Verder naar contactgegevens",
-  "Sponsoraanvraag versturen",
-  "Voorbeeld · fictief",
-  "Jouw WeerSport-moment",
-  "10:00 – 12:00",
-  "Fietswerk Amsterdam",
-  "Fictieve partner",
-  "Kies een sport",
-]) {
+for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL"]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
 for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede", "Bekijk volledige momentpagina"]) {
@@ -965,54 +951,9 @@ const verifyHtml = await (await request("/auth/verifieer")).text();
 const link = verifyHtml.match(/href="(\/auth\/verifieer\/bevestig\?token=[^"]+)"/)?.[1]?.replaceAll("&amp;", "&");
 assert(link, "verify link missing");
 await request(link!);
-const denied = await (await request("/moment")).text();
-assert(!denied.includes("Loopatelier Ede"), "no sponsor without consent");
-assert(!denied.includes("data-sponsor-state=\"show\""), "no shown sponsor without consent");
-await post("/api/consent", { granted: true });
 const moment = await (await request("/moment")).text();
-assert(moment.includes("Welke schoen past bij jouw rondje?"), "sponsor under the advice");
-assert(moment.includes("https://example.com/loopatelier-ede"), "destination is a direct link");
-assert(!moment.includes("adsbygoogle"), "direct sponsor must not load AdSense");
-assert(!moment.includes('href="/api/sponsoring/events'), "measurement is not a redirect");
-const placementId = moment.match(/data-sponsor-placement="([^"]+)"/)?.[1];
-const signature = moment.match(/data-sponsor-signature="([^"]+)"/)?.[1];
-const sportId = moment.match(/data-sponsor-sport="([^"]+)"/)?.[1];
-const placeId = moment.match(/data-sponsor-place="([^"]+)"/)?.[1];
-assert(placementId && signature && sportId === "hardlopen" && placeId === ede.id, "placement token missing");
-const eventBody = {
-  placementId,
-  signature,
-  campaignId,
-  sportId,
-  placeId,
-};
-const seen = await post("/api/sponsoring/events", { ...eventBody, kind: "impression" });
-assert(seen.status === 200 && seen.data.duplicate === false, "impression accepted");
-const seenAgain = await post("/api/sponsoring/events", { ...eventBody, kind: "impression" });
-assert(seenAgain.status === 200 && seenAgain.data.duplicate === true, "impression deduped");
-const clicked = await post("/api/sponsoring/events", { ...eventBody, kind: "click" });
-assert(clicked.status === 200 && clicked.data.ok, "click accepted");
+assert(!moment.includes("Welke schoen past bij jouw rondje?"), "historical campaign is not rendered on the moment");
+assert(!moment.includes("data-sponsor-state"), "old sponsor measure is gone");
 const reportLive = await runAdmin(["report", campaignId!]);
-assert(reportLive.stdout.includes("Zichtbare vertoningen: 1"), reportLive.stdout);
-assert(reportLive.stdout.includes("Klikken: 1"), reportLive.stdout);
-assert(reportLive.stdout.includes("niet mee in productierapporten"), "test report is marked");
-
-await post("/api/zoeken", { sportId: "wielrennen", placeId: ede.id, placeLabel: "Ede", period: "Komende 48 uur" });
-const otherMoment = await (await request("/moment")).text();
-assert(!otherMoment.includes("Welke schoen past bij jouw rondje?"), "wrong sport hides the sponsor");
-await post("/api/zoeken", { sportId: "schaatsen", placeId: ede.id, placeLabel: "Ede", period: "Komende 48 uur" });
-const noScore = await (await request("/moment")).text();
-assert(noScore.includes("NO_SCORE") && !noScore.includes("Welke schoen past bij jouw rondje?"), "missing score hides the sponsor");
-
-const pause = await runAdmin(["pause", campaignId!]);
-assert(pause.code === 0, pause.stderr);
-await post("/api/zoeken", { sportId: "hardlopen", placeId: ede.id, placeLabel: "Ede", period: "Komende 48 uur" });
-const pausedHtml = await (await request("/moment")).text();
-assert(!pausedHtml.includes("Welke schoen past bij jouw rondje?"), "paused campaign is hidden");
-assert(pausedHtml.includes('data-sponsor-state="eligible"'), "paused result can still count an eligible view");
-
-await post("/api/consent", { granted: false });
-const noConsentEvent = await post("/api/sponsoring/events", { ...eventBody, kind: "click" });
-assert(noConsentEvent.status === 403, "events need consent");
-
+assert(reportLive.code === 0, reportLive.stderr);
 console.log("sponsor pilot live checks ok");

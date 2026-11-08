@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { SaveActions } from "@/components/account/save-actions";
 import { AdsHost } from "@/components/ads/ads-host";
-import { SponsorMeasure } from "@/components/sponsor-measure";
+import { AffiliateTip } from "@/components/affiliate-tip";
+import { SportSponsors } from "@/components/sport-sponsors";
+import commercial from "@/components/commercial.module.css";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
 import type { AdDecision } from "@/lib/ads/policy";
-import type { SponsorCreative } from "@/lib/sponsoring/placement";
+import type { AffiliateTip as AffiliateTipData } from "@/lib/affiliate/select";
+import type { PublicSponsor } from "@/lib/sponsoring/directory";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { getSportMeta } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
@@ -43,14 +46,16 @@ export function MomentView({
   entitlement = null,
   booking = null,
   ads = null,
-  sponsor = null,
+  commercialBlocks = null,
+  consentGranted = false,
 }: {
   snapshot: ForecastSnapshot;
   accountName: string;
   entitlement?: { plan: string; used: number; limit: number; remaining: number } | null;
   booking?: { booked: boolean; consumed: number; cacheHit: boolean } | null;
   ads?: { decision: AdDecision; scriptEnabled: boolean } | null;
-  sponsor?: { mode: "show" | "eligible"; creative: SponsorCreative } | null;
+  commercialBlocks?: { affiliate: AffiliateTipData | null; sponsors: PublicSponsor[] } | null;
+  consentGranted?: boolean;
 }) {
   const sport = findSport(snapshot.sportId);
   const meta = getSportMeta(snapshot.sportId);
@@ -268,7 +273,12 @@ export function MomentView({
           </ul>
         </section>
 
-        {sponsor ? <SponsorMeasure creative={sponsor.creative} mode={sponsor.mode} /> : null}
+        <div className={commercial.stack}>
+          {commercialBlocks?.affiliate ? (
+            <AffiliateTip tip={commercialBlocks.affiliate} sportId={snapshot.sportId} measure={consentGranted} />
+          ) : null}
+          <SportSponsors sponsors={commercialBlocks?.sponsors ?? []} />
+        </div>
         {ads ? (
           <AdsHost
             decision={ads.decision}

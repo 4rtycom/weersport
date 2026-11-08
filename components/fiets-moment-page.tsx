@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { FietsScoreCurve } from "@/components/fiets-score-curve";
-import { SponsorCard } from "@/components/sponsor-card";
 import { fietsVoorbeeld } from "@/lib/sponsoring/fiets-voorbeeld";
 import styles from "@/app/sponsoring/voorbeeld/moment.module.css";
 
@@ -77,13 +76,7 @@ function FietsMomentContent({ embedded = false }: { embedded?: boolean }) {
           <span>{moment.safety}</span>
         </p>
 
-        <SponsorCard
-          partner={moment.sponsor.partner}
-          headline={moment.sponsor.headline}
-          body={moment.sponsor.body}
-          fictional
-          media={{ src: moment.sponsor.image, alt: moment.sponsor.imageAlt }}
-        />
+        <p className={styles.safety}>Sponsorvermelding en producttips volgen het contract op het sportmoment, niet dit vaste voorbeeld.</p>
     </>
   );
 }

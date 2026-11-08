@@ -1,0 +1,118 @@
+.main {
+  width: min(760px, calc(100% - 32px));
+  margin: 28px auto 80px;
+}
+.kicker {
+  margin: 0;
+  color: #3b8a90;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.main h1 {
+  margin: 8px 0 0;
+  font-size: clamp(32px, 5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+.lead {
+  margin: 12px 0 0;
+  max-width: 62ch;
+  color: #4c676d;
+}
+.card {
+  margin-top: 22px;
+  padding: 22px;
+  border: 1px solid #dfeae6;
+  border-radius: 28px;
+  background: #fff;
+}
+.card h2 {
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+.grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+.grid label,
+.groups label,
+.card > label {
+  display: grid;
+  gap: 6px;
+  font-weight: 750;
+  font-size: 14px;
+}
+.grid input,
+.grid select,
+.card input,
+.card select {
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #d5e3de;
+  border-radius: 14px;
+  background: #f7fbf9;
+}
+.help, .error, .note {
+  margin: 8px 0 0;
+  color: #4c676d;
+  font-size: 14px;
+}
+.error { color: #8d2d2d; }
+.total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #e7f6ef;
+}
+.total strong { font-size: 28px; letter-spacing: -0.04em; }
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.picker {
+  width: min(880px, calc(100% - 24px));
+  border: 0;
+  border-radius: 24px;
+  padding: 0;
+}
+.picker::backdrop { background: rgba(11, 37, 48, 0.46); }
+.pickerBody { padding: 22px; }
+.groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.groups section {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: #f4f8f6;
+}
+.groups h3 { font-size: 16px; }
+.groups label {
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 650;
+}
+.names { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.names span, .names summary {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e7f3f4;
+}
+@media (max-width: 720px) {
+  .groups { grid-template-columns: 1fr; }
+  .card { padding: 16px; border-radius: 20px; }
+  .actions .button { width: 100%; }
+}
