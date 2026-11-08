@@ -1,4 +1,13 @@
 .stack { display: grid; gap: 16px; margin-top: 18px; }
+.compact { gap: 10px; margin-top: 0; }
+.compact h2 { margin: 2px 0 0; font-size: 18px; line-height: 1.2; }
+.compact .affiliate,
+.compact .sponsors { padding: 12px; border-radius: 16px; }
+.compact .affiliate { grid-template-columns: 56px minmax(0, 1fr); gap: 10px; }
+.compact .affiliate img { width: 56px; height: 56px; }
+.compact .sponsors ul { margin-top: 8px; }
+.compact .sponsors a { min-height: 48px; padding: 6px; }
+.compact .test { margin-top: 4px; }
 .affiliate, .sponsors {
   padding: 18px;
   border: 1px solid #dfeae6;
@@ -22,5 +31,11 @@
 .sponsors img { width: 48px; height: 48px; object-fit: contain; border-radius: 12px; background: #fff; }
 .test { margin: 6px 0 0; color: #6e490a; font-size: 13px; }
 @media (max-width: 720px) {
-  .affiliate { grid-template-columns: 1fr; }
+  .compact .affiliate { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+  .compact .affiliate,
+  .compact .sponsors { padding: 8px 10px; }
+  .compact .affiliate img { width: 44px; height: 44px; }
+  .compact h2 { font-size: 16px; }
+  .compact .sponsors a { min-height: 40px; }
+  .compact .sponsors ul { margin-top: 4px; }
 }

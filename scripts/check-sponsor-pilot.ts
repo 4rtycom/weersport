@@ -13,6 +13,7 @@ const page = readFileSync(new URL("../app/sponsoring/page.tsx", import.meta.url)
 const form = readFileSync(new URL("../components/sponsor-signup.tsx", import.meta.url), "utf8");
 const momentPage = readFileSync(new URL("../app/moment/page.tsx", import.meta.url), "utf8");
 const momentView = readFileSync(new URL("../components/moment-view.tsx", import.meta.url), "utf8");
+const momentCss = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 const sponsors = readFileSync(new URL("../components/sport-sponsors.tsx", import.meta.url), "utf8");
 const affiliate = readFileSync(new URL("../components/affiliate-tip.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
@@ -47,12 +48,16 @@ if (!momentPage.includes("try {") || !momentPage.includes("resolveCommercialBloc
   throw new Error("Moment page must isolate commercial selection");
 }
 const adviceAt = momentView.indexOf("moment-score-card");
-const commercialAt = momentView.indexOf("commercial.stack");
+const commercialAt = momentView.indexOf("moment-offer");
+const factorsAt = momentView.indexOf("score-factors");
 const saveAt = momentView.indexOf("bewaar-title");
 const sourcesAt = momentView.indexOf("bronnen-title");
 const adsAt = momentView.indexOf("<AdsHost");
-if (!(adviceAt >= 0 && adviceAt < commercialAt && commercialAt < saveAt && sourcesAt < adsAt)) {
-  throw new Error("Affiliate tip and sponsors must follow the advice and precede the long blocks");
+if (!(adviceAt >= 0 && adviceAt < commercialAt && commercialAt < factorsAt && factorsAt < saveAt && sourcesAt < adsAt)) {
+  throw new Error("Affiliate tip and sponsors must sit with the score and above the factor list");
+}
+if (!momentCss.includes('"score safety"') || !momentCss.includes('"score"\n    "offer"')) {
+  throw new Error("Desktop keeps the offer in the right column; mobile keeps it under the score");
 }
 if (home.includes("resolveSponsorSlot") || home.includes("SponsorMeasure")) {
   throw new Error("Homepage must not place a sponsor");

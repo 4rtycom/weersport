@@ -127,22 +127,6 @@ export function MomentView({
                 <p className="score-tooltip" title={scored.tooltip}>
                   {meta.tagline}. {scored.bestTimeLabel}.
                 </p>
-                <ScoreCurve
-                  hourly={scored.hourly}
-                  peakTime={scored.peakWindow.peakTime}
-                  tooltip={scored.tooltip}
-                />
-                <ul className="score-factors">
-                  {scored.factors.map((factor) => (
-                    <li key={factor.id}>
-                      <div>
-                        <strong>{factor.label}</strong>
-                        <span>{factor.explanation}</span>
-                      </div>
-                      <em>{factor.impact}</em>
-                    </li>
-                  ))}
-                </ul>
                 <p className="moment-rights">{scored.caveats} UV en officiële waarschuwingen blijven los van deze score.</p>
               </>
             ) : (
@@ -167,21 +151,24 @@ export function MomentView({
             )}
           </article>
 
-          <aside className="moment-card moment-safety">
-            <h2>Zon &amp; veiligheid</h2>
-            <div className={`uv-panel uv-panel-${uv?.level ?? "missing"}`}>
-              <p>
-                {uv?.index === null || !uv
-                  ? "UV niet beschikbaar"
-                  : `UV ${uv.index % 1 === 0 ? uv.index.toFixed(0) : uv.index.toFixed(1)} · ${uv.label.toUpperCase()}`}
-              </p>
-              <span>Zonbescherming los van de sportscore.</span>
+          {commercialBlocks?.affiliate || (commercialBlocks?.sponsors.length ?? 0) > 0 ? (
+            <div className={`${commercial.stack} ${commercial.compact} moment-offer`}>
+              {commercialBlocks?.affiliate ? (
+                <AffiliateTip tip={commercialBlocks.affiliate} sportId={snapshot.sportId} measure={consentGranted} />
+              ) : null}
+              <SportSponsors sponsors={commercialBlocks?.sponsors ?? []} />
             </div>
-            <div className="warning-panel">
-              <p>Officiële weerwaarschuwingen</p>
-              <strong>{snapshot.warnings.message}</strong>
-            </div>
-            {nextSport ? (
+          ) : null}
+
+          <aside className="moment-safety">
+            <p className="eyebrow">Zon &amp; veiligheid</p>
+            <p className="moment-safety-line">
+              {uv?.index === null || !uv
+                ? "UV niet beschikbaar"
+                : `UV ${uv.index % 1 === 0 ? uv.index.toFixed(0) : uv.index.toFixed(1)} · ${uv.label.toUpperCase()}`}
+              . {snapshot.warnings.message}
+            </p>
+            {!scored && nextSport ? (
               <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
                 Volgende sport · {nextSport.name}
               </Link>
@@ -189,13 +176,26 @@ export function MomentView({
           </aside>
         </div>
 
-        {commercialBlocks?.affiliate || (commercialBlocks?.sponsors.length ?? 0) > 0 ? (
-          <div className={commercial.stack}>
-            {commercialBlocks?.affiliate ? (
-              <AffiliateTip tip={commercialBlocks.affiliate} sportId={snapshot.sportId} measure={consentGranted} />
+        {scored ? (
+          <section className="moment-card" aria-label="Scoreverloop en factoren">
+            <ScoreCurve hourly={scored.hourly} peakTime={scored.peakWindow.peakTime} tooltip={scored.tooltip} />
+            <ul className="score-factors">
+              {scored.factors.map((factor) => (
+                <li key={factor.id}>
+                  <div>
+                    <strong>{factor.label}</strong>
+                    <span>{factor.explanation}</span>
+                  </div>
+                  <em>{factor.impact}</em>
+                </li>
+              ))}
+            </ul>
+            {nextSport ? (
+              <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
+                Volgende sport · {nextSport.name}
+              </Link>
             ) : null}
-            <SportSponsors sponsors={commercialBlocks?.sponsors ?? []} />
-          </div>
+          </section>
         ) : null}
 
         <section className="moment-card" aria-labelledby="bewaar-title">

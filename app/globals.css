@@ -955,7 +955,38 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   text-transform: uppercase;
 }
 .moment-live-badge.is-demo { background: #fff2ce; }
-.moment-grid { display: grid; gap: 16px; }
+.moment-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-areas:
+    "score"
+    "offer"
+    "safety";
+}
+.moment-score-card { grid-area: score; }
+.moment-offer { grid-area: offer; }
+.moment-safety { grid-area: safety; }
+.moment-safety-line { margin-top: 4px; color: var(--ws-text-primary); font-size: 14px; font-weight: 700; }
+@media (max-width: 700px) {
+  .hero.site-header-bar { padding: 8px 12px; }
+  .moment { padding: 4px 12px 48px; gap: 4px; }
+  .moment-grid { gap: 8px; }
+  .moment-hero { padding: 8px 12px; gap: 4px; border-radius: 16px; }
+  .moment-hero p { margin-top: 2px; line-height: 1.25; font-size: 12px; }
+  .moment-hero-copy { gap: 8px; }
+  .moment-hero .icon-badge { width: 36px; height: 36px; }
+  .moment-live-badge { min-height: 26px; padding: 4px 8px; }
+  .moment-score-card { padding: 10px 12px; }
+  .moment-score-card .eyebrow { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .moment-hero h1 { font-size: 22px; }
+  .score-headline { grid-template-columns: 1fr auto; align-items: end; gap: 8px; margin-top: 4px; }
+  .score-value { font-size: 44px; }
+  .score-badge { margin-top: 6px; min-height: 28px; }
+  .score-peak { padding: 8px 10px; }
+  .score-peak strong { margin-top: 2px; font-size: 18px; }
+  .score-tooltip { margin-top: 6px; }
+  .moment-rights { margin-top: 6px; }
+}
 .moment-card {
   background: white;
   border-radius: 22px;
@@ -1197,9 +1228,17 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .source-list li { grid-template-columns: 1fr auto; align-items: center; }
   .score-headline { grid-template-columns: 1fr minmax(180px, 0.7fr); align-items: end; }
 }
+.moment-safety { padding: 0; background: transparent; }
 @media (min-width: 1024px) {
-  .moment { padding: 28px 80px 80px; }
-  .moment-grid { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr); }
+  .moment { padding: 12px 80px 80px; }
+  .moment-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    grid-template-areas:
+      "score safety"
+      "score offer";
+    align-items: start;
+  }
+  .moment-hero { padding: 16px 18px; }
 }
 
 .save-actions {
