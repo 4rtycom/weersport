@@ -968,7 +968,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .moment-safety { grid-area: safety; }
 .moment-safety-line { margin-top: 4px; color: var(--ws-text-primary); font-size: 14px; font-weight: 700; }
 @media (max-width: 700px) {
-  .hero.site-header-bar { padding: 8px 12px; }
+  body:has(main.moment) .hero.site-header-bar { padding: 8px 12px; }
   .moment { padding: 4px 12px 48px; gap: 4px; }
   .moment-grid { gap: 8px; }
   .moment-hero { padding: 8px 12px; gap: 4px; border-radius: 16px; }
