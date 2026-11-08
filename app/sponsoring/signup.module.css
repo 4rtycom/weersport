@@ -111,8 +111,84 @@
   border-radius: 999px;
   background: #e7f3f4;
 }
+.receipt {
+  width: min(620px, calc(100% - 32px));
+  margin: 28px auto 96px;
+}
+.receipt h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+.testBanner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff6d8;
+  color: #6e490a;
+  font-size: 14px;
+}
+.payCard {
+  margin-top: 16px;
+  padding: 18px;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+}
+.payCard h2 {
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.payCard + .payCard h2 { font-size: 18px; }
+.payCount {
+  margin-top: 8px;
+  font-size: 16px;
+}
+.paySports {
+  margin-top: 4px;
+  font-size: 16px;
+}
+.payStatus {
+  margin-top: 14px;
+  color: #4c676d;
+  font-size: 15px;
+}
+.payAmount {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.payNote,
+.payMail {
+  margin-top: 16px;
+  color: #4c676d;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.payMail { margin-top: 8px; }
+.payAddress {
+  margin-top: 12px;
+  font-style: normal;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.manageLink { margin-top: 16px; }
+.manageLink a { color: #276053; font-weight: 800; }
+.testBox {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+}
+@media (min-width: 900px) {
+  .receipt { margin-left: 56px; margin-right: auto; }
+  .receipt h1 { font-size: 44px; }
+}
 @media (max-width: 720px) {
   .groups { grid-template-columns: 1fr; }
   .card { padding: 16px; border-radius: 20px; }
   .actions .button { width: 100%; }
+  .testBox .button { width: 100%; }
 }

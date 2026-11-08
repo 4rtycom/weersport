@@ -136,6 +136,16 @@ if (first.ok && second.ok) {
   assert(invoices.n === 1, "one first invoice");
   const providerInvoices = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_provider_objects WHERE kind = 'invoice'").get() as { n: number };
   assert(providerInvoices.n === 1, "one provider invoice");
+  const invoicePayload = dbModule.db().prepare("SELECT payload_json FROM sponsor_provider_objects WHERE kind = 'invoice'").get() as {
+    payload_json: string;
+  };
+  const descriptions = JSON.parse(invoicePayload.payload_json).descriptions as string[];
+  assert(descriptions.every((line) => line.includes("27 februari 2026")), `inclusive period ${descriptions.join(" | ")}`);
+  assert(descriptions.every((line) => !line.includes("2026-02-28")), "exclusive end stays off the invoice");
+  assert(
+    checkoutLib.invoiceLineDescription("Fietsen", "2026-01-31", "2026-02-28").endsWith("27 februari 2026"),
+    "period label drops the exclusive end",
+  );
   const subscription = dbModule.db().prepare("SELECT name FROM sqlite_master WHERE name = 'billing_subscriptions'").get();
   assert(!subscription, "sponsorship did not create a Pro subscription table");
   const contract = dbModule.db().prepare("SELECT id, sponsor_id, anchor_day, contract_date, paid_until FROM sponsor_contracts").get() as {
@@ -154,6 +164,28 @@ if (first.ok && second.ok) {
   assert(listed.length === 1 && listed[0].name === "Atelier Ede", "fietsen listing");
   assert(directory.listPublicSponsors("hardlopen", during).length === 1, "hardlopen listing");
   assert(directory.listPublicSponsors("wielrennen", during).length === 0, "other sport hidden");
+  const firstInvoice = dbModule.db().prepare("SELECT id, provider_invoice_id FROM sponsor_invoice_periods").get() as {
+    id: string;
+    provider_invoice_id: string;
+  };
+  dbModule.db().prepare("UPDATE sponsor_invoice_periods SET status = 'issuing', provider_invoice_id = NULL WHERE id = ?").run(firstInvoice.id);
+  dbModule
+    .db()
+    .prepare(
+      `INSERT INTO sponsor_operations (id, op_key, kind, status, attempts, payload_json, created_at, updated_at)
+       VALUES ('op-retry', ?, 'invoice_retry', 'pending', 0, '{}', '2026-02-01T00:00:00.000Z', '2026-02-01T00:00:00.000Z')`,
+    )
+    .run(`invoice:${contract.id}:2026-01-31`);
+  await checkoutLib.recoverPendingInvoices(during);
+  const recoveredInvoice = dbModule.db().prepare("SELECT provider_invoice_id, status FROM sponsor_invoice_periods WHERE id = ?").get(firstInvoice.id) as {
+    provider_invoice_id: string;
+    status: string;
+  };
+  assert(recoveredInvoice.provider_invoice_id === firstInvoice.provider_invoice_id && recoveredInvoice.status === "paid", "issuing period reuses the invoice");
+  const invoicesAfterRetry = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_provider_objects WHERE kind = 'invoice'").get() as { n: number };
+  assert(invoicesAfterRetry.n === 1, "recovery does not mint a second invoice");
+  const retryOp = dbModule.db().prepare("SELECT status FROM sponsor_operations WHERE op_key = ?").get(`invoice:${contract.id}:2026-01-31`) as { status: string };
+  assert(retryOp.status === "done", "invoice_retry is consumed");
   assert(!JSON.stringify(listed).includes("factuur@"), "public list has no invoice email");
   const hidden = selectLib.resolveCommercialBlocks({
     surface: "moment",
@@ -178,6 +210,12 @@ if (first.ok && second.ok) {
   assert(collectLib.markInvoicePaid(openInvoice.id).ok, "same invoice can be paid");
   const covered = dbModule.db().prepare("SELECT paid_until FROM sponsor_contracts WHERE id = ?").get(contract.id) as { paid_until: string };
   assert(covered.paid_until === "2026-03-31", `coverage returns to the anchor ${covered.paid_until}`);
+  const march = new Date("2026-03-01T12:00:00Z");
+  assert(directory.listPublicSponsors("wandelen", march).length === 1, "current sport stays listed");
+  assert(directory.listPublicSponsors("fietsen", march).length === 0, "replaced sport leaves the public list");
+  assert(directory.listPublicSponsors("hardlopen", march).length === 0, "previous sport leaves the public list");
+  const managed = manageLib.manageView(contract.sponsor_id, march);
+  assert(managed?.sports.length === 1 && managed.sports[0] === "wandelen", `manage shows only the current period ${managed?.sports.join(",")}`);
   assert(months.nextPeriodStart("2026-03-31", 31) === "2026-04-30", "April clamps");
   manageLib.scheduleCancellation(contract.sponsor_id, new Date("2026-03-15T12:00:00Z"));
   const before = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_invoice_periods").get() as { n: number };
@@ -213,6 +251,83 @@ if (noMandateQuote.ok && logo.ok) {
     assert(countBefore.n === countAfter.n, "no second first payment");
   }
 }
+
+const forwarded = providerLib.publicRequestOrigin(
+  new Request("http://127.0.0.1:3000/api/sponsoring/checkout", {
+    headers: { "x-forwarded-host": "weersport.nl", "x-forwarded-proto": "https" },
+  }),
+);
+assert(forwarded === "https://weersport.nl", `forwarded origin ${forwarded}`);
+const checkoutRoute = await import("node:fs").then((fs) => fs.readFileSync(new URL("../app/api/sponsoring/checkout/route.ts", import.meta.url), "utf8"));
+assert(checkoutRoute.includes("publicRequestOrigin"), "checkout route uses the forwarded origin");
+assert(!checkoutRoute.includes("new URL(request.url).origin"), "checkout route does not trust request.url alone");
+const signupSource = await import("node:fs").then((fs) => fs.readFileSync(new URL("../components/sponsor-signup.tsx", import.meta.url), "utf8"));
+assert(signupSource.includes("attemptRef") && !signupSource.includes("attemptId: crypto.randomUUID()"), "signup retries the same attempt");
+
+process.env.WEERSPORT_SPONSOR_PROVIDER_FAIL = "1";
+const failQuote = quoteLib.createQuote({ sportIds: ["golf"], country: "NL", now: new Date("2026-06-01T12:00:00Z") });
+assert(failQuote.ok, "fail quote");
+if (failQuote.ok && logo.ok) {
+  const profilesBefore = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_profiles").get() as { n: number };
+  const failed = await checkoutLib.createSponsorCheckout({
+    quoteId: failQuote.quote.id,
+    attemptId: "44444444-4444-4444-8444-444444444444",
+    publicName: "Golfbaan",
+    destinationUrl: "https://example.com/golf",
+    logoId: logo.id,
+    billing,
+    consent: true,
+    origin,
+    now: new Date("2026-06-01T12:00:00Z"),
+  });
+  assert(!failed.ok && failed.status === 502, "provider failure is not a successful checkout");
+  const profilesOnce = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_profiles").get() as { n: number };
+  assert(profilesOnce.n === profilesBefore.n + 1, "one profile for the failed attempt");
+  const retried = await checkoutLib.createSponsorCheckout({
+    quoteId: failQuote.quote.id,
+    attemptId: "55555555-5555-4555-8555-555555555555",
+    publicName: "Golfbaan",
+    destinationUrl: "https://example.com/golf",
+    logoId: logo.id,
+    billing,
+    consent: true,
+    origin,
+    now: new Date("2026-06-01T12:00:00Z"),
+  });
+  assert(!retried.ok && retried.attemptId === "44444444-4444-4444-8444-444444444444", "retry reuses the failed attempt");
+  const profilesStill = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_profiles").get() as { n: number };
+  assert(profilesStill.n === profilesOnce.n, "retry does not insert another contract");
+  delete process.env.WEERSPORT_SPONSOR_PROVIDER_FAIL;
+  const resumed = await checkoutLib.createSponsorCheckout({
+    quoteId: failQuote.quote.id,
+    attemptId: "66666666-6666-4666-8666-666666666666",
+    publicName: "Golfbaan",
+    destinationUrl: "https://example.com/golf",
+    logoId: logo.id,
+    billing,
+    consent: true,
+    origin: "https://weersport.nl",
+    now: new Date("2026-06-01T12:00:00Z"),
+  });
+  assert(resumed.ok && resumed.checkout.checkoutUrl.startsWith("https://weersport.nl/sponsoring/betaling"), "resumed attempt gets one checkout url");
+  const profilesFinal = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_profiles").get() as { n: number };
+  assert(profilesFinal.n === profilesOnce.n, "resume keeps the same profile");
+}
+
+const zeil = dbModule.db().prepare("SELECT c.id, c.paid_until FROM sponsor_contracts c JOIN sponsor_profiles p ON p.id = c.sponsor_id WHERE p.public_name = 'Zeilclub'").get() as {
+  id: string;
+  paid_until: string;
+};
+dbModule.db().prepare("UPDATE sponsor_contracts SET pending_sport_ids = ?, status = 'active' WHERE id = ?").run("{", zeil.id);
+let rolledBack = false;
+try {
+  await collectLib.collectDue(new Date(`${zeil.paid_until}T12:00:00Z`));
+} catch (error) {
+  rolledBack = error instanceof SyntaxError;
+}
+assert(rolledBack, "bad pending sports abort the apply");
+dbModule.db().exec("BEGIN");
+dbModule.db().exec("ROLLBACK");
 
 const providerSource = await import("node:fs").then((fs) => fs.readFileSync(new URL("../lib/sponsoring/provider.ts", import.meta.url), "utf8"));
 assert(!providerSource.includes("/subscriptions"), "no Mollie subscription for sponsorship");

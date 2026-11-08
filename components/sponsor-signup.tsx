@@ -31,6 +31,7 @@ function euros(cents: number) {
 export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
+  const attemptRef = useRef(crypto.randomUUID());
   const titleId = useId();
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<string[]>([]);
@@ -139,7 +140,7 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           quoteId: quote.id,
-          attemptId: crypto.randomUUID(),
+          attemptId: attemptRef.current,
           publicName,
           destinationUrl,
           logoId,
@@ -151,9 +152,12 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
       const payload = (await response.json()) as {
         ok?: boolean;
         errors?: Record<string, string>;
+        attemptId?: string;
         checkout?: { checkoutUrl: string };
       };
+      if (payload.attemptId) attemptRef.current = payload.attemptId;
       if (!response.ok || !payload.checkout?.checkoutUrl) {
+        if (payload.errors?.attempt) attemptRef.current = crypto.randomUUID();
         setErrors(payload.errors ?? { form: "De betaling kon niet worden gestart." });
         return;
       }

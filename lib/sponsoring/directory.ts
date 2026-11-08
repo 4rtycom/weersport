@@ -27,10 +27,16 @@ export function listPublicSponsors(sportId: string, now = new Date()): PublicSpo
          AND c.status IN ('active', 'cancel_scheduled')
          AND c.paid_until > ?
          AND s.sport_id = ?
-         AND s.period_start < c.paid_until
+         AND s.period_start = (
+           SELECT MAX(current.period_start)
+           FROM sponsor_contract_sports current
+           WHERE current.contract_id = c.id
+             AND current.period_start <= ?
+             AND current.period_start < c.paid_until
+         )
        ORDER BY p.public_name COLLATE NOCASE, p.id`,
     )
-    .all(day, sportId) as Array<{ id: string; public_name: string; destination_url: string; logo_id: string }>;
+    .all(day, sportId, day) as Array<{ id: string; public_name: string; destination_url: string; logo_id: string }>;
   const seen = new Set<string>();
   const sponsors: PublicSponsor[] = [];
   for (const row of rows) {

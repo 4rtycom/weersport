@@ -4,7 +4,7 @@ import { normalizeEmail, validateEmail } from "@/lib/auth/service";
 import { ensureCommercialSchema } from "@/lib/sponsoring/commercial-schema";
 import { buildLines, uniqueKnownSports } from "@/lib/sponsoring/quote";
 import { resolveMonthlyRate } from "@/lib/sponsoring/rate";
-import { nextPeriodStart } from "@/lib/sponsoring/months";
+import { amsterdamToday, nextPeriodStart } from "@/lib/sponsoring/months";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -30,7 +30,7 @@ export function sponsorIdForToken(token: string, now = new Date()) {
   return row.sponsor_id;
 }
 
-export function manageView(sponsorId: string) {
+export function manageView(sponsorId: string, now = new Date()) {
   ensureCommercialSchema();
   const profile = db().prepare("SELECT id, public_name, destination_url, moderation_status, moderation_reason FROM sponsor_profiles WHERE id = ?").get(sponsorId) as
     | {
@@ -58,12 +58,21 @@ export function manageView(sponsorId: string) {
         pending_sport_ids: string | null;
       }
     | undefined;
+  const today = amsterdamToday(now);
   const sports = contract
     ? (db()
         .prepare(
-          `SELECT sport_id FROM sponsor_contract_sports WHERE contract_id = ? ORDER BY period_start DESC, sport_id LIMIT 24`,
+          `SELECT sport_id FROM sponsor_contract_sports
+           WHERE contract_id = ?
+             AND period_start = (
+               SELECT MAX(period_start) FROM sponsor_contract_sports
+               WHERE contract_id = ?
+                 AND period_start <= ?
+                 AND (? IS NULL OR period_start < ?)
+             )
+           ORDER BY sport_id`,
         )
-        .all(contract.id) as Array<{ sport_id: string }>)
+        .all(contract.id, contract.id, today, contract.paid_until, contract.paid_until) as Array<{ sport_id: string }>)
     : [];
   const invoices = contract
     ? (db()

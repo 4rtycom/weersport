@@ -1,6 +1,6 @@
 import { db } from "@/lib/auth/db";
 import { ensureCommercialSchema } from "@/lib/sponsoring/commercial-schema";
-import { createPeriodInvoice } from "@/lib/sponsoring/checkout";
+import { createPeriodInvoice, recoverPendingInvoices } from "@/lib/sponsoring/checkout";
 import { sponsorFlags } from "@/lib/sponsoring/flags";
 import { amsterdamToday, nextPeriodStart, periodContains } from "@/lib/sponsoring/months";
 import { readSalesInvoice } from "@/lib/sponsoring/provider";
@@ -29,6 +29,7 @@ type CheckoutRow = {
  */
 export async function collectDue(now = new Date()) {
   ensureCommercialSchema();
+  await recoverPendingInvoices(now);
   const today = amsterdamToday(now);
   const contracts = db()
     .prepare(`SELECT * FROM sponsor_contracts WHERE status IN ('active', 'cancel_scheduled')`)
@@ -85,56 +86,54 @@ function applyPendingSports(contract: ContractRow, periodStart: string) {
     .get(contract.id, periodStart) as { n: number };
   if (existing.n > 0) return;
   database.exec("BEGIN IMMEDIATE");
-  const again = database
-    .prepare("SELECT COUNT(*) AS n FROM sponsor_contract_sports WHERE contract_id = ? AND period_start = ?")
-    .get(contract.id, periodStart) as { n: number };
-  if (again.n > 0) {
-    database.exec("COMMIT");
-    return;
-  }
-  const fresh = database.prepare("SELECT pending_sport_ids FROM sponsor_contracts WHERE id = ?").get(contract.id) as {
-    pending_sport_ids: string | null;
-  };
-  const pending = fresh.pending_sport_ids;
-  if (!pending) {
-    const previous = db()
-      .prepare(
-        `SELECT sport_id FROM sponsor_contract_sports
-         WHERE contract_id = ? AND period_start < ? ORDER BY period_start DESC LIMIT 24`,
-      )
-      .all(contract.id, periodStart) as Array<{ sport_id: string }>;
-    const ids = [...new Set(previous.map((row) => row.sport_id))];
-    const latestStart = db()
-      .prepare(
-        `SELECT period_start FROM sponsor_contract_sports WHERE contract_id = ? AND period_start < ? ORDER BY period_start DESC LIMIT 1`,
-      )
-      .get(contract.id, periodStart) as { period_start: string } | undefined;
-    const carry = latestStart
-      ? (db()
-          .prepare("SELECT sport_id FROM sponsor_contract_sports WHERE contract_id = ? AND period_start = ?")
-          .all(contract.id, latestStart.period_start) as Array<{ sport_id: string }>)
-      : ids.map((sport_id) => ({ sport_id }));
-    for (const sport of carry) {
-      db()
-        .prepare(
-          `INSERT INTO sponsor_contract_sports (contract_id, sport_id, period_start) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
-        )
-        .run(contract.id, sport.sport_id, periodStart);
+  try {
+    const again = database
+      .prepare("SELECT COUNT(*) AS n FROM sponsor_contract_sports WHERE contract_id = ? AND period_start = ?")
+      .get(contract.id, periodStart) as { n: number };
+    if (again.n > 0) {
+      database.exec("COMMIT");
+      return;
     }
-  } else {
-    const nextIds = JSON.parse(pending) as string[];
-    for (const sportId of nextIds) {
+    const fresh = database.prepare("SELECT pending_sport_ids FROM sponsor_contracts WHERE id = ?").get(contract.id) as {
+      pending_sport_ids: string | null;
+    };
+    const pending = fresh.pending_sport_ids;
+    if (!pending) {
+      const latestStart = database
+        .prepare(
+          `SELECT period_start FROM sponsor_contract_sports WHERE contract_id = ? AND period_start < ? ORDER BY period_start DESC LIMIT 1`,
+        )
+        .get(contract.id, periodStart) as { period_start: string } | undefined;
+      const carry = latestStart
+        ? (database
+            .prepare("SELECT sport_id FROM sponsor_contract_sports WHERE contract_id = ? AND period_start = ?")
+            .all(contract.id, latestStart.period_start) as Array<{ sport_id: string }>)
+        : [];
+      for (const sport of carry) {
+        database
+          .prepare(
+            `INSERT INTO sponsor_contract_sports (contract_id, sport_id, period_start) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+          )
+          .run(contract.id, sport.sport_id, periodStart);
+      }
+    } else {
+      const nextIds = JSON.parse(pending) as string[];
+      for (const sportId of nextIds) {
+        database
+          .prepare(
+            `INSERT INTO sponsor_contract_sports (contract_id, sport_id, period_start) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+          )
+          .run(contract.id, sportId, periodStart);
+      }
       database
-        .prepare(
-          `INSERT INTO sponsor_contract_sports (contract_id, sport_id, period_start) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
-        )
-        .run(contract.id, sportId, periodStart);
+        .prepare("UPDATE sponsor_contracts SET pending_sport_ids = NULL, updated_at = ? WHERE id = ?")
+        .run(new Date().toISOString(), contract.id);
     }
-    database
-      .prepare("UPDATE sponsor_contracts SET pending_sport_ids = NULL, updated_at = ? WHERE id = ?")
-      .run(new Date().toISOString(), contract.id);
+    database.exec("COMMIT");
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
   }
-  database.exec("COMMIT");
 }
 
 export async function reconcileOpenInvoices() {

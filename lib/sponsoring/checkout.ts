@@ -4,7 +4,7 @@ import { normalizeEmail, validateEmail } from "@/lib/auth/service";
 import { ensureCommercialSchema } from "@/lib/sponsoring/commercial-schema";
 import { sponsorFlags } from "@/lib/sponsoring/flags";
 import { readLogo } from "@/lib/sponsoring/logo";
-import { amsterdamDate, amsterdamToday, nextPeriodStart } from "@/lib/sponsoring/months";
+import { amsterdamDate, amsterdamToday, formatPeriodLabel, nextPeriodStart } from "@/lib/sponsoring/months";
 import {
   createFirstIdealPayment,
   createSalesInvoice,
@@ -207,8 +207,13 @@ export async function createSponsorCheckout(input: CheckoutInput) {
         errors: { attempt: "Deze poging is afgesloten. Start een nieuwe poging voor dezelfde offerte." },
       };
     }
+    if (!existing.checkout_url) return attachProvider(existing, input.origin);
     return { ok: true as const, reused: true, checkout: publicCheckout(existing) };
   }
+  const incomplete = db()
+    .prepare("SELECT * FROM sponsor_checkouts WHERE request_hash = ? AND checkout_url = '' AND status = 'open' ORDER BY created_at LIMIT 1")
+    .get(hash) as CheckoutRow | undefined;
+  if (incomplete) return attachProvider(incomplete, input.origin);
 
   const checkoutId = randomUUID();
   const sponsorId = randomUUID();
@@ -291,34 +296,78 @@ export async function createSponsorCheckout(input: CheckoutInput) {
     throw error;
   }
 
+  const row = db().prepare("SELECT * FROM sponsor_checkouts WHERE id = ?").get(checkoutId) as CheckoutRow;
+  const attached = await attachProvider(row, input.origin);
+  if (!attached.ok) return attached;
+  return { ok: true as const, reused: false, checkout: attached.checkout };
+}
+
+async function attachProvider(row: CheckoutRow, origin: string) {
+  if (row.checkout_url && row.mollie_payment_id) {
+    return { ok: true as const, reused: true, checkout: publicCheckout(row) };
+  }
+  const billing = db()
+    .prepare("SELECT legal_name, invoice_email FROM sponsor_billing_profiles WHERE sponsor_id = ? ORDER BY created_at DESC LIMIT 1")
+    .get(row.sponsor_id) as { legal_name: string; invoice_email: string } | undefined;
+  if (!billing) {
+    return {
+      ok: false as const,
+      status: 502,
+      errors: { form: "Factuurprofiel ontbreekt voor deze poging." },
+      attemptId: row.attempt_id,
+    };
+  }
   try {
-    const customer = await createSponsorCustomer({
-      localId: sponsorId,
-      name: billing.value.legalName,
-      email: billing.value.invoiceEmail,
-    });
+    let customerId = row.mollie_customer_id;
+    let environment: ProviderEnvironment = row.environment === "live" ? "live" : "test";
+    if (!customerId) {
+      const customer = await createSponsorCustomer({
+        localId: row.sponsor_id,
+        name: billing.legal_name,
+        email: billing.invoice_email,
+      });
+      customerId = customer.id;
+      environment = customer.environment;
+      db()
+        .prepare("UPDATE sponsor_checkouts SET mollie_customer_id = ?, mode = ?, environment = ?, updated_at = ? WHERE id = ? AND mollie_customer_id IS NULL")
+        .run(customerId, environment, environment, new Date().toISOString(), row.id);
+    }
     const payment = await createFirstIdealPayment({
-      checkoutId,
-      customerId: customer.id,
-      amountCents: quote.grossCents,
-      origin: input.origin,
-      returnToken,
-      description: `WeerSport sportsponsoring · ${quote.sportIds.length} sporten`,
+      checkoutId: row.id,
+      customerId,
+      amountCents: row.amount_cents,
+      origin,
+      returnToken: row.return_token,
+      description: "WeerSport sportsponsoring",
     });
+    if (!payment.checkoutUrl) throw new Error("De provider gaf geen betaaladres terug.");
     db()
       .prepare(
         `UPDATE sponsor_checkouts
          SET mollie_customer_id = ?, mollie_payment_id = ?, checkout_url = ?, mode = ?, environment = ?, status = 'pending', updated_at = ?
-         WHERE id = ? AND mollie_payment_id IS NULL`,
+         WHERE id = ? AND (mollie_payment_id IS NULL OR checkout_url = '')`,
       )
-      .run(customer.id, payment.id, payment.checkoutUrl, payment.environment, payment.environment, new Date().toISOString(), checkoutId);
+      .run(customerId, payment.id, payment.checkoutUrl, payment.environment, payment.environment, new Date().toISOString(), row.id);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Providerfout";
-    rememberOperation(`payment:${checkoutId}`, "reconcile_payment", { checkoutId, error: message.slice(0, 180) });
+    rememberOperation(`payment:${row.id}`, "reconcile_payment", { checkoutId: row.id, error: message.slice(0, 180) });
+    return {
+      ok: false as const,
+      status: 502,
+      errors: { form: "De betaalprovider is niet gestart. Dezelfde poging kan opnieuw." },
+      attemptId: row.attempt_id,
+    };
   }
-
-  const row = db().prepare("SELECT * FROM sponsor_checkouts WHERE id = ?").get(checkoutId) as CheckoutRow;
-  return { ok: true as const, reused: false, checkout: publicCheckout(row) };
+  const fresh = db().prepare("SELECT * FROM sponsor_checkouts WHERE id = ?").get(row.id) as CheckoutRow;
+  if (!fresh.checkout_url) {
+    return {
+      ok: false as const,
+      status: 502,
+      errors: { form: "De betaalprovider is niet gestart. Dezelfde poging kan opnieuw." },
+      attemptId: fresh.attempt_id,
+    };
+  }
+  return { ok: true as const, reused: true, checkout: publicCheckout(fresh) };
 }
 
 function rememberOperation(opKey: string, kind: string, payload: unknown) {
@@ -525,6 +574,81 @@ export async function createPeriodInvoice(input: {
   return finishProviderInvoice(invoiceId, input, lines);
 }
 
+export async function recoverPendingInvoices(now = new Date()) {
+  ensureCommercialSchema();
+  const stuck = db()
+    .prepare(
+      `SELECT id, contract_id, period_start, period_end, kind, payment_ref
+       FROM sponsor_invoice_periods
+       WHERE provider_invoice_id IS NULL AND status IN ('issuing', 'draft')`,
+    )
+    .all() as Array<{
+    id: string;
+    contract_id: string;
+    period_start: string;
+    period_end: string;
+    kind: string;
+    payment_ref: string | null;
+  }>;
+  const ops = db()
+    .prepare("SELECT op_key FROM sponsor_operations WHERE kind = 'invoice_retry' AND status = 'pending'")
+    .all() as Array<{ op_key: string }>;
+  const targets = new Map<string, { contractId: string; periodStart: string; periodEnd?: string; kind?: string; paymentRef?: string | null }>();
+  for (const row of stuck) {
+    targets.set(`${row.contract_id}:${row.period_start}`, {
+      contractId: row.contract_id,
+      periodStart: row.period_start,
+      periodEnd: row.period_end,
+      kind: row.kind,
+      paymentRef: row.payment_ref,
+    });
+  }
+  for (const op of ops) {
+    const match = /^invoice:([^:]+):(\d{4}-\d{2}-\d{2})$/.exec(op.op_key);
+    if (!match) continue;
+    const key = `${match[1]}:${match[2]}`;
+    if (!targets.has(key)) targets.set(key, { contractId: match[1], periodStart: match[2] });
+  }
+  for (const target of targets.values()) {
+    const checkout = db()
+      .prepare(
+        `SELECT mollie_customer_id, mollie_mandate_id, mollie_payment_id
+         FROM sponsor_checkouts WHERE contract_id = ? AND status = 'paid' ORDER BY created_at LIMIT 1`,
+      )
+      .get(target.contractId) as { mollie_customer_id: string | null; mollie_mandate_id: string | null; mollie_payment_id: string | null } | undefined;
+    const period = db()
+      .prepare("SELECT period_end, kind, payment_ref, provider_invoice_id FROM sponsor_invoice_periods WHERE contract_id = ? AND period_start = ?")
+      .get(target.contractId, target.periodStart) as
+      | { period_end: string; kind: string; payment_ref: string | null; provider_invoice_id: string | null }
+      | undefined;
+    if (!checkout?.mollie_customer_id || !period) continue;
+    const opKey = `invoice:${target.contractId}:${target.periodStart}`;
+    try {
+      await createPeriodInvoice({
+        contractId: target.contractId,
+        periodStart: target.periodStart,
+        periodEnd: period.period_end,
+        kind: period.kind === "collection" ? "collection" : "first_paid",
+        customerId: checkout.mollie_customer_id,
+        paymentId: period.payment_ref ?? checkout.mollie_payment_id,
+        mandateId: checkout.mollie_mandate_id,
+        now,
+      });
+      const done = db()
+        .prepare("SELECT provider_invoice_id FROM sponsor_invoice_periods WHERE contract_id = ? AND period_start = ?")
+        .get(target.contractId, target.periodStart) as { provider_invoice_id: string | null } | undefined;
+      if (done?.provider_invoice_id) {
+        db().prepare("UPDATE sponsor_operations SET status = 'done', updated_at = ? WHERE op_key = ?").run(now.toISOString(), opKey);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message.slice(0, 180) : "factuurfout";
+      db()
+        .prepare("UPDATE sponsor_operations SET attempts = attempts + 1, last_error = ?, updated_at = ? WHERE op_key = ?")
+        .run(message, now.toISOString(), opKey);
+    }
+  }
+}
+
 function recipientSnapshot(row: Record<string, unknown> | undefined) {
   if (!row) return {};
   return {
@@ -538,9 +662,14 @@ function recipientSnapshot(row: Record<string, unknown> | undefined) {
   };
 }
 
+export function invoiceLineDescription(sportName: string, periodStart: string, periodEnd: string) {
+  return `${sportName} · ${formatPeriodLabel(periodStart, periodEnd)}`;
+}
+
 async function finishProviderInvoice(
   invoiceId: string,
   input: {
+    contractId: string;
     kind: "first_paid" | "collection";
     customerId: string;
     paymentId?: string | null;
@@ -552,15 +681,22 @@ async function finishProviderInvoice(
 ) {
   const database = db();
   database.exec("BEGIN IMMEDIATE");
-  const current = database.prepare("SELECT * FROM sponsor_invoice_periods WHERE id = ?").get(invoiceId) as
-    | { provider_invoice_id: string | null; status: string }
-    | undefined;
-  if (!current || current.provider_invoice_id || current.status === "issuing") {
+  try {
+    const current = database.prepare("SELECT provider_invoice_id, status FROM sponsor_invoice_periods WHERE id = ?").get(invoiceId) as
+      | { provider_invoice_id: string | null; status: string }
+      | undefined;
+    if (!current || current.provider_invoice_id) {
+      database.exec("COMMIT");
+      return current ?? null;
+    }
+    if (current.status !== "issuing") {
+      database.prepare("UPDATE sponsor_invoice_periods SET status = 'issuing' WHERE id = ? AND provider_invoice_id IS NULL").run(invoiceId);
+    }
     database.exec("COMMIT");
-    return current;
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
   }
-  database.prepare("UPDATE sponsor_invoice_periods SET status = 'issuing' WHERE id = ?").run(invoiceId);
-  database.exec("COMMIT");
   const subject = `WeerSport-factuur · ${input.periodStart}`;
   const provider = await createSalesInvoice({
     localInvoiceId: invoiceId,
@@ -569,7 +705,7 @@ async function finishProviderInvoice(
     mandateId: input.mandateId,
     kind: input.kind,
     lines: lines.map((line) => ({
-      description: `${line.sportName} · ${input.periodStart} t/m ${input.periodEnd}`,
+      description: invoiceLineDescription(line.sportName, input.periodStart, input.periodEnd),
       netCents: line.netCents,
       vatRate: line.vatRate,
     })),
@@ -583,6 +719,9 @@ async function finishProviderInvoice(
        WHERE id = ? AND provider_invoice_id IS NULL`,
     )
     .run(provider.id, provider.number, status, provider.emailStatus, invoiceId);
+  db()
+    .prepare("UPDATE sponsor_operations SET status = 'done', updated_at = ? WHERE op_key = ? AND status = 'pending'")
+    .run(new Date().toISOString(), `invoice:${input.contractId}:${input.periodStart}`);
   return db().prepare("SELECT * FROM sponsor_invoice_periods WHERE id = ?").get(invoiceId);
 }
 

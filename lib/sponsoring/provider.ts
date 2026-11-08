@@ -23,6 +23,16 @@ export type SponsorProviderInvoice = {
   emailStatus: "not_delivered_tested" | "requested" | "delivered";
 };
 
+/** Public origin for Mollie redirect and webhook URLs. Matches Pro checkout. */
+export function publicRequestOrigin(request: Request) {
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  if (forwardedHost) {
+    const proto = request.headers.get("x-forwarded-proto") ?? "https";
+    return `${proto}://${forwardedHost}`;
+  }
+  return new URL(request.url).origin;
+}
+
 export function providerEnvironment(): ProviderEnvironment {
   const rate = resolveMonthlyRate();
   if (!rate.ok || rate.mode !== "confirmed") return "test";
@@ -104,6 +114,9 @@ export async function createFirstIdealPayment(input: {
   returnToken: string;
   description: string;
 }) {
+  if (process.env.WEERSPORT_SPONSOR_PROVIDER_FAIL === "1") {
+    throw new Error("gesimuleerde providerfout");
+  }
   const environment = providerEnvironment();
   if (environment === "live") {
     const payment = await mollie("/payments", {
@@ -234,6 +247,8 @@ export async function createSalesInvoice(input: {
   if (input.kind === "collection" && !input.mandateId) {
     throw new Error("Incasso vraagt een mandaat. Er is geen abonnement gestart.");
   }
+  const stored = readInvoiceForLocal(input.localInvoiceId);
+  if (stored) return stored;
   if (environment === "live") {
     const sellerReady = Boolean(
       process.env.WEERSPORT_SELLER_LEGAL_NAME &&
@@ -260,7 +275,11 @@ export async function createSalesInvoice(input: {
       body.status = "issued";
       body.mandateId = input.mandateId;
     }
-    const invoice = await mollie("/sales-invoices", { method: "POST", body: JSON.stringify(body) });
+    const invoice = await mollie("/sales-invoices", {
+      method: "POST",
+      headers: { "Idempotency-Key": input.localInvoiceId },
+      body: JSON.stringify(body),
+    });
     const id = String(invoice.id);
     const number = typeof invoice.invoiceNumber === "string" ? invoice.invoiceNumber : null;
     saveObject({ providerId: id, kind: "invoice", localId: input.localInvoiceId, status: input.kind === "first_paid" ? "paid" : "issued", payload: invoice, environment });
@@ -277,7 +296,13 @@ export async function createSalesInvoice(input: {
     kind: "invoice",
     localId: input.localInvoiceId,
     status: input.kind === "first_paid" ? "paid" : "issued",
-    payload: { test: true, kind: input.kind, paymentId: input.paymentId ?? null, mandateId: input.mandateId ?? null },
+    payload: {
+      test: true,
+      kind: input.kind,
+      paymentId: input.paymentId ?? null,
+      mandateId: input.mandateId ?? null,
+      descriptions: input.lines.map((line) => line.description),
+    },
     environment: "test",
   });
   return {
@@ -286,6 +311,21 @@ export async function createSalesInvoice(input: {
     status: input.kind === "first_paid" ? "paid" : "issued",
     emailStatus: "not_delivered_tested",
   } satisfies SponsorProviderInvoice;
+}
+
+function readInvoiceForLocal(localInvoiceId: string): SponsorProviderInvoice | null {
+  ensureCommercialSchema();
+  const row = db()
+    .prepare("SELECT provider_id, status, payload_json, environment FROM sponsor_provider_objects WHERE kind = 'invoice' AND local_id = ? ORDER BY rowid LIMIT 1")
+    .get(localInvoiceId) as { provider_id: string; status: string; payload_json: string; environment: string } | undefined;
+  if (!row) return null;
+  const payload = JSON.parse(row.payload_json) as { invoiceNumber?: unknown };
+  return {
+    id: row.provider_id,
+    number: typeof payload.invoiceNumber === "string" ? payload.invoiceNumber : null,
+    status: row.status === "paid" ? "paid" : "issued",
+    emailStatus: row.environment === "live" ? "requested" : "not_delivered_tested",
+  };
 }
 
 export async function readSalesInvoice(providerId: string): Promise<SponsorProviderInvoice | null> {
