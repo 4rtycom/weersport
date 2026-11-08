@@ -312,6 +312,43 @@ if (failQuote.ok && logo.ok) {
   assert(resumed.ok && resumed.checkout.checkoutUrl.startsWith("https://weersport.nl/sponsoring/betaling"), "resumed attempt gets one checkout url");
   const profilesFinal = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_profiles").get() as { n: number };
   assert(profilesFinal.n === profilesOnce.n, "resume keeps the same profile");
+  const golf = dbModule.db().prepare("SELECT c.id, c.amount_cents FROM sponsor_checkouts c JOIN sponsor_profiles p ON p.id = c.sponsor_id WHERE p.public_name = 'Golfbaan'").get() as {
+    id: string;
+    amount_cents: number;
+  };
+  dbModule.db().prepare("DELETE FROM sponsor_provider_objects WHERE kind = 'payment' AND local_id = ?").run(golf.id);
+  dbModule
+    .db()
+    .prepare("INSERT INTO sponsor_provider_objects (provider_id, kind, local_id, status, payload_json, environment) VALUES ('tr_once_only', 'payment', ?, 'open', ?, 'live')")
+    .run(
+      golf.id,
+      JSON.stringify({
+        checkoutUrl: "https://www.mollie.com/checkout/once",
+        amountCents: golf.amount_cents,
+        checkoutId: golf.id,
+        mandateId: null,
+      }),
+    );
+  dbModule.db().prepare("UPDATE sponsor_checkouts SET checkout_url = '', mollie_payment_id = NULL, status = 'open' WHERE id = ?").run(golf.id);
+  const collectedTwice = await checkoutLib.createSponsorCheckout({
+    quoteId: failQuote.quote.id,
+    attemptId: "77777777-7777-4777-8777-777777777777",
+    publicName: "Golfbaan",
+    destinationUrl: "https://example.com/golf",
+    logoId: logo.id,
+    billing,
+    consent: true,
+    origin: "https://weersport.nl",
+    now: new Date("2026-06-01T12:00:00Z"),
+  });
+  assert(collectedTwice.ok, "retry finds the stored payment");
+  const keptPayment = dbModule.db().prepare("SELECT mollie_payment_id, checkout_url FROM sponsor_checkouts WHERE id = ?").get(golf.id) as {
+    mollie_payment_id: string;
+    checkout_url: string;
+  };
+  assert(keptPayment.mollie_payment_id === "tr_once_only" && keptPayment.checkout_url === "https://www.mollie.com/checkout/once", "retry reuses the first iDEAL payment");
+  const paymentObjects = dbModule.db().prepare("SELECT COUNT(*) AS n FROM sponsor_provider_objects WHERE kind = 'payment' AND local_id = ?").get(golf.id) as { n: number };
+  assert(paymentObjects.n === 1, "one checkout does not collect twice");
 }
 
 const zeil = dbModule.db().prepare("SELECT c.id, c.paid_until FROM sponsor_contracts c JOIN sponsor_profiles p ON p.id = c.sponsor_id WHERE p.public_name = 'Zeilclub'").get() as {
@@ -331,6 +368,15 @@ dbModule.db().exec("ROLLBACK");
 
 const providerSource = await import("node:fs").then((fs) => fs.readFileSync(new URL("../lib/sponsoring/provider.ts", import.meta.url), "utf8"));
 assert(!providerSource.includes("/subscriptions"), "no Mollie subscription for sponsorship");
+assert((providerSource.match(/Idempotency-Key/g) ?? []).length >= 2, "first payment and invoice send an idempotency key");
+const pendingLive = checkoutLib.invoiceDeliverySentence({ mode: "live", emailStatus: "not_requested", invoiceEmail: "factuur@example.nl" });
+const unpaidLive = checkoutLib.invoiceDeliverySentence({ mode: "live", emailStatus: null, invoiceEmail: "factuur@example.nl" });
+const testReceipt = checkoutLib.invoiceDeliverySentence({ mode: "test", emailStatus: "not_delivered_tested", invoiceEmail: "factuur@example.nl" });
+assert(!pendingLive.toLowerCase().includes("testadapter") && !unpaidLive.toLowerCase().includes("testadapter"), "live receipt does not say test adapter");
+assert(pendingLive.includes("factuur@example.nl") && unpaidLive.includes("factuur@example.nl"), "live receipt keeps the invoice email");
+assert(testReceipt.toLowerCase().includes("testadapter"), "test receipt stays labeled");
+const receiptSource = await import("node:fs").then((fs) => fs.readFileSync(new URL("../app/sponsoring/betaling/page.tsx", import.meta.url), "utf8"));
+assert(receiptSource.includes("invoiceDeliverySentence") && !receiptSource.includes("De testadapter heeft geen PDF"), "receipt page does not hard-code the test sentence");
 
 const rain = selectLib.resolveCommercialBlocks({
   surface: "moment",

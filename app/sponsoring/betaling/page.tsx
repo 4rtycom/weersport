@@ -3,7 +3,7 @@ import { SiteHeaderBar } from "@/components/site-header-bar";
 import { TestPaymentButton } from "@/components/test-payment-button";
 import { issueManageToken } from "@/lib/sponsoring/manage";
 import { formatEuroCents } from "@/lib/sponsoring/months";
-import { paymentStatusView, verifySponsorPayment, checkoutByReturnToken } from "@/lib/sponsoring/checkout";
+import { paymentStatusView, verifySponsorPayment, checkoutByReturnToken, invoiceDeliverySentence } from "@/lib/sponsoring/checkout";
 import styles from "../signup.module.css";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,6 @@ export default async function SponsorPaymentPage({ searchParams }: { searchParam
   const manage = view?.status === "paid" ? issueManageToken(view.sponsorId) : null;
   const paid = view?.status === "paid";
   const test = view?.mode === "test";
-  const mailSent = view?.invoice?.email_status === "delivered" || view?.invoice?.email_status === "requested";
 
   return (
     <>
@@ -77,9 +76,11 @@ export default async function SponsorPaymentPage({ searchParams }: { searchParam
               <section className={styles.payCard} aria-labelledby="factuur-mail">
                 <h2 id="factuur-mail">Je factuur per e-mail</h2>
                 <p className={styles.payMail}>
-                  {mailSent
-                    ? `Je ontvangt de PDF-factuur op ${view.billing.invoiceEmail}. Ook de volgende maandfacturen gaan naar dit adres.`
-                    : `De testadapter heeft geen PDF verstuurd. Productie mailt de factuur naar ${view.billing.invoiceEmail}.`}
+                  {invoiceDeliverySentence({
+                    mode: view.mode,
+                    emailStatus: view.invoice?.email_status,
+                    invoiceEmail: view.billing.invoiceEmail,
+                  })}
                 </p>
                 <address className={styles.payAddress}>
                   {view.billing.legalName}

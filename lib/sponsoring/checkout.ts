@@ -16,6 +16,14 @@ import { buildLines, quoteFingerprint, readQuote, type QuoteLine } from "@/lib/s
 import { resolveMonthlyRate } from "@/lib/sponsoring/rate";
 import { validateDestination, plainText } from "@/lib/sponsoring/validate";
 
+export function invoiceDeliverySentence(input: { mode: string; emailStatus?: string | null; invoiceEmail: string }) {
+  const delivered = input.emailStatus === "delivered" || input.emailStatus === "requested";
+  if (input.mode === "test" && !delivered) {
+    return `De testadapter heeft geen PDF verstuurd. Productie mailt de factuur naar ${input.invoiceEmail}.`;
+  }
+  return `Je ontvangt de PDF-factuur op ${input.invoiceEmail}. Ook de volgende maandfacturen gaan naar dit adres.`;
+}
+
 export const CONSENT_VERSION = "sepa-incasso-v1";
 export const CONSENT_TEXT =
   "Ik ga akkoord met maandelijkse SEPA-incasso na de eerste iDEAL-betaling, voor de gekozen sporten tegen het bevestigde maandtarief. Tekst sepa-incasso-v1.";

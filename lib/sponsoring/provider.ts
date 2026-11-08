@@ -117,10 +117,13 @@ export async function createFirstIdealPayment(input: {
   if (process.env.WEERSPORT_SPONSOR_PROVIDER_FAIL === "1") {
     throw new Error("gesimuleerde providerfout");
   }
+  const stored = readPaymentForCheckout(input.checkoutId, input.origin, input.returnToken);
+  if (stored) return stored;
   const environment = providerEnvironment();
   if (environment === "live") {
     const payment = await mollie("/payments", {
       method: "POST",
+      headers: { "Idempotency-Key": input.checkoutId },
       body: JSON.stringify({
         amount: { currency: "EUR", value: centsToValue(input.amountCents) },
         description: input.description,
@@ -134,15 +137,16 @@ export async function createFirstIdealPayment(input: {
     });
     const id = String(payment.id);
     const links = payment._links as { checkout?: { href?: string } } | undefined;
+    const checkoutUrl = links?.checkout?.href ?? "";
     saveObject({
       providerId: id,
       kind: "payment",
       localId: input.checkoutId,
       status: "open",
-      payload: payment,
+      payload: { ...payment, checkoutUrl },
       environment,
     });
-    return { id, checkoutUrl: links?.checkout?.href ?? "", environment, mandateId: null as string | null };
+    return { id, checkoutUrl, environment, mandateId: null as string | null };
   }
   const id = `tr_sponsor_test_${input.checkoutId.slice(0, 12)}`;
   saveObject({
@@ -156,6 +160,7 @@ export async function createFirstIdealPayment(input: {
       checkoutId: input.checkoutId,
       mandateId: null,
       sequenceType: "first",
+      checkoutUrl: `${input.origin}/sponsoring/betaling?token=${input.returnToken}`,
     },
     environment,
   });
@@ -311,6 +316,31 @@ export async function createSalesInvoice(input: {
     status: input.kind === "first_paid" ? "paid" : "issued",
     emailStatus: "not_delivered_tested",
   } satisfies SponsorProviderInvoice;
+}
+
+function readPaymentForCheckout(checkoutId: string, origin: string, returnToken: string) {
+  ensureCommercialSchema();
+  const row = db()
+    .prepare("SELECT provider_id, payload_json, environment FROM sponsor_provider_objects WHERE kind = 'payment' AND local_id = ? ORDER BY rowid LIMIT 1")
+    .get(checkoutId) as { provider_id: string; payload_json: string; environment: string } | undefined;
+  if (!row) return null;
+  const payload = JSON.parse(row.payload_json) as { checkoutUrl?: unknown; _links?: { checkout?: { href?: unknown } } };
+  const linked = payload._links?.checkout?.href;
+  const checkoutUrl =
+    typeof payload.checkoutUrl === "string" && payload.checkoutUrl
+      ? payload.checkoutUrl
+      : typeof linked === "string" && linked
+        ? linked
+        : row.environment !== "live"
+          ? `${origin}/sponsoring/betaling?token=${returnToken}`
+          : "";
+  if (!checkoutUrl) return null;
+  return {
+    id: row.provider_id,
+    checkoutUrl,
+    environment: row.environment === "live" ? "live" : "test",
+    mandateId: null as string | null,
+  } as const;
 }
 
 function readInvoiceForLocal(localInvoiceId: string): SponsorProviderInvoice | null {
