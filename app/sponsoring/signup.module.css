@@ -1,6 +1,6 @@
 .main {
-  width: min(760px, calc(100% - 32px));
-  margin: 28px auto 80px;
+  width: auto;
+  margin: 28px 12px 80px 8px;
 }
 .stage {
   display: grid;
@@ -194,10 +194,10 @@
   .receipt h1 { font-size: 44px; }
 }
 @media (min-width: 1100px) {
-  .main { width: min(1160px, calc(100% - 40px)); }
+  .main { margin: 28px 40px 80px 16px; }
   .stage {
     grid-template-columns: minmax(0, 536px) minmax(320px, 1fr);
-    gap: 24px;
+    gap: 32px;
   }
 }
 @media (max-width: 720px) {
