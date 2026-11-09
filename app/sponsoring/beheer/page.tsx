@@ -12,7 +12,7 @@ export default async function SponsorManagePage({ searchParams }: { searchParams
   return (
     <>
       <SiteHeaderBar />
-      <main id="inhoud" className={styles.main}>
+      <main id="inhoud" className={styles.manage}>
         <p className={styles.kicker}>Beheer</p>
         <h1>Je sportsponsoring</h1>
         {!view ? <p className={styles.error} role="alert">Deze beheerverwijzing is ongeldig of verlopen.</p> : <ManagePanel token={token} view={view} />}

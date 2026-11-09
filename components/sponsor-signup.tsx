@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import styles from "@/app/sponsoring/signup.module.css";
+import { FietsExampleCard } from "@/components/fiets-example-card";
 import { sports } from "@/lib/sports";
 
 const GROUPS = [
@@ -169,6 +170,8 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
 
   return (
     <div className={styles.main}>
+      <div className={styles.stage}>
+      <div>
       <p className={styles.kicker}>Word sportsponsor</p>
       <h1>Sponsor een sport, in heel Nederland</h1>
       <p className={styles.lead}>
@@ -295,6 +298,9 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
           </button>
         </div>
       </section>
+      </div>
+      <FietsExampleCard />
+      </div>
 
       <dialog ref={dialogRef} className={styles.picker} aria-labelledby={titleId} onCancel={cancelSelection}>
         <div className={styles.pickerBody}>

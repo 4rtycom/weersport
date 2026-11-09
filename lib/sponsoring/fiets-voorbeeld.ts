@@ -27,6 +27,7 @@ export const fietsVoorbeeld = {
   safety: "UV-risico, extreem weer en databron blijven los van de sportscores.",
   sponsor: {
     partner: "Fietswerk Amsterdam",
+    href: "https://example.com/fietswerk-amsterdam",
     headline: "Klaar voor je volgende rit?",
     body: "Laat je remmen en banden controleren in onze Amsterdamse werkplaats.",
     image: "/sponsoring/fietswerk-amsterdam.jpg",

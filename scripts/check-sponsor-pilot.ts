@@ -17,6 +17,34 @@ const momentCss = readFileSync(new URL("../app/globals.css", import.meta.url), "
 const sponsors = readFileSync(new URL("../components/sport-sponsors.tsx", import.meta.url), "utf8");
 const affiliate = readFileSync(new URL("../components/affiliate-tip.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
+const headerSource = readFileSync(new URL("../components/site-header.tsx", import.meta.url), "utf8");
+if (headerSource.includes("Inloggen") || !headerSource.includes("Mijn momenten →") || !headerSource.includes("Account")) {
+  throw new Error("Header keeps Account and Mijn momenten for every visitor");
+}
+if (!form.includes("<FietsExampleCard />") || form.includes("FietsMomentPage")) {
+  throw new Error("Sponsoring signup shows a compact Fietsen example, not the full moment page");
+}
+const exampleCard = readFileSync(new URL("../components/fiets-example-card.tsx", import.meta.url), "utf8");
+if (!exampleCard.includes("Voorbeeld · fictief") && !exampleCard.includes("moment.badge")) {
+  throw new Error("The compact example must be labeled Voorbeeld · fictief");
+}
+if (!exampleCard.includes("Onze sportsponsors") || !exampleCard.includes('rel="sponsored') || !exampleCard.includes("moment.sponsor")) {
+  throw new Error("The compact example keeps Onze sportsponsors with logo, name and a sponsored link");
+}
+if (!exampleCard.includes("<FietsScoreCurve") || !exampleCard.includes("moment.window") || !exampleCard.includes("moment.score")) {
+  throw new Error("The example preview shows the score, the time window and the day curve");
+}
+if (!exampleCard.includes("Jouw bedrijf bij de sport") || !exampleCard.includes("WeerSport-moment")) {
+  throw new Error("The example preview keeps the company call to action");
+}
+const managePage = readFileSync(new URL("../app/sponsoring/beheer/page.tsx", import.meta.url), "utf8");
+const signupCss = readFileSync(new URL("../app/sponsoring/signup.module.css", import.meta.url), "utf8");
+if (!managePage.includes("styles.manage") || managePage.includes("styles.main")) {
+  throw new Error("Manage page keeps its own centered column");
+}
+if (!signupCss.includes(".manage {\n  width: min(760px, calc(100% - 32px));\n  margin: 28px auto 80px;\n}")) {
+  throw new Error("Manage column stays centered at 760px");
+}
 const screen = `${page}\n${form}\n${momentView}\n${sponsors}\n${affiliate}`;
 for (const token of [
   "Word sportsponsor",
@@ -879,9 +907,10 @@ async function post(pathname: string, body: unknown) {
 }
 
 const html = await (await request("/sponsoring")).text();
-for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL"]) {
+for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL", "Voorbeeld · fictief", "Fietsen · Amsterdam", "Onze sportsponsors", "Fietswerk Amsterdam", "Jouw bedrijf bij de sport", "WeerSport-moment"]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
+if (html.includes("Inloggen")) throw new Error("Sponsoring header must keep Mijn momenten when logged out");
 for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede", "Bekijk volledige momentpagina"]) {
   if (html.includes(removed)) throw new Error(`Live sponsoring HTML still shows ${removed}`);
 }
