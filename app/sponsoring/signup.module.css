@@ -9,6 +9,76 @@
   align-items: start;
 }
 .stage > * { min-width: 0; }
+.example {
+  align-self: start;
+  justify-self: start;
+  width: min(100%, 420px);
+  margin: 0;
+  padding: 16px 18px 14px;
+  border: 1px solid #dfeae6;
+  border-radius: 22px;
+  background: #fff;
+}
+.exampleBadge {
+  margin: 0;
+  color: #276053;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.exampleContext {
+  margin: 6px 0 0;
+  color: #3b8a90;
+  font-size: 13px;
+  font-weight: 700;
+}
+.exampleHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+.example h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.exampleWindow {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.exampleScore {
+  margin: 0;
+  min-width: 72px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #e7f6ef;
+  text-align: center;
+}
+.exampleScore strong { display: block; font-size: 28px; line-height: 1; letter-spacing: -0.04em; }
+.exampleScore span { color: #4c676d; font-size: 12px; font-weight: 700; }
+.exampleReason { margin: 8px 0 0; color: #4c676d; font-size: 14px; }
+.exampleFactors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.exampleFactors li {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #f4f8f6;
+}
+.exampleFactors span { color: #4c676d; font-size: 11px; font-weight: 700; }
+.exampleFactors strong { font-size: 14px; }
 .kicker {
   margin: 0;
   color: #3b8a90;

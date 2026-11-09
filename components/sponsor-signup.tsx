@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import styles from "@/app/sponsoring/signup.module.css";
-import { FietsMomentPage } from "@/components/fiets-moment-page";
+import { FietsExampleCard } from "@/components/fiets-example-card";
 import { sports } from "@/lib/sports";
 
 const GROUPS = [
@@ -299,7 +299,7 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
         </div>
       </section>
       </div>
-      <FietsMomentPage embedded />
+      <FietsExampleCard />
       </div>
 
       <dialog ref={dialogRef} className={styles.picker} aria-labelledby={titleId} onCancel={cancelSelection}>

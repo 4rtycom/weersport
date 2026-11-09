@@ -21,8 +21,12 @@ const headerSource = readFileSync(new URL("../components/site-header.tsx", impor
 if (headerSource.includes("Inloggen") || !headerSource.includes("Mijn momenten →") || !headerSource.includes("Account")) {
   throw new Error("Header keeps Account and Mijn momenten for every visitor");
 }
-if (!form.includes("<FietsMomentPage embedded />")) {
-  throw new Error("Sponsoring signup shows the Fietsen example beside the form");
+if (!form.includes("<FietsExampleCard />") || form.includes("FietsMomentPage")) {
+  throw new Error("Sponsoring signup shows a compact Fietsen example, not the full moment page");
+}
+const exampleCard = readFileSync(new URL("../components/fiets-example-card.tsx", import.meta.url), "utf8");
+if (!exampleCard.includes("Voorbeeld · fictief") && !exampleCard.includes("moment.badge")) {
+  throw new Error("The compact example must be labeled Voorbeeld · fictief");
 }
 const managePage = readFileSync(new URL("../app/sponsoring/beheer/page.tsx", import.meta.url), "utf8");
 const signupCss = readFileSync(new URL("../app/sponsoring/signup.module.css", import.meta.url), "utf8");
