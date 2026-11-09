@@ -612,16 +612,31 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   }
   .hero.site-header-bar {
     display: block;
-    padding: 18px 40px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 18px 0;
   }
-  .hero.hero-home { padding-top: 0; }
+  .hero.site-header-bar .site-header {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    padding-inline: 40px;
+  }
+  .hero.hero-home {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 72px;
+    padding-inline: max(40px, calc((100% - 1440px) / 2 + 40px));
+  }
   .catalog-hero,
   .release-hero {
     width: min(1440px, 100%);
     margin-inline: auto;
   }
   .site-header, .hero-halo { grid-column: 1 / -1; }
-  .hero-halo { width: 560px; right: 40px; top: 80px; }
+  .hero-halo { width: 560px; right: max(40px, calc((100% - 1440px) / 2 + 40px)); top: 80px; }
   .hero-copy { margin-top: 48px; max-width: 650px; }
   .hero h1 { font-size: 48px; line-height: 1.08; letter-spacing: -1.4px; }
   .hero-lead-desktop { display: block; font-size: 16px; }

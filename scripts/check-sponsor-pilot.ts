@@ -45,6 +45,12 @@ if (!managePage.includes("styles.manage") || managePage.includes("styles.main"))
 if (!signupCss.includes(".manage {\n  width: min(760px, calc(100% - 32px));\n  margin: 28px auto 80px;\n}")) {
   throw new Error("Manage column stays centered at 760px");
 }
+if (!signupCss.includes(".main {\n  width: min(1280px, calc(100% - 32px));\n  margin: 28px auto 80px;\n}") || signupCss.includes("margin: 28px 40px 80px 16px")) {
+  throw new Error("Signup stage stays a centered content width");
+}
+if (!signupCss.includes("grid-template-columns: minmax(0, 536px) minmax(320px, 1fr)")) {
+  throw new Error("Signup keeps the form on the left and the example on the right");
+}
 const screen = `${page}\n${form}\n${momentView}\n${sponsors}\n${affiliate}`;
 for (const token of [
   "Word sportsponsor",
@@ -93,8 +99,14 @@ if (/site-header-bar[^{]*\{[^}]*8px 12px/.test(momentCss)) {
 if (!momentCss.includes("padding: 18px 16px")) {
   throw new Error("Header bar uses the same 18px 16px padding as home");
 }
-if (!/@media \(min-width: 1024px\)[\s\S]*?\.hero\.site-header-bar \{[^}]*padding: 18px 40px/.test(momentCss)) {
-  throw new Error("Desktop header inset matches the hero content");
+if (!/@media \(min-width: 1024px\)[\s\S]*?\.hero\.site-header-bar \{[^}]*width: 100%/.test(momentCss)) {
+  throw new Error("Header bar background stays full viewport width");
+}
+if (!/@media \(min-width: 1024px\)[\s\S]*?\.hero\.hero-home \{[^}]*width: 100%/.test(momentCss)) {
+  throw new Error("Home hero background stays full viewport width");
+}
+if (!/@media \(min-width: 1024px\)[\s\S]*?\.hero\.site-header-bar \.site-header \{[^}]*padding-inline: 40px/.test(momentCss)) {
+  throw new Error("Desktop header content stays inset with the hero");
 }
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const footer = readFileSync(new URL("../components/site-footer.tsx", import.meta.url), "utf8");
