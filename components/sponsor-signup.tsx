@@ -307,7 +307,6 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
               </div>
             </dl>
             <p className={styles.quoteLater}>Daarna dezelfde maandfactuur per periode.</p>
-            {quote.rateMode === "example" ? <p className={styles.quoteExample}>{quote.label}</p> : null}
           </>
         ) : (
           <p className={styles.quoteEmpty}>{quoteError || "De offerte wordt berekend."}</p>

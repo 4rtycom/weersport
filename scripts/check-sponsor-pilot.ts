@@ -54,8 +54,8 @@ if (!signupCss.includes("grid-template-columns: minmax(0, 536px) minmax(320px, 1
 if (!form.includes("quote.netCents") || !form.includes("quote.vatCents") || !form.includes("quote.grossCents") || !form.includes("Er wordt niets in rekening gebracht")) {
   throw new Error("The cost preview uses the server quote and shows no charge without sports");
 }
-if (form.includes("2900") || form.includes("€ 29")) {
-  throw new Error("The signup page must not hardcode a rate");
+if (form.includes("2900") || form.includes("€ 29") || form.includes("quote.rateMode") || form.includes("quoteExample")) {
+  throw new Error("The signup page must not hardcode a rate or label the Kosten preview as an example rate");
 }
 if (!signupCss.includes(".quotePreview { grid-column: 2; grid-row: 2; }") || !signupCss.includes(".invoice { grid-column: 1; grid-row: 2; margin-top: 0; }")) {
   throw new Error("The cost preview sits beside the invoice block");
