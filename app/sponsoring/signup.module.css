@@ -330,11 +330,44 @@
 @media (min-width: 768px) {
   .main { width: min(1280px, calc(100% - 48px)); }
 }
+.quotePreview {
+  align-self: start;
+  margin: 0;
+  padding: 22px;
+  border: 1px solid #d7e4df;
+  border-radius: 28px;
+  background: #fff;
+}
+.quotePreview h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+.quoteEmpty { margin: 10px 0 0; color: #4c676d; }
+.quoteCount { margin: 8px 0 0; font-weight: 800; }
+.quoteRows { display: grid; gap: 10px; margin: 14px 0 0; }
+.quoteRows div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.quoteRows dt { color: #4c676d; font-weight: 700; }
+.quoteRows dd { margin: 0; font-weight: 800; }
+.quoteIdeal dt,
+.quoteIdeal dd { color: #0b2934; font-size: 18px; }
+.quoteLater { margin: 14px 0 0; color: #4c676d; font-size: 14px; }
+.quoteExample { margin: 10px 0 0; color: #6e490a; font-size: 13px; font-weight: 700; }
 @media (min-width: 1100px) {
   .stage {
     grid-template-columns: minmax(0, 536px) minmax(320px, 1fr);
-    gap: 32px;
+    gap: 28px 32px;
   }
+  .formTop { grid-column: 1; grid-row: 1; }
+  .example { grid-column: 2; grid-row: 1; }
+  .invoice { grid-column: 1; grid-row: 2; margin-top: 0; }
+  .quotePreview { grid-column: 2; grid-row: 2; }
+  .pay { grid-column: 1; grid-row: 3; margin-top: 0; }
 }
 @media (max-width: 720px) {
   .example { padding: 18px 16px 16px; }

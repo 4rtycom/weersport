@@ -168,10 +168,11 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
     }
   }
 
+  const sportCount = quote?.lines.length ?? 0;
   return (
     <div className={styles.main}>
       <div className={styles.stage}>
-      <div>
+      <div className={styles.formTop}>
       <p className={styles.kicker}>Word sportsponsor</p>
       <h1>Sponsor een sport, in heel Nederland</h1>
       <p className={styles.lead}>
@@ -238,7 +239,8 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
         {quoteError ? <p className={styles.error} role="alert">{quoteError}</p> : null}
       </section>
 
-      <section className={styles.card} aria-labelledby="factuur">
+      </div>
+      <section className={`${styles.card} ${styles.invoice}`} aria-labelledby="factuur">
         <h2 id="factuur">Factuurgegevens</h2>
         <p className={styles.help}>Deze gegevens blijven privé en komen niet bij de vermelding.</p>
         <div className={styles.grid}>
@@ -283,7 +285,35 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
         </div>
       </section>
 
-      <section className={styles.card}>
+      <aside className={styles.quotePreview} aria-live="polite" aria-labelledby="kosten-titel">
+        <h2 id="kosten-titel">Kosten</h2>
+        {selected.length === 0 ? (
+          <p className={styles.quoteEmpty}>Nog geen sporten gekozen. Er wordt niets in rekening gebracht.</p>
+        ) : quote ? (
+          <>
+            <p className={styles.quoteCount}>{sportCount === 1 ? "1 sport" : `${sportCount} sporten`}</p>
+            <dl className={styles.quoteRows}>
+              <div>
+                <dt>Maandbedrag excl. btw</dt>
+                <dd>{euros(quote.netCents)}</dd>
+              </div>
+              <div>
+                <dt>Btw</dt>
+                <dd>{euros(quote.vatCents)}</dd>
+              </div>
+              <div className={styles.quoteIdeal}>
+                <dt>Eerste betaling via iDEAL</dt>
+                <dd>{euros(quote.grossCents)}</dd>
+              </div>
+            </dl>
+            <p className={styles.quoteLater}>Daarna dezelfde maandfactuur per periode.</p>
+            {quote.rateMode === "example" ? <p className={styles.quoteExample}>{quote.label}</p> : null}
+          </>
+        ) : (
+          <p className={styles.quoteEmpty}>{quoteError || "De offerte wordt berekend."}</p>
+        )}
+      </aside>
+      <section className={`${styles.card} ${styles.pay}`}>
         <label>
           <span>
             <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Ik machtig de maandelijkse incasso na de eerste iDEAL-betaling.
@@ -298,7 +328,6 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
           </button>
         </div>
       </section>
-      </div>
       <FietsExampleCard />
       </div>
 
