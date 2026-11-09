@@ -65,6 +65,9 @@ if (/site-header-bar[^{]*\{[^}]*8px 12px/.test(momentCss)) {
 if (!momentCss.includes("padding: 18px 16px")) {
   throw new Error("Header bar uses the same 18px 16px padding as home");
 }
+if (!/@media \(min-width: 1024px\)[\s\S]*?\.hero\.site-header-bar \{[^}]*padding: 18px 40px/.test(momentCss)) {
+  throw new Error("Desktop header inset matches the hero content");
+}
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const footer = readFileSync(new URL("../components/site-footer.tsx", import.meta.url), "utf8");
 if (!layout.includes("<SiteFooter />") || home.includes('className="site-footer"') || !footer.includes("WeerSport-moment is een advies")) {

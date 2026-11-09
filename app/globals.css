@@ -588,6 +588,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 
 @media (min-width: 768px) {
   .hero, .catalog-hero { padding-inline: 28px; }
+  .hero.site-header-bar { padding-inline: 28px; }
   .planner, .families, .showcase, .editorial, .curve, .factors, .steps, .sponsor, .catalog {
     width: min(1280px, calc(100% - 48px));
   }
@@ -611,7 +612,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   }
   .hero.site-header-bar {
     display: block;
-    padding: 18px 16px;
+    padding: 18px 40px;
   }
   .hero.hero-home { padding-top: 0; }
   .catalog-hero,
