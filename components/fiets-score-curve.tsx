@@ -3,13 +3,13 @@ import styles from "@/app/sponsoring/voorbeeld/moment.module.css";
 
 const label = "Sportscore door de dag van 06:00 tot 20:00. Het hoogste punt is 10:00.";
 
-export function FietsScoreCurve() {
+export function FietsScoreCurve({ prominent = false }: { prominent?: boolean }) {
   const { width, height, line, area, band, peak, hours } = fietsCurve;
 
   return (
-    <figure className={styles.curveFigure}>
+    <figure className={prominent ? `${styles.curveFigure} ${styles.curveProminent}` : styles.curveFigure}>
       <svg
-        className={styles.curveSvg}
+        className={prominent ? styles.curveSvgTall : styles.curveSvg}
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
         role="img"

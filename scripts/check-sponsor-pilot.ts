@@ -31,6 +31,9 @@ if (!exampleCard.includes("Voorbeeld · fictief") && !exampleCard.includes("mome
 if (!exampleCard.includes("Onze sportsponsors") || !exampleCard.includes('rel="sponsored') || !exampleCard.includes("moment.sponsor")) {
   throw new Error("The compact example keeps Onze sportsponsors with logo, name and a sponsored link");
 }
+if (!exampleCard.includes("<FietsScoreCurve") || !exampleCard.includes("moment.window") || !exampleCard.includes("moment.score")) {
+  throw new Error("The example preview shows the score, the time window and the day curve");
+}
 const managePage = readFileSync(new URL("../app/sponsoring/beheer/page.tsx", import.meta.url), "utf8");
 const signupCss = readFileSync(new URL("../app/sponsoring/signup.module.css", import.meta.url), "utf8");
 if (!managePage.includes("styles.manage") || managePage.includes("styles.main")) {

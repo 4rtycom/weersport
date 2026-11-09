@@ -235,11 +235,29 @@
 }
 .curveFigure {
   margin: 0;
+  container-type: inline-size;
 }
 .curveSvg {
   display: block;
   width: 100%;
   height: 105px;
+}
+.curveSvgTall {
+  display: block;
+  width: 100%;
+  height: 176px;
+}
+.curveProminent .hours {
+  height: 20px;
+  margin-top: 8px;
+}
+.curveProminent .hours li {
+  font-size: 12px;
+}
+.curveProminent .hours li:first-child { transform: translateX(0); }
+.curveProminent .hours li:last-child { transform: translateX(-100%); }
+@container (max-width: 460px) {
+  .curveProminent .hours li:nth-child(even) { display: none; }
 }
 .hours {
   position: relative;
