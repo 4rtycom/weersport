@@ -17,7 +17,12 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.main h1 {
+.manage {
+  width: min(760px, calc(100% - 32px));
+  margin: 28px auto 80px;
+}
+.main h1,
+.manage h1 {
   margin: 8px 0 0;
   font-size: clamp(32px, 5vw, 44px);
   line-height: 1.05;

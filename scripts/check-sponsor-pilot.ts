@@ -24,6 +24,14 @@ if (headerSource.includes("Inloggen") || !headerSource.includes("Mijn momenten â
 if (!form.includes("<FietsMomentPage embedded />")) {
   throw new Error("Sponsoring signup shows the Fietsen example beside the form");
 }
+const managePage = readFileSync(new URL("../app/sponsoring/beheer/page.tsx", import.meta.url), "utf8");
+const signupCss = readFileSync(new URL("../app/sponsoring/signup.module.css", import.meta.url), "utf8");
+if (!managePage.includes("styles.manage") || managePage.includes("styles.main")) {
+  throw new Error("Manage page keeps its own centered column");
+}
+if (!signupCss.includes(".manage {\n  width: min(760px, calc(100% - 32px));\n  margin: 28px auto 80px;\n}")) {
+  throw new Error("Manage column stays centered at 760px");
+}
 const screen = `${page}\n${form}\n${momentView}\n${sponsors}\n${affiliate}`;
 for (const token of [
   "Word sportsponsor",
