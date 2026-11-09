@@ -1,0 +1,41 @@
+.stack { display: grid; gap: 16px; margin-top: 18px; }
+.compact { gap: 10px; margin-top: 0; }
+.compact h2 { margin: 2px 0 0; font-size: 18px; line-height: 1.2; }
+.compact .affiliate,
+.compact .sponsors { padding: 12px; border-radius: 16px; }
+.compact .affiliate { grid-template-columns: 56px minmax(0, 1fr); gap: 10px; }
+.compact .affiliate img { width: 56px; height: 56px; }
+.compact .sponsors ul { margin-top: 8px; }
+.compact .sponsors a { min-height: 48px; padding: 6px; }
+.compact .test { margin-top: 4px; }
+.affiliate, .sponsors {
+  padding: 18px;
+  border: 1px solid #dfeae6;
+  border-radius: 24px;
+  background: #fff;
+}
+.affiliate { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; }
+.affiliate img { width: 96px; height: 96px; object-fit: contain; border-radius: 16px; background: #f4f8f6; }
+.kicker { margin: 0; color: #3b8a90; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.sponsors ul { display: grid; gap: 10px; margin-top: 12px; }
+.sponsors a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 8px;
+  border-radius: 16px;
+  background: #f4f8f6;
+  text-decoration: none;
+}
+.sponsors img { width: 48px; height: 48px; object-fit: contain; border-radius: 12px; background: #fff; }
+.test { margin: 6px 0 0; color: #6e490a; font-size: 13px; }
+@media (max-width: 720px) {
+  .compact .affiliate { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+  .compact .affiliate,
+  .compact .sponsors { padding: 8px 10px; }
+  .compact .affiliate img { width: 44px; height: 44px; }
+  .compact h2 { font-size: 16px; }
+  .compact .sponsors a { min-height: 40px; }
+  .compact .sponsors ul { margin-top: 4px; }
+}

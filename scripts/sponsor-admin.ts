@@ -39,8 +39,13 @@ const usage = `WeerSport sponsorbeheer (lokaal, zelfde database als de app).
   npm run sponsor -- resume <campagne-id>
   npm run sponsor -- report <campagne-id> [--csv]
 
-Standaard is een testcampagne. Die is lokaal zichtbaar en telt niet mee in productierapporten.
-Facturen blijven handmatig. Dit commando publiceert niets.`;
+Historische pilotcommando's blijven beschikbaar voor oude aanvragen. Ze starten geen incasso.
+
+  npm run sponsor -- moderate <sponsor-id> --decision approved --reason "URL en logo gecontroleerd"
+  npm run sponsor -- collect
+  npm run sponsor -- contracts
+
+Nieuwe sponsoring gebruikt een maandcontract. Een historische lead wordt geen incasso.`;
 
 async function main() {
   if (!command || command === "help") {
@@ -51,7 +56,30 @@ async function main() {
     console.log(formatRequestList(listRequests()));
     return;
   }
+  if (command === "collect") {
+    const { collectDue } = await import("@/lib/sponsoring/collect");
+    console.log(JSON.stringify(await collectDue(), null, 2));
+    return;
+  }
+  if (command === "contracts") {
+    const { db } = await import("@/lib/auth/db");
+    const { ensureCommercialSchema } = await import("@/lib/sponsoring/commercial-schema");
+    ensureCommercialSchema();
+    console.log(JSON.stringify(db().prepare("SELECT id, status, paid_until, cancel_effective_at FROM sponsor_contracts").all(), null, 2));
+    return;
+  }
   if (!id) fail(usage);
+  if (command === "moderate") {
+    const { moderateSponsor } = await import("@/lib/sponsoring/directory");
+    const decision = option("--decision", rest);
+    const reason = option("--reason", rest);
+    if (decision !== "approved" && decision !== "rejected") fail("Kies --decision approved of rejected.");
+    if (!reason) fail("Leg --reason vast.");
+    const result = moderateSponsor({ sponsorId: id, decision, reason, actor: "cli" });
+    if (!result.ok) fail(result.error);
+    console.log(`Moderatie ${decision}: ${id}`);
+    return;
+  }
   if (command === "show") {
     const request = getRequest(id);
     if (!request) fail("Aanvraag niet gevonden.");

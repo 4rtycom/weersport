@@ -2,6 +2,7 @@ import { db } from "@/lib/auth/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { ensureBillingSchema } from "@/lib/billing/schema";
 import { ensureMomentsSchema } from "@/lib/moments/store";
+import { ensureCommercialSchema } from "@/lib/sponsoring/commercial-schema";
 
 type UserRow = {
   id: string;
@@ -20,6 +21,7 @@ function userById(id: string) {
 export function exportAccountData(userId: string) {
   ensureMomentsSchema();
   ensureBillingSchema();
+  ensureCommercialSchema();
   const user = userById(userId);
   if (!user) return null;
 
@@ -61,12 +63,26 @@ export function exportAccountData(userId: string) {
       checkouts,
       invoices,
     },
+    sponsorship: {
+      profiles: db()
+        .prepare("SELECT id, public_name, destination_url, moderation_status, created_at FROM sponsor_profiles WHERE owner_user_id = ?")
+        .all(userId),
+      billing: db()
+        .prepare(
+          `SELECT b.legal_name, b.street, b.postal_code, b.city, b.country, b.vat_id, b.invoice_email, b.created_at
+           FROM sponsor_billing_profiles b
+           JOIN sponsor_profiles p ON p.id = b.sponsor_id
+           WHERE p.owner_user_id = ?`,
+        )
+        .all(userId),
+    },
   };
 }
 
 export function deleteAccount(userId: string, password: string) {
   ensureMomentsSchema();
   ensureBillingSchema();
+  ensureCommercialSchema();
   const user = userById(userId);
   if (!user) return { ok: false as const, error: "Account niet gevonden.", status: 404 };
   if (!verifyPassword(password, user.password_hash)) {
@@ -88,6 +104,7 @@ export function deleteAccount(userId: string, password: string) {
     database.prepare("DELETE FROM billing_invoices WHERE user_id = ?").run(userId);
     database.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
     database.prepare("DELETE FROM tokens WHERE user_id = ?").run(userId);
+    database.prepare("UPDATE sponsor_profiles SET owner_user_id = NULL WHERE owner_user_id = ?").run(userId);
     database.prepare("DELETE FROM users WHERE id = ?").run(userId);
     database.exec("COMMIT");
   } catch (error) {

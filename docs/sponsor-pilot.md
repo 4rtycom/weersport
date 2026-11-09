@@ -1,5 +1,7 @@
 # Sponsorpilot lokaal testen
 
+De publieke pagina `/sponsoring` is geen campagneformulier meer. Nieuwe sponsoring is een maandcontract per sport. De commando's hieronder gelden alleen voor historische pilotaanvragen. Een oude lead of betaalde pilot wordt geen automatische incasso. Nieuwe contracten lopen via de aanmeldpagina, `npm run sponsor -- moderate` en `npm run sponsor -- collect`.
+
 De publieke pagina `/sponsoring` is een directe sponsoraanvraag (`requestType` `campaign_v1`). Er staat geen pakketprijs op. Verzenden bewaart sport, plaats, bereik, periode en contact in dezelfde database en plant niets in. Zoek de aanvraag na een herstart met `npm run sponsor -- list` en `npm run sponsor -- show <aanvraag-id>`.
 
 De betaalde pilot staat uit. `WEERSPORT_SPONSOR_PILOT_BOOKABLE` blijft leeg tot een aanvraag na een herstart nog in de database staat en het eindrapport klopt. Dit bestand publiceert geen campagne en verplaatst geen productie-alias.

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { verifyAndApplyPayment } from "@/lib/billing/mollie";
+import { verifySponsorPayment } from "@/lib/sponsoring/checkout";
 import { db } from "@/lib/auth/db";
 import { ensureBillingSchema } from "@/lib/billing/schema";
 
@@ -29,6 +30,13 @@ export async function POST(request: Request) {
     .prepare("SELECT id FROM billing_checkouts WHERE mollie_payment_id = ?")
     .get(paymentId) as { id: string } | undefined;
   if (!checkout) {
+    const sponsor = await verifySponsorPayment({ paymentId });
+    if (sponsor.ok) {
+      return NextResponse.json({ ok: true, scope: "sponsoring", status: sponsor.checkout.status });
+    }
+    if (sponsor.status !== 404) {
+      return NextResponse.json({ error: sponsor.error }, { status: sponsor.status });
+    }
     return NextResponse.json({ ok: true, ignored: true });
   }
 

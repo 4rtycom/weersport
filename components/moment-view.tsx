@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { SaveActions } from "@/components/account/save-actions";
 import { AdsHost } from "@/components/ads/ads-host";
-import { SponsorMeasure } from "@/components/sponsor-measure";
+import { AffiliateTip } from "@/components/affiliate-tip";
+import { SportSponsors } from "@/components/sport-sponsors";
+import commercial from "@/components/commercial.module.css";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { ScoreCurve } from "@/components/score-curve";
 import { SportIcon } from "@/components/sport-icon";
 import { UvBadge } from "@/components/uv-badge";
 import type { AdDecision } from "@/lib/ads/policy";
-import type { SponsorCreative } from "@/lib/sponsoring/placement";
+import type { AffiliateTip as AffiliateTipData } from "@/lib/affiliate/select";
+import type { PublicSponsor } from "@/lib/sponsoring/directory";
 import type { ForecastSnapshot } from "@/lib/data/types";
 import { getSportMeta } from "@/lib/scoring/engine";
 import { findSport } from "@/lib/sports";
@@ -43,14 +46,16 @@ export function MomentView({
   entitlement = null,
   booking = null,
   ads = null,
-  sponsor = null,
+  commercialBlocks = null,
+  consentGranted = false,
 }: {
   snapshot: ForecastSnapshot;
   accountName: string;
   entitlement?: { plan: string; used: number; limit: number; remaining: number } | null;
   booking?: { booked: boolean; consumed: number; cacheHit: boolean } | null;
   ads?: { decision: AdDecision; scriptEnabled: boolean } | null;
-  sponsor?: { mode: "show" | "eligible"; creative: SponsorCreative } | null;
+  commercialBlocks?: { affiliate: AffiliateTipData | null; sponsors: PublicSponsor[] } | null;
+  consentGranted?: boolean;
 }) {
   const sport = findSport(snapshot.sportId);
   const meta = getSportMeta(snapshot.sportId);
@@ -122,22 +127,6 @@ export function MomentView({
                 <p className="score-tooltip" title={scored.tooltip}>
                   {meta.tagline}. {scored.bestTimeLabel}.
                 </p>
-                <ScoreCurve
-                  hourly={scored.hourly}
-                  peakTime={scored.peakWindow.peakTime}
-                  tooltip={scored.tooltip}
-                />
-                <ul className="score-factors">
-                  {scored.factors.map((factor) => (
-                    <li key={factor.id}>
-                      <div>
-                        <strong>{factor.label}</strong>
-                        <span>{factor.explanation}</span>
-                      </div>
-                      <em>{factor.impact}</em>
-                    </li>
-                  ))}
-                </ul>
                 <p className="moment-rights">{scored.caveats} UV en officiële waarschuwingen blijven los van deze score.</p>
               </>
             ) : (
@@ -162,27 +151,52 @@ export function MomentView({
             )}
           </article>
 
-          <aside className="moment-card moment-safety">
-            <h2>Zon &amp; veiligheid</h2>
-            <div className={`uv-panel uv-panel-${uv?.level ?? "missing"}`}>
-              <p>
-                {uv?.index === null || !uv
-                  ? "UV niet beschikbaar"
-                  : `UV ${uv.index % 1 === 0 ? uv.index.toFixed(0) : uv.index.toFixed(1)} · ${uv.label.toUpperCase()}`}
-              </p>
-              <span>Zonbescherming los van de sportscore.</span>
+          {commercialBlocks?.affiliate || (commercialBlocks?.sponsors.length ?? 0) > 0 ? (
+            <div className={`${commercial.stack} ${commercial.compact} moment-offer`}>
+              {commercialBlocks?.affiliate ? (
+                <AffiliateTip tip={commercialBlocks.affiliate} sportId={snapshot.sportId} measure={consentGranted} />
+              ) : null}
+              <SportSponsors sponsors={commercialBlocks?.sponsors ?? []} />
             </div>
-            <div className="warning-panel">
-              <p>Officiële weerwaarschuwingen</p>
-              <strong>{snapshot.warnings.message}</strong>
-            </div>
-            {nextSport ? (
+          ) : null}
+
+          <aside className="moment-safety">
+            <p className="eyebrow">Zon &amp; veiligheid</p>
+            <p className="moment-safety-line">
+              {uv?.index === null || !uv
+                ? "UV niet beschikbaar"
+                : `UV ${uv.index % 1 === 0 ? uv.index.toFixed(0) : uv.index.toFixed(1)} · ${uv.label.toUpperCase()}`}
+              . {snapshot.warnings.message}
+            </p>
+            {!scored && nextSport ? (
               <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
                 Volgende sport · {nextSport.name}
               </Link>
             ) : null}
           </aside>
         </div>
+
+        {scored ? (
+          <section className="moment-card" aria-label="Scoreverloop en factoren">
+            <ScoreCurve hourly={scored.hourly} peakTime={scored.peakWindow.peakTime} tooltip={scored.tooltip} />
+            <ul className="score-factors">
+              {scored.factors.map((factor) => (
+                <li key={factor.id}>
+                  <div>
+                    <strong>{factor.label}</strong>
+                    <span>{factor.explanation}</span>
+                  </div>
+                  <em>{factor.impact}</em>
+                </li>
+              ))}
+            </ul>
+            {nextSport ? (
+              <Link className="button button-lime moment-next-sport" href={`/?sport=${nextSport.id}#planner`}>
+                Volgende sport · {nextSport.name}
+              </Link>
+            ) : null}
+          </section>
+        ) : null}
 
         <section className="moment-card" aria-labelledby="bewaar-title">
           <p className="eyebrow">Opslaan zonder verbruik</p>
@@ -268,7 +282,6 @@ export function MomentView({
           </ul>
         </section>
 
-        {sponsor ? <SponsorMeasure creative={sponsor.creative} mode={sponsor.mode} /> : null}
         {ads ? (
           <AdsHost
             decision={ads.decision}

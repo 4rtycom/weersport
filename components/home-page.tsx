@@ -2,11 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { SportSelect } from "@/components/sport-select";
 import { PlaceField } from "@/components/place-field";
-import { BrandMark } from "@/components/brand-mark";
 import { families, findSport, periods } from "@/lib/sports";
 import type { SearchDraft } from "@/lib/draft";
 
@@ -59,9 +58,9 @@ export function HomePage({
 
   return (
     <>
-      <section className="hero">
+      <SiteHeaderBar account={Boolean(viewerName)} />
+      <section className="hero hero-home">
         <img className="hero-halo" src="/home/halo.svg" alt="" width={670} height={670} />
-        <SiteHeader account={Boolean(viewerName)} />
         <div className="hero-copy">
           <p className="eyebrow eyebrow-lime">
             <img src="/home/lime-dot.svg" alt="" width={15} height={15} />
@@ -369,20 +368,6 @@ export function HomePage({
         </aside>
       </main>
 
-      <footer className="site-footer">
-        <div className="footer-brand">
-          <BrandMark size={42} />
-          <p>WeerSport.</p>
-        </div>
-        <p className="footer-tagline">Wat is jouw beste sportmoment?</p>
-        <p className="footer-disclaimer">WeerSport-moment is een advies, geen veiligheidsgarantie.</p>
-        <nav className="footer-links" aria-label="Juridisch en support">
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/voorwaarden">Voorwaarden</Link>
-          <Link href="/support">Support</Link>
-          <Link href="/sponsoring">Samenwerken</Link>
-        </nav>
-      </footer>
       </>
   );
 }

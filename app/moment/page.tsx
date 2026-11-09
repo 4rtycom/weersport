@@ -4,7 +4,7 @@ import { MomentView } from "@/components/moment-view";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { readDraftCookie, readSession } from "@/lib/auth/cookies";
 import { resolveAdPlacement } from "@/lib/ads/server";
-import { resolveSponsorSlot } from "@/lib/sponsoring/placement";
+import { resolveCommercialBlocks } from "@/lib/affiliate/select";
 import { runMeteredAnalysis } from "@/lib/billing/analysis";
 import { saveDraft } from "@/lib/auth/service";
 
@@ -60,16 +60,15 @@ export default async function MomentPage() {
     suitabilityKind: result.snapshot.suitability.kind,
     userId: account.id,
   });
-  let sponsor: ReturnType<typeof resolveSponsorSlot> = { mode: "none", reason: "error" };
+  let commercialBlocks: ReturnType<typeof resolveCommercialBlocks> = { affiliate: null, sponsors: [] };
   try {
-    sponsor = resolveSponsorSlot({
+    commercialBlocks = resolveCommercialBlocks({
       surface: "moment",
       plan: ads.plan,
-      consentGranted: ads.consent.granted,
       snapshot: result.snapshot,
     });
   } catch {
-    sponsor = { mode: "none", reason: "error" };
+    commercialBlocks = { affiliate: null, sponsors: [] };
   }
   return (
     <MomentView
@@ -77,27 +76,9 @@ export default async function MomentPage() {
       accountName={account.name}
       entitlement={result.entitlement}
       booking={{ booked: result.booked, consumed: result.consumed, cacheHit: result.cacheHit }}
-      ads={sponsor.mode === "show" ? null : ads}
-      sponsor={
-        sponsor.mode === "none"
-          ? null
-          : sponsor.mode === "show"
-            ? sponsor
-            : {
-                mode: "eligible",
-                creative: {
-                  placementId: sponsor.creative.placementId,
-                  signature: sponsor.creative.signature,
-                  campaignId: sponsor.creative.campaignId,
-                  sportId: sponsor.creative.sportId,
-                  placeId: sponsor.creative.placeId,
-                  partnerName: "",
-                  headline: "",
-                  body: "",
-                  destinationUrl: null,
-                },
-              }
-      }
+      ads={ads}
+      commercialBlocks={commercialBlocks}
+      consentGranted={ads.consent.granted}
     />
   );
 }
