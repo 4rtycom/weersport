@@ -34,6 +34,10 @@ export function FietsExampleCard() {
           <span>{moment.sponsor.partner}</span>
         </a>
       </section>
+      <p className={styles.exampleCta}>
+        Jouw bedrijf bij de sport
+        <span>én het WeerSport-moment</span>
+      </p>
     </aside>
   );
 }

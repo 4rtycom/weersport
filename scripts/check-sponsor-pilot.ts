@@ -34,6 +34,9 @@ if (!exampleCard.includes("Onze sportsponsors") || !exampleCard.includes('rel="s
 if (!exampleCard.includes("<FietsScoreCurve") || !exampleCard.includes("moment.window") || !exampleCard.includes("moment.score")) {
   throw new Error("The example preview shows the score, the time window and the day curve");
 }
+if (!exampleCard.includes("Jouw bedrijf bij de sport") || !exampleCard.includes("WeerSport-moment")) {
+  throw new Error("The example preview keeps the company call to action");
+}
 const managePage = readFileSync(new URL("../app/sponsoring/beheer/page.tsx", import.meta.url), "utf8");
 const signupCss = readFileSync(new URL("../app/sponsoring/signup.module.css", import.meta.url), "utf8");
 if (!managePage.includes("styles.manage") || managePage.includes("styles.main")) {
@@ -904,7 +907,7 @@ async function post(pathname: string, body: unknown) {
 }
 
 const html = await (await request("/sponsoring")).text();
-for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL", "Voorbeeld · fictief", "Fietsen · Amsterdam", "Onze sportsponsors", "Fietswerk Amsterdam"]) {
+for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL", "Voorbeeld · fictief", "Fietsen · Amsterdam", "Onze sportsponsors", "Fietswerk Amsterdam", "Jouw bedrijf bij de sport", "WeerSport-moment"]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
 if (html.includes("Inloggen")) throw new Error("Sponsoring header must keep Mijn momenten when logged out");
