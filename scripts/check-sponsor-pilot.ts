@@ -59,11 +59,16 @@ if (!(adviceAt >= 0 && adviceAt < commercialAt && commercialAt < factorsAt && fa
 if (!momentCss.includes('"score safety"') || !momentCss.includes('"score"\n    "offer"')) {
   throw new Error("Desktop keeps the offer in the right column; mobile keeps it under the score");
 }
-if (/^\s*\.hero\.site-header-bar \{ padding: 8px 12px; \}/m.test(momentCss)) {
-  throw new Error("Compact header padding must stay on the moment page");
+if (/site-header-bar[^{]*\{[^}]*8px 12px/.test(momentCss)) {
+  throw new Error("The shared header keeps the home padding on every page");
 }
-if (!momentCss.includes("main.moment) .hero.site-header-bar")) {
-  throw new Error("Moment page keeps the compact header so the offer stays in the first screen");
+if (!momentCss.includes("padding: 18px 16px")) {
+  throw new Error("Header bar uses the same 18px 16px padding as home");
+}
+const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+const footer = readFileSync(new URL("../components/site-footer.tsx", import.meta.url), "utf8");
+if (!layout.includes("<SiteFooter />") || home.includes('className="site-footer"') || !footer.includes("WeerSport-moment is een advies")) {
+  throw new Error("Pages share one footer");
 }
 if (home.includes("resolveSponsorSlot") || home.includes("SponsorMeasure")) {
   throw new Error("Homepage must not place a sponsor");

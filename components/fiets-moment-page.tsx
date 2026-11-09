@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { BrandMark } from "@/components/brand-mark";
 import { FietsScoreCurve } from "@/components/fiets-score-curve";
+import { SiteHeaderBar } from "@/components/site-header-bar";
 import { fietsVoorbeeld } from "@/lib/sponsoring/fiets-voorbeeld";
 import styles from "@/app/sponsoring/voorbeeld/moment.module.css";
 
@@ -95,28 +94,7 @@ export function FietsMomentPage({ embedded = false }: { embedded?: boolean }) {
       <a className="skip-link" href="#inhoud">
         Naar inhoud
       </a>
-      <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="WeerSport, naar de homepage">
-          <span className={styles.logo}>
-            <BrandMark size={32} />
-          </span>
-          <span>WeerSport.</span>
-        </Link>
-        <nav aria-label="Plaats in de site">
-          <ol className={styles.crumbs}>
-            <li>
-              <Link href="/sporten">Sporten</Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <Link href="/sporten/fietsen">Fietsen</Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li aria-current="page">Amsterdam</li>
-          </ol>
-          <p className={styles.mobileCrumb}>Sportmoment</p>
-        </nav>
-      </header>
+      <SiteHeaderBar />
       <main id="inhoud" className={styles.main}>
         <FietsMomentContent />
       </main>

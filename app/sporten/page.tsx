@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BrandMark } from "@/components/brand-mark";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { readSession } from "@/lib/auth/cookies";
@@ -50,14 +49,6 @@ export default async function SportenPage() {
           </section>
         ))}
       </main>
-      <footer className="site-footer">
-        <div className="footer-brand">
-          <BrandMark size={42} />
-          <p>WeerSport.</p>
-        </div>
-        <p className="footer-tagline">Wat is jouw beste sportmoment?</p>
-        <p className="footer-disclaimer">WeerSport-moment is een advies, geen veiligheidsgarantie.</p>
-      </footer>
     </>
   );
 }
