@@ -28,6 +28,9 @@ const exampleCard = readFileSync(new URL("../components/fiets-example-card.tsx",
 if (!exampleCard.includes("Voorbeeld · fictief") && !exampleCard.includes("moment.badge")) {
   throw new Error("The compact example must be labeled Voorbeeld · fictief");
 }
+if (!exampleCard.includes("Onze sportsponsors") || !exampleCard.includes('rel="sponsored') || !exampleCard.includes("moment.sponsor")) {
+  throw new Error("The compact example keeps Onze sportsponsors with logo, name and a sponsored link");
+}
 const managePage = readFileSync(new URL("../app/sponsoring/beheer/page.tsx", import.meta.url), "utf8");
 const signupCss = readFileSync(new URL("../app/sponsoring/signup.module.css", import.meta.url), "utf8");
 if (!managePage.includes("styles.manage") || managePage.includes("styles.main")) {
@@ -898,7 +901,7 @@ async function post(pathname: string, body: unknown) {
 }
 
 const html = await (await request("/sponsoring")).text();
-for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL", "Voorbeeld · fictief", "Fietsen · Amsterdam"]) {
+for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL", "Voorbeeld · fictief", "Fietsen · Amsterdam", "Onze sportsponsors", "Fietswerk Amsterdam"]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
 if (html.includes("Inloggen")) throw new Error("Sponsoring header must keep Mijn momenten when logged out");

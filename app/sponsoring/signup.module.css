@@ -79,6 +79,38 @@
 }
 .exampleFactors span { color: #4c676d; font-size: 11px; font-weight: 700; }
 .exampleFactors strong { font-size: 14px; }
+.exampleSponsors {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e4eeea;
+}
+.exampleSponsors h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+}
+.exampleSponsors a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: #f4f8f6;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.exampleSponsors img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  object-position: 72% 42%;
+  border-radius: 10px;
+  background: #fff;
+}
 .kicker {
   margin: 0;
   color: #3b8a90;

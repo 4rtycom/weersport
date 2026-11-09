@@ -27,6 +27,13 @@ export function FietsExampleCard() {
           </li>
         ))}
       </ul>
+      <section className={styles.exampleSponsors} aria-labelledby="voorbeeld-sponsors">
+        <h3 id="voorbeeld-sponsors">Onze sportsponsors</h3>
+        <a href={moment.sponsor.href} rel="sponsored noopener" target="_blank">
+          <img src={moment.sponsor.image} alt="" width={40} height={40} />
+          <span>{moment.sponsor.partner}</span>
+        </a>
+      </section>
     </aside>
   );
 }
