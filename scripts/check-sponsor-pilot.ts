@@ -17,6 +17,13 @@ const momentCss = readFileSync(new URL("../app/globals.css", import.meta.url), "
 const sponsors = readFileSync(new URL("../components/sport-sponsors.tsx", import.meta.url), "utf8");
 const affiliate = readFileSync(new URL("../components/affiliate-tip.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
+const headerSource = readFileSync(new URL("../components/site-header.tsx", import.meta.url), "utf8");
+if (headerSource.includes("Inloggen") || !headerSource.includes("Mijn momenten →") || !headerSource.includes("Account")) {
+  throw new Error("Header keeps Account and Mijn momenten for every visitor");
+}
+if (!form.includes("<FietsMomentPage embedded />")) {
+  throw new Error("Sponsoring signup shows the Fietsen example beside the form");
+}
 const screen = `${page}\n${form}\n${momentView}\n${sponsors}\n${affiliate}`;
 for (const token of [
   "Word sportsponsor",
@@ -879,9 +886,10 @@ async function post(pathname: string, body: unknown) {
 }
 
 const html = await (await request("/sponsoring")).text();
-for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL"]) {
+for (const token of ["Word sportsponsor", "Kies uit 24 sporten", "Factuurgegevens", "Betalen met iDEAL", "Voorbeeld · fictief", "Fietsen · Amsterdam"]) {
   if (!html.includes(token)) throw new Error(`Live sponsoring HTML missing ${token}`);
 }
+if (html.includes("Inloggen")) throw new Error("Sponsoring header must keep Mijn momenten when logged out");
 for (const removed of ["Zo ziet een sporter je merk", "Je ochtendrun", "Loopatelier Ede", "Bekijk volledige momentpagina"]) {
   if (html.includes(removed)) throw new Error(`Live sponsoring HTML still shows ${removed}`);
 }

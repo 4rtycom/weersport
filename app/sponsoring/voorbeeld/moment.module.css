@@ -341,6 +341,9 @@
   width: 24px;
   height: 24px;
 }
+.safety:not(:has(img)) {
+  grid-template-columns: minmax(0, 1fr);
+}
 
 .shell :global(.sponsor-moment) {
   display: grid;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 
@@ -8,38 +8,11 @@ const links = [
   { href: "/#stappen", label: "Hoe werkt het" },
   { href: "/sporten", label: "Alle sporten" },
   { href: "/#weer-uv", label: "Weer & UV" },
+  { href: "/account", label: "Account" },
 ];
 
-export function SiteHeader({ account }: { account?: boolean }) {
+export function SiteHeader({ account: _account }: { account?: boolean }) {
   const [open, setOpen] = useState(false);
-  // Omitted `account` is unknown (static guides and legal pages), not logged out.
-  const [signedIn, setSignedIn] = useState(account ?? false);
-  const [ready, setReady] = useState(account !== undefined);
-
-  useEffect(() => {
-    if (account !== undefined) {
-      setSignedIn(account);
-      setReady(true);
-      return;
-    }
-
-    const controller = new AbortController();
-    fetch("/api/auth/sessie", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("sessie");
-        return (await response.json()) as { signedIn?: boolean };
-      })
-      .then((data) => {
-        setSignedIn(Boolean(data.signedIn));
-        setReady(true);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof Error && error.name === "AbortError") return;
-        setSignedIn(false);
-        setReady(true);
-      });
-    return () => controller.abort();
-  }, [account]);
 
   return (
     <header className="site-header">
@@ -56,18 +29,9 @@ export function SiteHeader({ account }: { account?: boolean }) {
             {link.label}
           </Link>
         ))}
-        {ready && signedIn ? <Link href="/account">Account</Link> : null}
-        {ready ? (
-          signedIn ? (
-            <Link className="button button-lime nav-cta" href="/account/momenten">
-              Mijn momenten →
-            </Link>
-          ) : (
-            <Link className="button button-lime nav-cta" href="/auth/inloggen">
-              Inloggen →
-            </Link>
-          )
-        ) : null}
+        <Link className="button button-lime nav-cta" href="/account/momenten">
+          Mijn momenten →
+        </Link>
       </nav>
       <button
         className="menu-button"
@@ -86,22 +50,9 @@ export function SiteHeader({ account }: { account?: boolean }) {
               {link.label}
             </Link>
           ))}
-          {ready && signedIn ? (
-            <Link href="/account" onClick={() => setOpen(false)}>
-              Account
-            </Link>
-          ) : null}
-          {ready ? (
-            signedIn ? (
-              <Link className="button button-lime" href="/account/momenten" onClick={() => setOpen(false)}>
-                Mijn momenten →
-              </Link>
-            ) : (
-              <Link className="button button-lime" href="/auth/inloggen" onClick={() => setOpen(false)}>
-                Inloggen →
-              </Link>
-            )
-          ) : null}
+          <Link className="button button-lime" href="/account/momenten" onClick={() => setOpen(false)}>
+            Mijn momenten →
+          </Link>
         </nav>
       ) : null}
     </header>
