@@ -46,7 +46,7 @@ Rollback method: do nothing to the live app. It keeps using SQLite. Do not drop 
 
 Decision log updated: no
 
-Gate decision: NEEDS_INPUT
+Gate decision: NEEDS_INPUT for the running-app switch. Schema creation was approved and applied.
 
 Next phase: not started. Provider activation stays closed.
 
@@ -126,6 +126,12 @@ The sequence, once the approvals exist:
 
 Rollback before step 5 is to leave the app on SQLite. Rollback after step 5 is a forward repair, or a return to SQLite only when Postgres has not accepted new writes that SQLite lacks. Provider tables are not dropped in either case.
 
+## Applied after approval
+
+`supabase/migrations/20261110143000_app_sqlite_domains.sql` created the account, session, moment, billing, and sponsor tables. `users.password_hash` is text and is not rewritten. Row level security is on for those tables and for the nine provider tables, with no permissive policies. `anon` and `authenticated` no longer have `TRUNCATE` on them. The PostGIS catalog is still granted by `supabase_admin`, so this role could not revoke `TRUNCATE` there. No provider table was truncated. Every new table has 0 rows.
+
+Nothing was copied. The only readable SQLite file is the local checkout, and its `users`, `sessions`, `tokens`, and `login_attempts` tables each have 0 rows. It has no billing or sponsor tables. The Vercel production file is still not readable, so any rows that lived only there were not copied and were not invented. Affiliate tables were not part of this migration. The Next.js app still opens SQLite; Vercel has no `DATABASE_URL`.
+
 ## Blockers
 
 | Blocker | State |
@@ -133,6 +139,6 @@ Rollback before step 5 is to leave the app on SQLite. Rollback after step 5 is a
 | Durable production SQLite export | missing; Vercel path is ephemeral and was not readable |
 | Confirmation that production has no accounts to keep | not given |
 | `DATABASE_URL` on Vercel | missing |
-| RLS and grant review before account tables exist | not done; provider tables are already world-writable through the Data API |
-| App code reading Postgres | not started; `lib/data/storage/memory.ts` is still the provider cache |
-| Cutover approval | not given |
+| RLS and grant review before account tables exist | RLS is on and `TRUNCATE` is revoked for the app tables. Other `anon` grants remain, but there is no policy, so the Data API sees no rows. |
+| App code reading Postgres | not started; the site still opens SQLite |
+| Running-app switch | schema was approved; Vercel still has no `DATABASE_URL`, and there were no readable rows to move |

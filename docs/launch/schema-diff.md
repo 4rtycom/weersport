@@ -2,6 +2,8 @@
 
 Inspection date: 2026-11-10. No row contents were copied. No tables were dropped.
 
+After approval, `20261110143000_app_sqlite_domains.sql` created the account, session, billing, and sponsor tables below. They are empty. The "absent" column describes the inspection before that file was applied.
+
 ## What Postgres already has
 
 The nine provider tables from `supabase/migrations/20261110120000_provider_open_data.sql` match the file: same columns, primary keys, unique keys, and indexes. `pgcrypto` 1.3 and `postgis` 3.3.7 are installed. There is no `supabase_migrations` schema, so this apply was not recorded by the Supabase migration runner.
