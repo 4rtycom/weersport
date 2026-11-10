@@ -80,7 +80,7 @@ Secrets checked present/missing (names only):
 Known limitations:
 
 - Runtime provider storage is process memory. `dataSourceStatus()` still reports `durableStore: not-applied`. The nine provider tables exist in the Supabase project, but this app does not read or write them. That is Phase 03 work.
-- A fresh empty operational KNMI snapshot now says `geen KNMI-waarschuwing in gecontroleerd venster` and includes the KNMI source and publication time. A stale snapshot, a test publication, an exercise-only snapshot, and a missing feed stay `UNKNOWN` and do not say there is no warning.
+- A fresh empty operational KNMI snapshot now says `geen KNMI-waarschuwing in gecontroleerd venster` and includes the KNMI source and publication time. A stale snapshot, a test publication, an exercise-only snapshot, and a missing feed stay `UNKNOWN` and do not say there is no warning. A later exercise file replaces the stored snapshot, so the previous operational warnings are not served as live.
 - Sponsor blocks stay hidden for an official warning or any warning item. They are not hidden merely because KNMI is `NOT_LINKED`. Changing that now would hide the existing sponsor preview on every scored moment while the data flags are off. Phase 05/06 owns that policy choice.
 - GitHub has no approving review. Bugbot commented on `a7383c7` and the four fixes are already in `e8bbab4`. The side branch `cursor/multiple-bug-corrections-e256` was not merged.
 - Remote CI for `613ea5c` was not recorded yet when this document was written. The local suite above passed. The previous head had a green Vercel preview and a green Bugbot check.

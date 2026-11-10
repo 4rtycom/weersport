@@ -1,6 +1,6 @@
 import { buildAnalysisCacheKey } from "@/lib/billing/analysis";
 import { pointInGeometry } from "@/lib/data/knmi/geometry";
-import { matchKnmiWarnings } from "@/lib/data/knmi/ingest";
+import { matchKnmiWarnings, storeKnmiSnapshot } from "@/lib/data/knmi/ingest";
 import { parseKnmiSnapshot } from "@/lib/data/knmi/parse";
 import { knmiKeyConfigured } from "@/lib/data/knmi/key";
 import { parseMeasurement } from "@/lib/data/luchtmeetnet/measurements";
@@ -13,7 +13,7 @@ import { safetyFromWarnings } from "@/lib/data/safety-gate";
 import { parseRwsCatalog } from "@/lib/data/rws/catalog";
 import { matchWaterLocation } from "@/lib/data/rws/spot-mapping";
 import { interpretRwsQuality } from "@/lib/data/rws/quality";
-import { resetDataStoreForTests, writeKnmiStore } from "@/lib/data/storage/memory";
+import { readKnmiStore, resetDataStoreForTests, writeKnmiStore } from "@/lib/data/storage/memory";
 import { selectWoonplaats, toPlace, searchPlaces } from "@/lib/places";
 import { parseSportTimestamp } from "@/lib/data/time";
 import { scoreSportHours } from "@/lib/scoring/engine";
@@ -182,12 +182,16 @@ if (parsed.ok) {
   assert(!stale.message.toLowerCase().includes("geen waarschuwing"), "stale snapshot does not claim there is no warning");
   assert(safetyFromWarnings(stale).level === "UNKNOWN", "stale snapshot is unknown");
 }
-if (exercise.ok) {
-  writeKnmiStore({ hash: "exercise", filename: "public_warnings_exercise.json", fetchedAt: new Date().toISOString(), snapshot: exercise.snapshot });
+if (exercise.ok && parsed.ok) {
+  storeKnmiSnapshot("public_warnings_live.json", "live-operational", parsed.snapshot);
+  const liveBeforeExercise = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date(Date.now() + 48 * 60 * 60 * 1000) });
+  assert(liveBeforeExercise.status === "OFFICIAL_WARNING" && liveBeforeExercise.items.length === 1, "operational snapshot is live before the exercise");
+  storeKnmiSnapshot("public_warnings_exercise_later.json", "later-exercise", exercise.snapshot);
   const drilled = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date(Date.now() + 48 * 60 * 60 * 1000) });
-  assert(drilled.status === "NOT_LINKED", "exercise is not shown as live");
+  assert(drilled.status === "NOT_LINKED" && drilled.items.length === 0, "later exercise does not keep the previous warning live");
   assert(!drilled.message.toLowerCase().includes("geen waarschuwing"), "exercise does not claim there is no warning");
   assert(safetyFromWarnings(drilled).level === "UNKNOWN", "exercise is unknown");
+  assert(readKnmiStore()?.snapshot.rejectedAsTest === true, "stored snapshot is the exercise, not the old operational file");
 }
 if (testPublication.ok) {
   writeKnmiStore({ hash: "testpub", filename: "public_warnings_testpub.json", fetchedAt: new Date().toISOString(), snapshot: testPublication.snapshot });

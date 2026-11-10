@@ -71,19 +71,29 @@ function downloadUrl(payload: unknown) {
 function remember(filename: string, raw: string, snapshot: ParsedKnmiSnapshot, replaced: boolean) {
   const fetchedAt = new Date().toISOString();
   const stored: StoredKnmi = { hash: hashPayload(raw), filename, fetchedAt, snapshot };
-  if (!snapshot.rejectedAsTest) writeKnmiStore(stored);
+  writeKnmiStore(stored);
   recordProviderHealth({
     provider: "knmi",
     status: snapshot.rejectedAsTest ? "TEST_ONLY" : "READY",
     lastSuccessAt: snapshot.rejectedAsTest ? null : fetchedAt,
-    lastPublishedAt: snapshot.generatedAt,
+    lastPublishedAt: snapshot.rejectedAsTest ? null : snapshot.generatedAt,
     lastErrorCode: snapshot.rejectedAsTest ? "TEST_ONLY" : null,
     records: snapshot.parts.length,
     requests: 2,
     latencyMs: null,
-    note: replaced ? `Snapshot ${filename} vervangt de vorige.` : `Snapshot ${filename} ongewijzigd.`,
+    note: snapshot.rejectedAsTest
+      ? `Snapshot ${filename} is een test of oefening. Vorige operationele waarschuwingen worden niet meer als live getoond.`
+      : replaced
+        ? `Snapshot ${filename} vervangt de vorige.`
+        : `Snapshot ${filename} ongewijzigd.`,
   });
   return stored;
+}
+
+export function storeKnmiSnapshot(filename: string, raw: string, snapshot: ParsedKnmiSnapshot) {
+  const previous = readKnmiStore();
+  const hash = hashPayload(raw);
+  return remember(filename, raw, snapshot, previous?.hash !== hash);
 }
 
 export async function ingestKnmiSnapshot(): Promise<{ ok: true; filename: string; records: number } | { ok: false; code: string; message: string }> {
@@ -139,9 +149,7 @@ export async function ingestKnmiSnapshot(): Promise<{ ok: true; filename: string
   if (!file.ok || file.json === null) return { ok: false, code: file.ok ? "SCHEMA" : file.code, message: "KNMI-snapshot is niet leesbaar." };
   const parsed = parseKnmiSnapshot(file.json);
   if (!parsed.ok) return { ok: false, code: parsed.code, message: parsed.message };
-  const previous = readKnmiStore();
-  const hash = hashPayload(file.text);
-  remember(filename, file.text, parsed.snapshot, previous?.hash !== hash);
+  storeKnmiSnapshot(filename, file.text, parsed.snapshot);
   return { ok: true, filename, records: parsed.snapshot.parts.length };
 }
 
