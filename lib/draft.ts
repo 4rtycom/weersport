@@ -1,4 +1,8 @@
+import { dataFlagEnabled, DATA_FLAG } from "@/lib/data/flags";
+import { parseSportSpot, type SportSpotDraft } from "@/lib/data/geo/locations";
 import { findSport, periods, sports } from "@/lib/sports";
+
+export type { SportSpotDraft };
 
 export type SearchDraft = {
   sportId: string;
@@ -6,6 +10,7 @@ export type SearchDraft = {
   placeId: string;
   placeLabel: string;
   period: (typeof periods)[number];
+  sportSpot?: SportSpotDraft;
 };
 
 export function parseDraft(value: unknown): SearchDraft | null {
@@ -18,11 +23,17 @@ export function parseDraft(value: unknown): SearchDraft | null {
   if (!record.placeId.startsWith("wpl-") || record.placeLabel.length < 2 || record.placeLabel.length > 80) {
     return null;
   }
-  return {
+  const draft: SearchDraft = {
     sportId: sport.id,
     sportName: findSport(sport.id).name,
     placeId: record.placeId,
     placeLabel: record.placeLabel,
     period,
   };
+  if (dataFlagEnabled(DATA_FLAG.pdokV2) && "sportSpot" in record) {
+    const spot = parseSportSpot(record.sportSpot);
+    if (!spot) return null;
+    draft.sportSpot = spot;
+  }
+  return draft;
 }

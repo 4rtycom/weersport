@@ -1,42 +1,38 @@
+import { matchKnmiWarnings } from "@/lib/data/knmi/ingest";
+import { PROVIDER_RIGHTS } from "@/lib/data/providers/contracts";
 import type { SourceObservation, WarningBundle } from "@/lib/data/types";
 
 /**
- * KNMI open-data API requires an authorized key (verified: 401 without Authorization).
- * Until a key and reuse rights are configured, this adapter stays NOT_LINKED and never invents alerts.
+ * KNMI public weather warnings 1.0. Without the flag, or without a usable server key,
+ * the status stays NOT_LINKED. A missing feed is never reported as an empty warning list.
  */
-export async function fetchKnmiWarnings(placeLabel: string): Promise<SourceObservation<WarningBundle>> {
-  const key = process.env.KNMI_API_KEY?.trim();
+export async function fetchKnmiWarnings(
+  placeLabel: string,
+  point?: { latitude: number; longitude: number },
+): Promise<SourceObservation<WarningBundle>> {
   const receivedAt = new Date().toISOString();
-  if (!key) {
-    return {
-      sourceId: "knmi-warnings",
-      sourceLabel: "KNMI waarschuwingen",
-      status: "NOT_LINKED",
-      rightsNote: "KNMI open-data vereist een API-sleutel en expliciete hergebruikrechten.",
-      coverageNote: "Gebiedsgerichte officiële waarschuwingen voor Nederland.",
-      publishedAt: null,
-      receivedAt,
-      validUntil: null,
-      locationLabel: placeLabel,
-      demo: false,
-      value: { items: [] },
-      message: "Bron niet gekoppeld / geen veiligheidsoordeel",
-    };
-  }
-
-  // Key present but endpoint contract not finalized in this repo: refuse to invent payloads.
+  const from = new Date();
+  const until = new Date(from.getTime() + 48 * 60 * 60 * 1000);
+  const match = point
+    ? matchKnmiWarnings({ latitude: point.latitude, longitude: point.longitude, from, until })
+    : {
+        status: "NOT_LINKED" as const,
+        publishedAt: null,
+        message: "Bron niet gekoppeld / geen veiligheidsoordeel",
+        items: [],
+      };
   return {
     sourceId: "knmi-warnings",
     sourceLabel: "KNMI waarschuwingen",
-    status: "NOT_LINKED",
-    rightsNote: "KNMI-sleutel is gezet, maar de waarschuwingsendpoint is nog niet aangesloten.",
+    status: match.status,
+    rightsNote: `${PROVIDER_RIGHTS.knmi.attribution} ${PROVIDER_RIGHTS.knmi.license}.`,
     coverageNote: "Gebiedsgerichte officiële waarschuwingen voor Nederland.",
-    publishedAt: null,
+    publishedAt: match.publishedAt,
     receivedAt,
     validUntil: null,
     locationLabel: placeLabel,
     demo: false,
-    value: { items: [] },
-    message: "Bron niet gekoppeld / geen veiligheidsoordeel",
+    value: { items: match.items },
+    message: match.message,
   };
 }

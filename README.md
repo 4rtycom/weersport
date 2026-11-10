@@ -11,12 +11,15 @@ npm run dev
 
 De site staat daarna op `http://localhost:3000`.
 
-Accounts staan lokaal in `data/weersport.sqlite`. Er is geen mailserver gekoppeld; verificatie- en herstellinks verschijnen in de ontwikkelmailbox op het scherm. Zet `WEERSPORT_DB` als het databasebestand ergens anders moet staan. Optioneel: `KNMI_API_KEY` (nog niet aangesloten op een waarschuwingsendpoint).
+Accounts staan lokaal in `data/weersport.sqlite`. Er is geen mailserver gekoppeld; verificatie- en herstellinks verschijnen in de ontwikkelmailbox op het scherm. Zet `WEERSPORT_DB` als het databasebestand ergens anders moet staan.
+
+Open data (KNMI, Rijkswaterstaat, PDOK, Luchtmeetnet) staat achter flags die standaard uit staan. Zie `docs/data-sources.md`. `KNMI_API_KEY` wordt alleen van de serveromgeving gelezen en hoort niet in git.
 
 ## Controles
 
 ```bash
 npm run check
+npm run check:data
 npm run lint
 npm run build
 WEERSPORT_BASE_URL=http://127.0.0.1:3000 npm run check
@@ -30,12 +33,13 @@ WEERSPORT_BASE_URL=http://127.0.0.1:3000 npm run check
 
 ### Bronnen in Phase 03
 
-| Bron | Status in deze fase |
+| Bron | Status zolang de bijbehorende flag uit staat |
 |---|---|
-| Open-Meteo weer/UV | Live adapter met CC BY 4.0-bronvermelding; vendorkeuze blijft open |
-| KNMI waarschuwingen | `NOT_LINKED` zonder verzonnen alerts |
-| RWS WADAR | `NOT_LINKED` |
+| Open-Meteo weer/UV | Ongewijzigde live adapter met CC BY 4.0-bronvermelding |
+| KNMI waarschuwingen 1.0 | `NOT_LINKED`. Een ontbrekende of uitgeschakelde feed is geen leeg waarschuwingsbeeld |
+| Rijkswaterstaat WaterWebservices | `NOT_LINKED`. Geen watermeting uit luchttemperatuur |
+| Luchtmeetnet | `NOT_LINKED`. Geen adresluchtkwaliteit en geen 48-uursvoorspelling |
 | Zwemwater / BIJ12 | `NOT_LINKED` |
-| PDOK | Live plaats- en centroïde-lookup |
+| PDOK | Live woonplaats- en centroïde-lookup. Suggest, reverse en sportspot alleen met `DATA_PDOK_V2_ENABLED` |
 
 Gevalideerde sportscore 0–100, quota, Mollie en AdSense horen bij latere fases.
