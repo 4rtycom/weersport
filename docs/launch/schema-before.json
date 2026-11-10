@@ -1,0 +1,89 @@
+{
+  "capturedAt": "2026-11-10",
+  "projectRef": "fgznemnxnhdraoghfcwm",
+  "connection": "session-pooler",
+  "rowContentsCopied": false,
+  "extensions": [
+    "pg_stat_statements 1.11",
+    "pgcrypto 1.3",
+    "plpgsql 1.0",
+    "postgis 3.3.7",
+    "supabase_vault 0.3.1",
+    "uuid-ossp 1.1"
+  ],
+  "namespacesPresent": ["auth", "public", "storage"],
+  "supabaseMigrationsSchema": "absent",
+  "publicPolicies": 0,
+  "publicTriggers": 0,
+  "rls": "off on every public table",
+  "grants": "anon, authenticated, postgres, and service_role each have SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, and TRIGGER on the public provider tables",
+  "tables": [
+    {
+      "name": "provider_sync_runs",
+      "rows": 0,
+      "primaryKey": ["id"],
+      "uniques": [],
+      "indexes": ["provider_sync_runs_provider_started_idx (provider, started_at desc)"]
+    },
+    {
+      "name": "provider_snapshots",
+      "rows": 0,
+      "primaryKey": ["id"],
+      "uniques": [["provider", "dataset", "raw_hash"]],
+      "indexes": ["provider_snapshots_provider_fetched_idx (provider, fetched_at desc)"]
+    },
+    {
+      "name": "knmi_warnings",
+      "rows": 0,
+      "primaryKey": ["id"],
+      "uniques": [["snapshot_id", "warning_set_uuid"]],
+      "indexes": []
+    },
+    {
+      "name": "knmi_warning_parts",
+      "rows": 0,
+      "primaryKey": ["id"],
+      "uniques": [["snapshot_id", "part_uuid"]],
+      "indexes": ["knmi_warning_parts_window_idx (onset, expires)"]
+    },
+    {
+      "name": "rws_measurement_locations",
+      "rows": 0,
+      "primaryKey": ["location_code"],
+      "uniques": [],
+      "indexes": []
+    },
+    {
+      "name": "rws_measurements",
+      "rows": 0,
+      "primaryKey": ["location_code", "quantity_code", "observed_at"],
+      "uniques": [],
+      "indexes": ["rws_measurements_observed_idx (observed_at desc)"]
+    },
+    {
+      "name": "air_stations",
+      "rows": 0,
+      "primaryKey": ["station_number"],
+      "uniques": [],
+      "indexes": []
+    },
+    {
+      "name": "air_measurements",
+      "rows": 0,
+      "primaryKey": ["station_number", "formula", "observed_at"],
+      "uniques": [],
+      "indexes": ["air_measurements_observed_idx (observed_at desc)"]
+    },
+    {
+      "name": "place_geo_cache",
+      "rows": 0,
+      "primaryKey": ["pdok_id"],
+      "uniques": [],
+      "indexes": []
+    }
+  ],
+  "postgisCatalog": {
+    "spatial_ref_sys": "present; stats estimate about 8500 reference rows; not application data",
+    "views": ["geography_columns", "geometry_columns"]
+  }
+}
