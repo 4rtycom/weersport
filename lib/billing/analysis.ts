@@ -31,6 +31,13 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+export function isUniqueConflict(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const code = "code" in error && error.code != null ? String(error.code) : "";
+  const message = error instanceof Error ? error.message : "";
+  return code === "23505" || /duplicate key value violates unique constraint/i.test(message) || /UNIQUE constraint failed/i.test(message);
+}
+
 function cacheKeyFor(userId: string, draft: SearchDraft) {
   const base = `${userId}:${draft.sportId}:${draft.placeId}:${draft.period}:${hourBucketKey()}`;
   return draft.sportSpot ? `${base}:spot:${draft.sportSpot.id}` : base;
@@ -229,6 +236,16 @@ export async function runMeteredAnalysis(input: {
       db().exec("ROLLBACK");
     } catch {
       /* ignore */
+    }
+    if (isUniqueConflict(error)) {
+      return {
+        ok: true,
+        booked: false,
+        consumed: 0,
+        cacheHit: true,
+        snapshot,
+        entitlement: getEntitlement(input.userId),
+      };
     }
     throw error;
   }
