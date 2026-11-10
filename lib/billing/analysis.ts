@@ -32,7 +32,12 @@ function nowIso() {
 }
 
 function cacheKeyFor(userId: string, draft: SearchDraft) {
-  return `${userId}:${draft.sportId}:${draft.placeId}:${draft.period}:${hourBucketKey()}`;
+  const base = `${userId}:${draft.sportId}:${draft.placeId}:${draft.period}:${hourBucketKey()}`;
+  return draft.sportSpot ? `${base}:spot:${draft.sportSpot.id}` : base;
+}
+
+export function buildAnalysisCacheKey(userId: string, draft: SearchDraft) {
+  return cacheKeyFor(userId, draft);
 }
 
 function shouldConsume(snapshot: ForecastSnapshot) {

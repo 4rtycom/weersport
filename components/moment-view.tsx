@@ -35,8 +35,28 @@ function statusLabel(status: string) {
       return "TEST_ONLY";
     case "OFFICIAL_WARNING":
       return "OFFICIAL_WARNING";
+    case "NOT_COVERED":
+      return "NOT_COVERED";
+    case "ERROR":
+      return "ERROR";
     default:
       return "NOT_LINKED";
+  }
+}
+
+function dutchState(status: string) {
+  switch (status) {
+    case "READY":
+    case "OFFICIAL_WARNING":
+      return "actueel";
+    case "PARTIAL":
+      return "gedeeltelijk";
+    case "STALE":
+      return "verouderd";
+    case "NOT_COVERED":
+      return "geen dekking";
+    default:
+      return "niet beschikbaar";
   }
 }
 
@@ -128,6 +148,9 @@ export function MomentView({
                   {meta.tagline}. {scored.bestTimeLabel}.
                 </p>
                 <p className="moment-rights">{scored.caveats} UV en officiële waarschuwingen blijven los van deze score.</p>
+            {snapshot.safety && snapshot.safety.level !== "NONE_IN_WINDOW" ? (
+              <p className="moment-rights">{snapshot.safety.summary} De comfortscore is geen veiligheidsgoedkeuring.</p>
+            ) : null}
               </>
             ) : (
               <>
@@ -261,6 +284,97 @@ export function MomentView({
               <p>Maximale UV in het geselecteerde sporttijdvak. Bescherming aanbevolen bij blootstelling.</p>
             </div>
           </div>
+        </section>
+
+        <section className="moment-card" aria-labelledby="waarschuwingen-title">
+          <p className="eyebrow">Officiële waarschuwingen · KNMI</p>
+          <h2 id="waarschuwingen-title">Officiële waarschuwingen</h2>
+          <p className="moment-source-line">
+            {dutchState(snapshot.warnings.status)} · {snapshot.warnings.message}
+          </p>
+          {snapshot.warnings.value?.items.length ? (
+            <ul className="score-factors">
+              {snapshot.warnings.value.items.map((item) => (
+                <li key={`${item.title}-${item.validFrom ?? ""}`} className={item.code ? `warning-${item.code}` : undefined}>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.detail}</span>
+                    <span>
+                      {item.validFrom ?? "tijd onbekend"} – {item.validUntil ?? "tijd onbekend"}
+                      {item.attribution ? ` · ${item.attribution}` : ""}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+
+        {["zeilen", "windsurfen", "kitesurfen", "surfen", "suppen", "kajakken", "roeien", "openwaterzwemmen"].includes(snapshot.sportId) ? (
+          <section className="moment-card" aria-labelledby="water-title">
+            <p className="eyebrow">Watercondities · Rijkswaterstaat</p>
+            <h2 id="water-title">Watercondities</h2>
+            <p className="moment-source-line">
+              {dutchState(snapshot.water.status)} · {snapshot.water.message}
+            </p>
+            <ul className="moment-metrics">
+              {(snapshot.water.value?.readings ?? []).map((reading) => (
+                <li key={reading.parameter}>
+                  <span>{reading.label}</span>
+                  <strong>{formatMetric(reading.value, reading.unit ? ` ${reading.unit}` : "")}</strong>
+                  <span>
+                    Gemeten bij {reading.stationLabel}
+                    {reading.observedAt ? `, ${reading.observedAt}` : ""}
+                    {reading.distanceKm !== null ? `, ${reading.distanceKm.toFixed(1)} km` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="moment-rights">{snapshot.water.rightsNote}</p>
+          </section>
+        ) : null}
+
+        <section className="moment-card" aria-labelledby="lucht-title">
+          <p className="eyebrow">Luchtkwaliteit · Luchtmeetnet</p>
+          <h2 id="lucht-title">Luchtkwaliteit</h2>
+          <p className="moment-source-line">
+            {dutchState(snapshot.airQuality?.status ?? "NOT_LINKED")} · {snapshot.airQuality?.message ?? "Niet beschikbaar."}
+          </p>
+          <ul className="moment-metrics">
+            {(snapshot.airQuality?.value?.readings ?? []).map((reading) => (
+              <li key={reading.formula}>
+                <span>{reading.formula}</span>
+                <strong>{reading.value === null ? "—" : formatMetric(reading.value, reading.unit ? ` ${reading.unit}` : "")}</strong>
+                <span>
+                  {reading.stationLabel ? `${reading.stationLabel}` : "geen station"}
+                  {reading.stationType ? ` · ${reading.stationType}` : ""}
+                  {reading.distanceKm !== null ? ` · ${reading.distanceKm.toFixed(1)} km` : ""}
+                  {reading.observedAt ? ` · ${reading.observedAt}` : ""}
+                  {reading.value !== null ? ` · ${reading.fresh ? "actueel" : "verouderd"}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="moment-rights">{snapshot.airQuality?.value?.note ?? snapshot.airQuality?.rightsNote}</p>
+        </section>
+
+        <section className="moment-card" aria-labelledby="actualiteit-title">
+          <p className="eyebrow">Data en actualiteit</p>
+          <h2 id="actualiteit-title">Data en actualiteit</h2>
+          <ul className="source-list">
+            {[snapshot.warnings, snapshot.water, snapshot.airQuality, snapshot.uv].filter((item) => item).map((item) => (
+              <li key={item!.sourceId}>
+                <div>
+                  <strong>{item!.sourceLabel}</strong>
+                  <span>
+                    {dutchState(item!.status)}
+                    {item!.publishedAt ? ` · gepubliceerd ${item!.publishedAt}` : ""}
+                    {item!.locationLabel ? ` · ${item!.locationLabel}` : ""}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="moment-card" aria-labelledby="bronnen-title">

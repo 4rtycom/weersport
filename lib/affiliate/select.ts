@@ -153,7 +153,7 @@ function hourFacts(hourly: HourlyScorePoint[], time: string, badge: string): Hou
   };
 }
 
-function numberOrNull(value: number | undefined) {
+function numberOrNull(value: number | null | undefined) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 

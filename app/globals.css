@@ -1115,7 +1115,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   letter-spacing: 0.04em;
 }
 .source-status-ready { color: #165730; }
-.source-status-not_linked, .source-status-missing_critical { color: #79410d; }
+.source-status-not_linked, .source-status-missing_critical, .source-status-error { color: #79410d; }
+.source-status-not_covered, .source-status-stale { color: #79410d; }
+.warning-rood, .warning-oranje, .warning-geel { padding-left: 10px; }
+.warning-rood { border-left: 4px solid #b42318; }
+.warning-oranje { border-left: 4px solid #b54708; }
+.warning-geel { border-left: 4px solid #ca8a04; }
 .moment-foot {
   display: flex;
   flex-wrap: wrap;

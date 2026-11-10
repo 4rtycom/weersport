@@ -5,7 +5,9 @@ export type SourceStatus =
   | "MISSING_CRITICAL"
   | "TEST_ONLY"
   | "OFFICIAL_WARNING"
-  | "NOT_LINKED";
+  | "NOT_LINKED"
+  | "NOT_COVERED"
+  | "ERROR";
 
 export type SourceObservation<T> = {
   sourceId: string;
@@ -43,14 +45,63 @@ export type UvBundle = {
   label: string;
 };
 
+export type WarningItem = {
+  title: string;
+  detail: string;
+  code?: "geel" | "oranje" | "rood";
+  phenomenon?: string;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  attribution?: string;
+};
+
 export type WarningBundle = {
-  items: Array<{ title: string; detail: string }>;
+  items: WarningItem[];
+};
+
+export type WaterReading = {
+  parameter: string;
+  label: string;
+  value: number | null;
+  unit: string | null;
+  observedAt: string | null;
+  stationId: string;
+  stationLabel: string;
+  distanceKm: number | null;
+  qualityCode: string | null;
+  coverage: "EXACT" | "REPRESENTATIVE" | "NONE";
 };
 
 export type WaterBundle = {
   waterTemperatureC: number | null;
   waveHeightM: number | null;
   currentMs: number | null;
+  readings?: WaterReading[];
+};
+
+export type AirReading = {
+  formula: "PM25" | "PM10" | "NO2" | "O3" | "LKI";
+  value: number | null;
+  unit: string | null;
+  observedAt: string | null;
+  stationId: string | null;
+  stationLabel: string | null;
+  stationType: string | null;
+  distanceKm: number | null;
+  fresh: boolean;
+};
+
+export type AirBundle = {
+  readings: AirReading[];
+  note: string;
+};
+
+export type SafetyLevel = "UNKNOWN" | "NONE_IN_WINDOW" | "YELLOW" | "ORANGE" | "RED";
+
+export type SafetyState = {
+  level: SafetyLevel;
+  summary: string;
+  comfortIsNotSafety: boolean;
 };
 
 export type SwimBundle = {
@@ -71,7 +122,7 @@ export type HourlyScorePoint = {
   temperatureC: number;
   windKmh: number;
   precipitationProbability: number;
-  uvIndex: number;
+  uvIndex: number | null;
 };
 
 export type SuitabilityOutcome =
@@ -107,6 +158,8 @@ export type ForecastSnapshot = {
   warnings: SourceObservation<WarningBundle>;
   water: SourceObservation<WaterBundle>;
   swim: SourceObservation<SwimBundle>;
+  airQuality?: SourceObservation<AirBundle>;
+  safety?: SafetyState;
   suitability: SuitabilityOutcome;
   sources: Array<{
     id: string;

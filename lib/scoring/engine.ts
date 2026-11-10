@@ -1,5 +1,6 @@
 import type { SuitabilityFactor, SuitabilityOutcome, WeatherHour } from "@/lib/data/types";
 import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
+import { inScoreWindow } from "@/lib/data/time";
 import {
   SCORE_MODEL_VERSION,
   getScoreProfile,
@@ -13,7 +14,7 @@ export type HourlyScorePoint = {
   temperatureC: number;
   windKmh: number;
   precipitationProbability: number;
-  uvIndex: number;
+  uvIndex: number | null;
 };
 
 export type ScoredSuitability = Extract<SuitabilityOutcome, { kind: "SCORED" }>;
@@ -56,25 +57,20 @@ function rainScore(probability: number, sensitivity: SportScoreProfile["rainSens
 
 function usableHours(hours: WeatherHour[]) {
   const now = Date.now();
-  const upcoming = hours.filter((hour) => {
-    const stamp = new Date(hour.time).getTime();
-    return stamp >= now - 60 * 60 * 1000;
-  });
-  const source = upcoming.length > 0 ? upcoming : hours;
-  return source
+  return hours
+    .filter((hour) => inScoreWindow(hour.time, now))
     .filter(
       (hour) =>
         hour.temperatureC !== null &&
         hour.windKmh !== null &&
         hour.precipitationProbability !== null,
     )
-    .slice(0, 24)
     .map((hour) => ({
       time: hour.time,
       temperatureC: hour.temperatureC as number,
       windKmh: hour.windKmh as number,
       precipitationProbability: hour.precipitationProbability as number,
-      uvIndex: hour.uvIndex ?? 0,
+      uvIndex: hour.uvIndex === undefined ? null : hour.uvIndex,
     }));
 }
 
@@ -85,7 +81,7 @@ export function scoreHour(
     temperatureC: number;
     windKmh: number;
     precipitationProbability: number;
-    uvIndex: number;
+    uvIndex: number | null;
   },
 ) {
   const temperature = scoreBand(hour.temperatureC, profile.idealTempC, 10);
@@ -167,8 +163,10 @@ function formatWindow(start: string, end: string) {
 export function scoreSportHours(input: {
   sportId: string;
   hours: WeatherHour[];
-  waterLinked: boolean;
-  swimLinked: boolean;
+  /** Ignored as an approval. A linked adapter is not a water measurement. */
+  waterLinked?: boolean;
+  swimLinked?: boolean;
+  hasAcceptedWaterMeasurement?: boolean;
 }): SuitabilityOutcome {
   const profile = getScoreProfile(input.sportId);
 
@@ -182,15 +180,20 @@ export function scoreSportHours(input: {
   }
 
   if (WATER_CRITICAL_SPORTS.has(input.sportId)) {
-    const swimNeedsLink = input.sportId === "openwaterzwemmen";
-    if (!input.waterLinked || (swimNeedsLink && !input.swimLinked)) {
+    if (input.sportId === "openwaterzwemmen") {
       return {
         kind: "NO_SCORE",
         reason:
-          "Kritieke water- of zwemwaterdata ontbreekt. Er is geen geruststellende sportgeschiktheidsscore.",
-        missing: swimNeedsLink
-          ? ["watertemperatuur", "zwemwaterkwaliteit"]
-          : ["watertemperatuur", "waterkwaliteit of stroming"],
+          "Openwaterzwemmen krijgt geen score zonder officiële zwemwaterstatus. Een watermeting is geen veilig-zwemmenclaim.",
+        missing: ["officiële zwemwaterstatus"],
+      };
+    }
+    if (!input.hasAcceptedWaterMeasurement) {
+      return {
+        kind: "NO_SCORE",
+        reason:
+          "Kritieke waterdata ontbreekt. Er is geen geruststellende sportgeschiktheidsscore.",
+        missing: ["waterstand, watertemperatuur, golf of stroming op hetzelfde water"],
       };
     }
   }

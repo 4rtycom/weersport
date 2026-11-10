@@ -1,22 +1,22 @@
+import { collectWater } from "@/lib/data/rws/measurements";
+import { PROVIDER_RIGHTS } from "@/lib/data/providers/contracts";
 import type { SourceObservation, WaterBundle } from "@/lib/data/types";
 
-/**
- * RWS WADAR / Waterinfo is listed as a source category to verify.
- * Public probes from this environment returned 404; never invent water safety from air temperature.
- */
+/** Rijkswaterstaat WaterWebservices. A place name alone is not a waterbody match. */
 export async function fetchRwsWater(placeLabel: string): Promise<SourceObservation<WaterBundle>> {
+  const water = await collectWater(null);
   return {
-    sourceId: "rws-wadar",
-    sourceLabel: "RWS WADAR",
-    status: "NOT_LINKED",
-    rightsNote: "Rijkswaterstaat WADAR/Waterinfo moet met dekking en hergebruikrechten worden gekoppeld.",
+    sourceId: "rws-waterwebservices",
+    sourceLabel: "Rijkswaterstaat WaterWebservices",
+    status: water.status,
+    rightsNote: `${PROVIDER_RIGHTS.rws.attribution} ${PROVIDER_RIGHTS.rws.license}.`,
     coverageNote: "Meetpunt is niet representatief voor elk watergebied.",
-    publishedAt: null,
+    publishedAt: water.publishedAt,
     receivedAt: new Date().toISOString(),
     validUntil: null,
     locationLabel: placeLabel,
     demo: false,
-    value: null,
-    message: "Waterdata niet gekoppeld. Geen veilige-waterclaim.",
+    value: water.value,
+    message: water.message,
   };
 }
