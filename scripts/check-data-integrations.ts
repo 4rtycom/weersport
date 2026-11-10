@@ -28,6 +28,10 @@ assert(Object.values(flags).every((enabled) => enabled === false), "flags must d
 
 assert(parseSportTimestamp("2026-07-01T12:00").toISOString() === "2026-07-01T10:00:00.000Z", "summer time");
 assert(parseSportTimestamp("2026-01-01T12:00").toISOString() === "2026-01-01T11:00:00.000Z", "winter time");
+assert(parseSportTimestamp("2026-03-29T01:30").toISOString() === "2026-03-29T00:30:00.000Z", "before spring forward");
+assert(parseSportTimestamp("2026-03-29T03:30").toISOString() === "2026-03-29T01:30:00.000Z", "after spring forward");
+assert(parseSportTimestamp("2026-10-25T01:30").toISOString() === "2026-10-24T23:30:00.000Z", "before autumn fallback");
+assert(parseSportTimestamp("2026-10-25T03:30").toISOString() === "2026-10-25T02:30:00.000Z", "after autumn fallback");
 
 function hour(offset: number, uvIndex: number | null) {
   return {
@@ -134,11 +138,69 @@ if (parsed.ok) {
   assert(outside.items.length === 0 && outside.status === "READY", "neighbouring place has no warning");
   assert(!inside.message.toLowerCase().includes("geen waarschuwingen"), "do not use a blanket no-warning phrase");
 }
+const exercise = parseKnmiSnapshot({
+  metadata: { schema_version: "1.0.0", publication_type: "manual", generated_at: new Date().toISOString(), snapshot_uuid: "12121212-1212-1212-1212-121212121212" },
+  num_warning_sets: 1,
+  num_warnings: 1,
+  warnings: [
+    {
+      phenomenon: "wind",
+      operational_status: "Exercise",
+      warning_set_uuid: "13131313-1313-1313-1313-131313131313",
+      texts: { nl: { headline: "Oefening", description: "Geen echte waarschuwing." } },
+      parts: [
+        {
+          part_uuid: "14141414-1414-1414-1414-141414141414",
+          status: "active",
+          color: "red",
+          onset: tomorrow,
+          expires: tomorrowEnd,
+          area: ring,
+        },
+      ],
+    },
+  ],
+});
+assert(exercise.ok && exercise.snapshot.rejectedAsTest && exercise.snapshot.parts.length === 0, "exercise is not operational");
+if (empty.ok) {
+  writeKnmiStore({ hash: "empty", filename: "public_warnings_empty.json", fetchedAt: new Date().toISOString(), snapshot: empty.snapshot });
+  const clear = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date(Date.now() + 48 * 60 * 60 * 1000) });
+  assert(clear.status === "READY", "fresh empty snapshot is ready");
+  assert(clear.message.includes("geen KNMI-waarschuwing in gecontroleerd venster"), "empty window names the checked window");
+  assert(clear.message.includes(empty.snapshot.generatedAt), "empty window names the publication time");
+  assert(clear.message.includes("KNMI"), "empty window names the source");
+  assert(safetyFromWarnings(clear).level === "NONE_IN_WINDOW", "fresh empty snapshot is an explicit clear window");
+}
+if (parsed.ok) {
+  const staleSnapshot = {
+    ...parsed.snapshot,
+    generatedAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
+  };
+  writeKnmiStore({ hash: "stale", filename: "public_warnings_stale.json", fetchedAt: new Date().toISOString(), snapshot: staleSnapshot });
+  const stale = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date(Date.now() + 48 * 60 * 60 * 1000) });
+  assert(stale.status === "STALE", "old snapshot is stale");
+  assert(!stale.message.toLowerCase().includes("geen waarschuwing"), "stale snapshot does not claim there is no warning");
+  assert(safetyFromWarnings(stale).level === "UNKNOWN", "stale snapshot is unknown");
+}
+if (exercise.ok) {
+  writeKnmiStore({ hash: "exercise", filename: "public_warnings_exercise.json", fetchedAt: new Date().toISOString(), snapshot: exercise.snapshot });
+  const drilled = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date(Date.now() + 48 * 60 * 60 * 1000) });
+  assert(drilled.status === "NOT_LINKED", "exercise is not shown as live");
+  assert(!drilled.message.toLowerCase().includes("geen waarschuwing"), "exercise does not claim there is no warning");
+  assert(safetyFromWarnings(drilled).level === "UNKNOWN", "exercise is unknown");
+}
+if (testPublication.ok) {
+  writeKnmiStore({ hash: "testpub", filename: "public_warnings_testpub.json", fetchedAt: new Date().toISOString(), snapshot: testPublication.snapshot });
+  const tested = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date(Date.now() + 48 * 60 * 60 * 1000) });
+  assert(tested.status === "NOT_LINKED", "test publication is not shown as live");
+  assert(safetyFromWarnings(tested).level === "UNKNOWN", "test publication is unknown");
+}
 delete process.env.DATA_KNMI_ENABLED;
 resetDataStoreForTests();
 const unlinked = matchKnmiWarnings({ latitude: 52.3, longitude: 4.9, from: new Date(), until: new Date() });
 assert(unlinked.status === "NOT_LINKED", "flag off stays NOT_LINKED");
 assert(safetyFromWarnings(unlinked).level === "UNKNOWN", "missing feed is unknown");
+assert(!unlinked.message.toLowerCase().includes("geen waarschuwing"), "unlinked feed does not claim there is no warning");
 const savedKnmiKey = process.env.KNMI_API_KEY;
 process.env.KNMI_API_KEY = "eyJ";
 assert(knmiKeyConfigured() === false, "prefix is not a usable key");

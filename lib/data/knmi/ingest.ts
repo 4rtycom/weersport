@@ -176,7 +176,7 @@ export function matchKnmiWarnings(input: { latitude: number; longitude: number; 
       publishedAt: stored.snapshot.generatedAt,
       fetchedAt: stored.fetchedAt,
       message: stored.snapshot.emptyOperational
-        ? "Geen actuele waarschuwing in deze geldige operationele snapshot."
+        ? `geen KNMI-waarschuwing in gecontroleerd venster. Bron: KNMI public weather warnings 1.0, gepubliceerd ${stored.snapshot.generatedAt}.`
         : "Geen actuele waarschuwing voor deze locatie in het gekozen tijdvak.",
       items: [],
     };

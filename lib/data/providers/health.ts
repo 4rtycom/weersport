@@ -29,6 +29,7 @@ export function dataSourceStatus() {
     flags: dataFlagSnapshot(),
     knmiKeyConfigured: knmiKeyConfigured(),
     persistence: "process-memory",
+    // Fase 03: this process cache is not durable. Do not treat SQL tables as live storage until the runtime reads them.
     durableStore: "not-applied",
     providers: providerHealthRows(),
   };

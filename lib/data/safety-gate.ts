@@ -8,10 +8,7 @@ export function safetyFromWarnings(match: KnmiMatch): SafetyState {
     const rank = item.code ? RANK[item.code] : 0;
     return rank > best ? rank : best;
   }, 0);
-  if (match.status === "STALE" && top === 0) {
-    return { level: "UNKNOWN", summary: match.message, comfortIsNotSafety: true };
-  }
-  if (match.status === "NOT_LINKED" || match.status === "ERROR" || match.status === "MISSING_CRITICAL" || match.status === "TEST_ONLY") {
+  if (match.status === "STALE" || match.status === "NOT_LINKED" || match.status === "ERROR" || match.status === "MISSING_CRITICAL" || match.status === "TEST_ONLY") {
     return { level: "UNKNOWN", summary: match.message, comfortIsNotSafety: true };
   }
   if (top >= RANK.rood) return { level: "RED", summary: match.message, comfortIsNotSafety: true };

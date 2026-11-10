@@ -126,14 +126,20 @@ export function parseKnmiSnapshot(payload: unknown): ParseResult {
 
   const parts: ParsedWarningPart[] = [];
   let declaredParts = 0;
+  let sawActual = false;
+  let sawNonActual = false;
   for (const entry of warnings) {
     const set = record(entry);
     if (!set) return { ok: false, code: "SCHEMA", message: "Waarschuwingsset is ongeldig." };
     const setParts = set.parts;
     if (!Array.isArray(setParts)) return { ok: false, code: "SCHEMA", message: "Waarschuwingsset mist parts." };
     declaredParts += setParts.length;
-    const operational = text(set.operational_status) ?? "Actual";
-    if (operational !== "Actual") continue;
+    const operational = text(set.operational_status);
+    if (operational !== "Actual") {
+      sawNonActual = true;
+      continue;
+    }
+    sawActual = true;
     const phenomenon = text(set.phenomenon);
     const warningSetId = text(set.warning_set_uuid);
     const texts = record(set.texts);
@@ -182,7 +188,7 @@ export function parseKnmiSnapshot(payload: unknown): ParseResult {
       snapshotId,
       parts,
       emptyOperational: warnings.length === 0,
-      rejectedAsTest: false,
+      rejectedAsTest: sawNonActual && !sawActual,
     },
   };
 }
