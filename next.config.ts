@@ -29,7 +29,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ["node:sqlite"],
+  serverExternalPackages: ["node:sqlite", "pg"],
+  outputFileTracingIncludes: {
+    "*": ["./lib/auth/pg-worker.mjs"],
+  },
   async headers() {
     return [
       {

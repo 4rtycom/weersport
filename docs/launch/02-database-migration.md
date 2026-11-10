@@ -130,7 +130,9 @@ Rollback before step 5 is to leave the app on SQLite. Rollback after step 5 is a
 
 `supabase/migrations/20261110143000_app_sqlite_domains.sql` created the account, session, moment, billing, and sponsor tables. `users.password_hash` is text and is not rewritten. Row level security is on for those tables and for the nine provider tables, with no permissive policies. `anon` and `authenticated` no longer have `TRUNCATE` on them. The PostGIS catalog is still granted by `supabase_admin`, so this role could not revoke `TRUNCATE` there. No provider table was truncated. Every new table has 0 rows.
 
-Nothing was copied. The only readable SQLite file is the local checkout, and its `users`, `sessions`, `tokens`, and `login_attempts` tables each have 0 rows. It has no billing or sponsor tables. The Vercel production file is still not readable, so any rows that lived only there were not copied and were not invented. Affiliate tables were not part of this migration. The Next.js app still opens SQLite; Vercel has no `DATABASE_URL`.
+Nothing was copied. The only readable SQLite file is the local checkout, and its `users`, `sessions`, `tokens`, and `login_attempts` tables each have 0 rows. It has no billing or sponsor tables. The Vercel production file is still not readable, so any rows that lived only there were not copied and were not invented. Affiliate tables were not part of this migration.
+
+`lib/auth/db.ts` opens Postgres when `DATABASE_URL` is present and SQLite when it is absent. The variable is set on the Vercel project for Production and Preview. Its value is not in the repo. Data and sponsor flags stay off.
 
 ## Blockers
 
@@ -138,7 +140,7 @@ Nothing was copied. The only readable SQLite file is the local checkout, and its
 |---|---|
 | Durable production SQLite export | missing; Vercel path is ephemeral and was not readable |
 | Confirmation that production has no accounts to keep | not given |
-| `DATABASE_URL` on Vercel | missing |
+| `DATABASE_URL` on Vercel | set for Production and Preview; the value is not stored in git |
 | RLS and grant review before account tables exist | RLS is on and `TRUNCATE` is revoked for the app tables. Other `anon` grants remain, but there is no policy, so the Data API sees no rows. |
-| App code reading Postgres | not started; the site still opens SQLite |
-| Running-app switch | schema was approved; Vercel still has no `DATABASE_URL`, and there were no readable rows to move |
+| App code reading Postgres | uses Postgres only when `DATABASE_URL` is present; SQLite stays the fallback |
+| Running-app switch | no production rows were available to copy, and this pull request is not merged |
