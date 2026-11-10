@@ -1,6 +1,6 @@
 import type { SuitabilityFactor, SuitabilityOutcome, WeatherHour } from "@/lib/data/types";
 import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
-import { inScoreWindow } from "@/lib/data/time";
+import { inScoreWindow, parseSportTimestamp } from "@/lib/data/time";
 import {
   SCORE_MODEL_VERSION,
   getScoreProfile,
@@ -153,7 +153,7 @@ function formatClock(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Amsterdam",
-  }).format(new Date(iso));
+  }).format(parseSportTimestamp(iso));
 }
 
 function formatWindow(start: string, end: string) {

@@ -3,7 +3,9 @@ import { pointInGeometry } from "@/lib/data/knmi/geometry";
 import { matchKnmiWarnings } from "@/lib/data/knmi/ingest";
 import { parseKnmiSnapshot } from "@/lib/data/knmi/parse";
 import { knmiKeyConfigured } from "@/lib/data/knmi/key";
+import { parseMeasurement } from "@/lib/data/luchtmeetnet/measurements";
 import { selectAirStation, airIsFresh, resetAirBudgetForTests } from "@/lib/data/luchtmeetnet/representativeness";
+import { providerRequest, resetProviderHttpForTests } from "@/lib/data/providers/http";
 import type { AirStation } from "@/lib/data/luchtmeetnet/stations";
 import { parseCentroide, validateNlPoint } from "@/lib/data/pdok/client";
 import { dataFlagSnapshot } from "@/lib/data/flags";
@@ -216,6 +218,89 @@ const draft: SearchDraft = { sportId: "wandelen", sportName: "Wandelen", placeId
 const key = buildAnalysisCacheKey("user", draft);
 assert(!key.includes(":spot:"), "cache key unchanged without a spot");
 assert(buildAnalysisCacheKey("user", { ...draft, sportSpot: { id: "spot", name: "Strand", kind: "beach", latitude: 52.3, longitude: 4.5 } }).includes(":spot:spot"), "spot changes only its own key");
+
+function amsterdamWall(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+const wall = amsterdamWall(new Date(Date.now() + 2 * 60 * 60 * 1000));
+const clock = new Intl.DateTimeFormat("nl-NL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Amsterdam",
+}).format(parseSportTimestamp(wall));
+const shifted = new Intl.DateTimeFormat("nl-NL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Amsterdam",
+}).format(new Date(wall));
+const labeled = scoreSportHours({
+  sportId: "wandelen",
+  hours: [{ time: wall, temperatureC: 16, windKmh: 12, precipitationProbability: 5, uvIndex: null }],
+});
+assert(labeled.kind === "SCORED", "offset-less hour scores");
+if (labeled.kind === "SCORED") {
+  assert(clock !== shifted, "UTC host must shift a naive timestamp");
+  assert(labeled.bestTimeLabel.includes(clock), `best time should use Amsterdam clock ${clock}`);
+  assert(labeled.peakWindow.label.includes(clock), "peak window should use Amsterdam clock");
+  assert(!labeled.bestTimeLabel.includes(shifted), "best time must not use the UTC reading");
+}
+
+const latestAir = parseMeasurement(
+  {
+    data: [
+      { formula: "PM25", value: 10, timestamp_measured: "2026-11-10T05:00:00+00:00" },
+      { formula: "PM10", value: 99, timestamp_measured: "2026-11-10T09:00:00+00:00" },
+      { formula: "PM25", value: 22, timestamp_measured: "2026-11-10T08:00:00+00:00" },
+      { formula: "PM25", value: 15, timestamp_measured: "2026-11-10T07:00:00+00:00" },
+    ],
+  },
+  "PM25",
+);
+assert(latestAir.value === 22 && latestAir.observedAt === "2026-11-10T08:00:00+00:00", "air reading uses the latest timestamp");
+
+const hole: [number, number][] = [[1, 1], [3, 1], [3, 3], [1, 3], [1, 1]];
+const outer: [number, number][] = [[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]];
+const donut = { type: "Polygon" as const, coordinates: [outer, hole] };
+assert(pointInGeometry(0.5, 0.5, donut), "point between outer ring and hole matches");
+assert(!pointInGeometry(2, 2, donut), "point inside a hole does not match");
+const multi = {
+  type: "MultiPolygon" as const,
+  coordinates: [
+    [[[10, 10], [11, 10], [11, 11], [10, 11], [10, 10]] as [number, number][]],
+    [outer, hole],
+  ],
+};
+assert(!pointInGeometry(2, 2, multi), "hole in a multipolygon does not match");
+
+const originalFetch = globalThis.fetch;
+const upstream = { calls: 0 };
+const sent = () => upstream.calls;
+globalThis.fetch = async () => {
+  upstream.calls += 1;
+  return new Response("unavailable", { status: 500 });
+};
+resetProviderHttpForTests();
+const firstFailure = await providerRequest({ provider: "knmi", url: "https://example.test/warnings", retries: 2, timeoutMs: 1000 });
+if (firstFailure.ok || firstFailure.code !== "UPSTREAM") throw new Error("upstream failure is reported");
+if (sent() !== 3) throw new Error(`retries stay inside one call, saw ${sent()}`);
+const secondFailure = await providerRequest({ provider: "knmi", url: "https://example.test/warnings", retries: 2, timeoutMs: 1000 });
+if (secondFailure.ok || secondFailure.code === "CIRCUIT_OPEN") throw new Error("one exhausted call does not open the circuit");
+await providerRequest({ provider: "knmi", url: "https://example.test/warnings", retries: 2, timeoutMs: 1000 });
+const blocked = await providerRequest({ provider: "knmi", url: "https://example.test/warnings", retries: 2, timeoutMs: 1000 });
+if (blocked.ok || blocked.code !== "CIRCUIT_OPEN") throw new Error("circuit opens after three failed calls");
+if (sent() !== 9) throw new Error(`the open circuit does not send another request, saw ${sent()}`);
+globalThis.fetch = originalFetch;
+resetProviderHttpForTests();
 
 if (process.env.KNMI_LIVE === "1") {
   process.env.DATA_KNMI_ENABLED = "true";

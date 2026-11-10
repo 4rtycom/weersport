@@ -51,18 +51,21 @@ export async function ingestAirStations(): Promise<{ ok: true; records: number }
   return { ok: true, records: stations.length };
 }
 
-function parseMeasurement(payload: unknown, formula: string) {
+export function parseMeasurement(payload: unknown, formula: string) {
   const root = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : null;
   const data = Array.isArray(root?.data) ? root.data : [];
-  const row = data.find((entry) => {
-    if (!entry || typeof entry !== "object") return false;
-    return (entry as { formula?: unknown }).formula === formula;
-  }) as { value?: unknown; timestamp_measured?: unknown } | undefined;
-  if (!row || typeof row.value !== "number") return { value: null, observedAt: null };
-  return {
-    value: row.value,
-    observedAt: typeof row.timestamp_measured === "string" ? row.timestamp_measured : null,
-  };
+  let best: { value: number; observedAt: string | null; stamp: number } | null = null;
+  for (const entry of data) {
+    if (!entry || typeof entry !== "object") continue;
+    const row = entry as { formula?: unknown; value?: unknown; timestamp_measured?: unknown };
+    if (row.formula !== formula || typeof row.value !== "number" || !Number.isFinite(row.value)) continue;
+    const observedAt = typeof row.timestamp_measured === "string" ? row.timestamp_measured : null;
+    const stamp = observedAt ? new Date(observedAt).getTime() : Number.NEGATIVE_INFINITY;
+    const comparable = Number.isNaN(stamp) ? Number.NEGATIVE_INFINITY : stamp;
+    if (!best || comparable >= best.stamp) best = { value: row.value, observedAt, stamp: comparable };
+  }
+  if (!best) return { value: null, observedAt: null };
+  return { value: best.value, observedAt: best.observedAt };
 }
 
 async function measurementFor(station: AirStation, formula: AirFormula | "LKI", distanceKm: number): Promise<AirReading> {

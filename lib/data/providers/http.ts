@@ -55,13 +55,12 @@ export async function providerRequest(input: {
       const text = await response.text();
       if (response.status === 429 || response.status >= 500) {
         last = { ok: false, code: response.status === 429 ? "RATE_LIMITED" : "UPSTREAM", status: response.status };
-        recordFailure(input.provider);
         if (attempt < retries) {
           const jitter = Math.floor(Math.random() * 150);
           await sleep(200 * 2 ** attempt + jitter);
           continue;
         }
-        return last;
+        break;
       }
       if (!response.ok) {
         recordFailure(input.provider);
@@ -80,13 +79,13 @@ export async function providerRequest(input: {
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       last = { ok: false, code: timedOut ? "TIMEOUT" : "UPSTREAM", status: null };
-      recordFailure(input.provider);
       if (attempt < retries && timedOut) {
         await sleep(200 * 2 ** attempt);
         continue;
       }
-      return last;
+      break;
     }
   }
+  recordFailure(input.provider);
   return last;
 }

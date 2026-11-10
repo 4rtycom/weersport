@@ -40,9 +40,15 @@ export function pointInRing(lon: number, lat: number, ring: LngLat[]): boolean {
   return inside;
 }
 
+function pointInPolygon(lon: number, lat: number, rings: LngLat[][]): boolean {
+  const [outer, ...holes] = rings;
+  if (!outer || !pointInRing(lon, lat, outer)) return false;
+  return !holes.some((ring) => pointInRing(lon, lat, ring));
+}
+
 export function pointInGeometry(lon: number, lat: number, geometry: WarningGeometry): boolean {
-  if (geometry.type === "Polygon") return geometry.coordinates.some((ring) => pointInRing(lon, lat, ring));
-  return geometry.coordinates.some((polygon) => polygon.some((ring) => pointInRing(lon, lat, ring)));
+  if (geometry.type === "Polygon") return pointInPolygon(lon, lat, geometry.coordinates);
+  return geometry.coordinates.some((polygon) => pointInPolygon(lon, lat, polygon));
 }
 
 export function isWarningGeometry(value: unknown): value is WarningGeometry {
