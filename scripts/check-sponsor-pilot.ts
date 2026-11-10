@@ -51,7 +51,7 @@ if (!signupCss.includes(".main {\n  width: min(1280px, calc(100% - 32px));\n  ma
 if (!signupCss.includes("grid-template-columns: minmax(0, 536px) minmax(320px, 1fr)")) {
   throw new Error("Signup keeps the form on the left and the example on the right");
 }
-if (!form.includes("quote.netCents") || !form.includes("quote.vatCents") || !form.includes("quote.grossCents") || !form.includes("Er wordt niets in rekening gebracht")) {
+if (!form.includes("quote.netCents") || !form.includes("quote.vatCents") || !form.includes("quote.grossCents") || !form.includes("Kies eerst één of meer sporten") || !form.includes("Er wordt niets in rekening gebracht")) {
   throw new Error("The cost preview uses the server quote and shows no charge without sports");
 }
 if (form.includes("2900") || form.includes("€ 29") || form.includes("quote.rateMode") || form.includes("quoteExample")) {

@@ -74,6 +74,12 @@ assert(quoteLib.uniqueKnownSports(["nope"]).ok === false, "unknown sport");
 assert(quoteLib.uniqueKnownSports(["fietsen", "fietsen"]).ok === false, "duplicate sport");
 const two = quoteLib.createQuote({ sportIds: ["hardlopen", "fietsen"], country: "NL", now: new Date("2026-03-15T12:00:00Z") });
 assert(two.ok && two.quote.netCents === 5800 && two.quote.vatCents === 1218 && two.quote.grossCents === 7018, "two sport example");
+if (two.ok) {
+  const net = two.quote.lines.reduce((sum: number, line: { netCents: number }) => sum + line.netCents, 0);
+  const vat = two.quote.lines.reduce((sum: number, line: { vatCents: number }) => sum + line.vatCents, 0);
+  assert(net === two.quote.netCents && vat === two.quote.vatCents && net + vat === two.quote.grossCents, "total is the sum of the lines");
+  assert(two.quote.netCents >= 0 && two.quote.vatCents >= 0 && two.quote.grossCents >= 0, "no negative amounts");
+}
 const all = quoteLib.createQuote({ sportIds: (await import(pathToFileURL(path.join(root, "lib/sports.ts")).href)).sports.map((sport: { id: string }) => sport.id), country: "NL" });
 assert(all.ok && all.quote.netCents === 69600 && all.quote.vatCents === 14616 && all.quote.grossCents === 84216, "24 sports");
 assert(quoteLib.createQuote({ sportIds: ["fietsen"], country: "BE" }).ok === false, "unsupported country");
@@ -113,6 +119,33 @@ async function checkout(quoteId: string, attemptId: string, gross?: number) {
 if (!two.ok || !logo.ok) throw new Error("setup failed");
 const mismatch = await checkout(two.quote.id, "22222222-2222-4222-8222-222222222222", 1);
 assert(!mismatch.ok, "client price loses");
+const stale = quoteLib.createQuote({ sportIds: ["wandelen"], country: "NL", now: new Date("2025-12-01T00:00:00Z") });
+assert(stale.ok, "stale quote created");
+if (stale.ok) {
+  const expiredCheckout = await checkoutLib.createSponsorCheckout({
+    quoteId: stale.quote.id,
+    attemptId: "33333333-3333-4333-8333-333333333333",
+    publicName: "Atelier Ede",
+    destinationUrl: "https://example.com/atelier",
+    logoId: logo.ok ? logo.id : "",
+    billing,
+    consent: true,
+    clientGrossCents: stale.quote.grossCents,
+    origin,
+    now: new Date("2026-02-01T00:00:00Z"),
+  });
+  assert(!expiredCheckout.ok, "expired quote cannot check out");
+}
+const savedCents = process.env.WEERSPORT_SPONSOR_RATE_CENTS;
+process.env.WEERSPORT_SPONSOR_RATE_CENTS = "3100";
+const changedRate = await checkout(two.quote.id, "44444444-4444-4444-8444-444444444444", two.quote.grossCents);
+process.env.WEERSPORT_SPONSOR_RATE_CENTS = savedCents;
+assert(!changedRate.ok, "changed rate cannot reuse the old quote");
+assert(providerLib.providerEnvironment() === "test", "example rate never opens a live checkout");
+process.env.WEERSPORT_SPONSOR_SIGNUP = "0";
+const closed = await checkout(two.quote.id, "55555555-5555-4555-8555-555555555555", two.quote.grossCents);
+process.env.WEERSPORT_SPONSOR_SIGNUP = "1";
+assert(!closed.ok && closed.status === 403, "signup flag off blocks checkout");
 const [first, second] = await Promise.all([
   checkout(two.quote.id, attempt, two.quote.grossCents),
   checkout(two.quote.id, attempt, two.quote.grossCents),

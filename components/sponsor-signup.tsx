@@ -288,7 +288,7 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
       <aside className={styles.quotePreview} aria-live="polite" aria-labelledby="kosten-titel">
         <h2 id="kosten-titel">Kosten</h2>
         {selected.length === 0 ? (
-          <p className={styles.quoteEmpty}>Nog geen sporten gekozen. Er wordt niets in rekening gebracht.</p>
+          <p className={styles.quoteEmpty}>Kies eerst één of meer sporten. Er wordt niets in rekening gebracht.</p>
         ) : quote ? (
           <>
             <p className={styles.quoteCount}>{sportCount === 1 ? "1 sport" : `${sportCount} sporten`}</p>
