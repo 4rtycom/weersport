@@ -2,6 +2,9 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { Worker, MessageChannel, receiveMessageOnPort } from "node:worker_threads";
+// Static import: the worker is loaded by path, so the serverless trace only
+// keeps pg when this server module imports it too.
+import "pg";
 import { splitStatements, translateStatement } from "@/lib/auth/sql-compat";
 
 export type StatementResult = { changes: number; lastInsertRowid: number | bigint };
@@ -141,8 +144,12 @@ class PostgresBridge {
     }
     const received = receiveMessageOnPort(this.port!);
     if (!received) throw new Error("database returned no result");
-    const message = received.message as { ok: boolean; result?: QueryResult; error?: string };
-    if (!message.ok) throw new Error(message.error || "database query failed");
+    const message = received.message as { ok: boolean; result?: QueryResult; error?: string; code?: string };
+    if (!message.ok) {
+      const error = new Error(message.error || "database query failed") as Error & { code?: string };
+      if (message.code) error.code = message.code;
+      throw error;
+    }
     return message.result ?? { rows: [], rowCount: 0 };
   }
 

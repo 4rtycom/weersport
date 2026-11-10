@@ -39,8 +39,14 @@ export function translateStatement(sql: string): string | null {
   }
   if (/^pragma\b/i.test(trimmed)) return null;
 
+  const begin = /^begin(?:\s+(immediate|exclusive|deferred))?\s*$/i.exec(trimmed);
+  if (begin) {
+    const mode = begin[1]?.toUpperCase();
+    if (mode === "IMMEDIATE" || mode === "EXCLUSIVE") return `BEGIN ${mode}`;
+    return "BEGIN";
+  }
+
   let translated = replacePlaceholders(trimmed);
-  translated = translated.replace(/\bBEGIN\s+(IMMEDIATE|EXCLUSIVE|DEFERRED)\b/gi, "BEGIN");
   translated = translated.replace(
     /\bsqlite_master\b/gi,
     `(SELECT c.relname AS name, CASE WHEN c.relkind = 'r' THEN 'table' WHEN c.relkind = 'i' THEN 'index' ELSE c.relkind::text END AS type
