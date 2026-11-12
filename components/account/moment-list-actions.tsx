@@ -3,26 +3,57 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function DeleteMomentButton({ id }: { id: string }) {
-  const router = useRouter();
+/** Two-step delete: the first press asks, the second one deletes. */
+function ConfirmDelete({ label, onConfirm }: { label: string; onConfirm: () => Promise<void> }) {
+  const [asking, setAsking] = useState(false);
   const [pending, setPending] = useState(false);
 
+  if (!asking) {
+    return (
+      <button className="button button-ghost button-danger" type="button" onClick={() => setAsking(true)}>
+        {label}
+      </button>
+    );
+  }
+  return (
+    <span className="confirm-delete" role="group" aria-label={`${label}: weet je het zeker?`}>
+      <button
+        className="button button-danger-solid"
+        type="button"
+        disabled={pending}
+        autoFocus
+        onClick={async () => {
+          setPending(true);
+          try {
+            await onConfirm();
+          } finally {
+            setPending(false);
+            setAsking(false);
+          }
+        }}
+      >
+        {pending ? "Verwijderen…" : "Ja, verwijder"}
+      </button>
+      <button className="button button-ghost" type="button" disabled={pending} onClick={() => setAsking(false)}>
+        Annuleer
+      </button>
+    </span>
+  );
+}
+
+export function DeleteMomentButton({ id }: { id: string }) {
+  const router = useRouter();
+
   async function onDelete() {
-    setPending(true);
     await fetch("/api/moments", {
       method: "DELETE",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    setPending(false);
     router.refresh();
   }
 
-  return (
-    <button className="button button-dark" type="button" disabled={pending} onClick={onDelete}>
-      {pending ? "Verwijderen…" : "Verwijder plan"}
-    </button>
-  );
+  return <ConfirmDelete label="Verwijder plan" onConfirm={onDelete} />;
 }
 
 export function OpenSearchButton({ id }: { id: string }) {
@@ -52,24 +83,17 @@ export function OpenSearchButton({ id }: { id: string }) {
 
 export function DeleteSearchButton({ id }: { id: string }) {
   const router = useRouter();
-  const [pending, setPending] = useState(false);
 
   async function onDelete() {
-    setPending(true);
     await fetch("/api/searches", {
       method: "DELETE",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    setPending(false);
     router.refresh();
   }
 
-  return (
-    <button className="button button-lime" type="button" disabled={pending} onClick={onDelete}>
-      {pending ? "Verwijderen…" : "Verwijder filter"}
-    </button>
-  );
+  return <ConfirmDelete label="Verwijder zoekopdracht" onConfirm={onDelete} />;
 }
 
 export function FavoriteToggle({ sportId, favorite }: { sportId: string; favorite: boolean }) {
@@ -88,8 +112,14 @@ export function FavoriteToggle({ sportId, favorite }: { sportId: string; favorit
   }
 
   return (
-    <button className={`button ${favorite ? "button-lime" : "button-dark"}`} type="button" disabled={pending} onClick={onToggle}>
-      {pending ? "…" : favorite ? "Favoriet" : "Maak favoriet"}
+    <button
+      className={`button ${favorite ? "button-lime" : "button-ghost"}`}
+      type="button"
+      aria-pressed={favorite}
+      disabled={pending}
+      onClick={onToggle}
+    >
+      {favorite ? "★ Favoriet" : "☆ Maak favoriet"}
     </button>
   );
 }
@@ -117,7 +147,7 @@ export function PreferencesForm({
       setNotice(data.error ?? "Voorkeuren niet opgeslagen.");
       return;
     }
-    setNotice("Voorkeuren opgeslagen · 0 aanvragen.");
+    setNotice("Voorkeuren opgeslagen.");
     router.refresh();
   }
 

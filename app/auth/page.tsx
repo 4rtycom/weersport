@@ -13,7 +13,6 @@ export default async function AuthGatePage() {
 
   return (
     <AuthShell>
-      <p className="auth-eyebrow">01 / Authenticatie bij zoeken</p>
       <h1>Je sportmoment staat klaar.</h1>
       <p className="auth-lead">Log in of maak een account om jouw weersanalyse te bekijken.</p>
       <div className="auth-draft">
@@ -33,12 +32,12 @@ export default async function AuthGatePage() {
         )}
       </div>
       <Link className="button button-dark auth-button" href="/auth/inloggen">
-        Inloggen en mijn sportmoment bekijken →
+        Inloggen
       </Link>
       <Link className="button auth-button auth-button-soft" href="/auth/registreren">
-        Maak gratis een Basis-account
+        Gratis account aanmaken
       </Link>
-      <p className="auth-inline-note">Er wordt pas een aanvraag geteld wanneer je de analyse echt start.</p>
+      <p className="auth-inline-note">Je zoekopdracht telt pas als analyse wanneer je het advies opent.</p>
     </AuthShell>
   );
 }

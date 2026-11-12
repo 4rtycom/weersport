@@ -15,8 +15,8 @@ export function LogoutButton() {
   }
 
   return (
-    <button className="button auth-button auth-button-soft" type="button" onClick={logout} disabled={pending}>
-      Uitloggen
+    <button className="button button-ghost" type="button" onClick={logout} disabled={pending}>
+      {pending ? "Uitloggen…" : "Uitloggen"}
     </button>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
-async function postJson(url: string, body: object) {
+async function send(url: string, body: object) {
   const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -14,12 +14,66 @@ async function postJson(url: string, body: object) {
   return { ok: response.ok, data };
 }
 
+/** Never throws: a dropped connection becomes an ordinary error message instead of a stuck form. */
+async function postJson(url: string, body: object) {
+  try {
+    return await send(url, body);
+  } catch {
+    return {
+      ok: false,
+      data: { error: "Geen verbinding. Controleer je internet en probeer het opnieuw." } as { error?: string; next?: string },
+    };
+  }
+}
+
+function PasswordField({
+  id,
+  value,
+  onChange,
+  autoComplete,
+  placeholder,
+  minLength,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: "current-password" | "new-password";
+  placeholder?: string;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="auth-password">
+      <input
+        id={id}
+        className="auth-input"
+        type={visible ? "text" : "password"}
+        autoComplete={autoComplete}
+        required
+        minLength={minLength}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <button
+        type="button"
+        className="auth-password-toggle"
+        aria-pressed={visible}
+        aria-controls={id}
+        onClick={() => setVisible((current) => !current)}
+      >
+        {visible ? "Verberg" : "Toon"}
+        <span className="visually-hidden"> wachtwoord</span>
+      </button>
+    </div>
+  );
+}
+
 export function LoginForm({ confirmed = false, restored = false }: { confirmed?: boolean; restored?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [googleNote, setGoogleNote] = useState("");
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent) {
@@ -39,7 +93,6 @@ export function LoginForm({ confirmed = false, restored = false }: { confirmed?:
 
   return (
     <form onSubmit={onSubmit}>
-      <p className="auth-eyebrow">{error ? "Account / error" : "Account / login"}</p>
       <h1>{error ? "We helpen je weer inloggen." : "Welkom terug."}</h1>
       <p className="auth-lead">
         {error ? "Controleer je gegevens of herstel je wachtwoord." : "Log in en plan jouw volgende buitensportmoment."}
@@ -63,36 +116,17 @@ export function LoginForm({ confirmed = false, restored = false }: { confirmed?:
         <label className="auth-label" htmlFor="wachtwoord">
           Wachtwoord
         </label>
-      </div>
-      <input
-        id="wachtwoord"
-        className="auth-input"
-        type="password"
-        autoComplete="current-password"
-        required
-        placeholder="••••••••••••"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-      />
-      <p className="auth-forgot">
         <Link href="/auth/herstel">Wachtwoord vergeten?</Link>
-      </p>
+      </div>
+      <PasswordField id="wachtwoord" value={password} onChange={setPassword} autoComplete="current-password" />
       {error ? (
         <p className="auth-error" role="alert">
           {error}
         </p>
       ) : null}
       <button className="button button-dark auth-button" type="submit" disabled={pending}>
-        Inloggen
+        {pending ? "Bezig met inloggen…" : "Inloggen"}
       </button>
-      <button
-        className="button auth-button auth-button-soft"
-        type="button"
-        onClick={() => setGoogleNote("Doorgaan met Google is een concept en is nog niet gekoppeld.")}
-      >
-        Doorgaan met Google (optioneel)
-      </button>
-      {googleNote ? <p className="auth-inline-note">{googleNote}</p> : null}
       <p className="auth-switch">
         Nog geen account? <Link href="/auth/registreren">Gratis registreren</Link>
       </p>
@@ -125,7 +159,6 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit}>
-      <p className="auth-eyebrow">Account / register</p>
       <h1>Maak je WeerSport-account.</h1>
       <p className="auth-lead">Start met Basis. Upgrade wanneer jij meer wilt zoeken.</p>
       {error ? (
@@ -161,17 +194,14 @@ export function RegisterForm() {
       <label className="auth-label" htmlFor="wachtwoord">
         Wachtwoord
       </label>
-      <input
+      <PasswordField
         id="wachtwoord"
-        className="auth-input"
-        type="password"
-        autoComplete="new-password"
-        required
-        minLength={12}
-        placeholder="Minimaal 12 tekens"
         value={password}
-        onChange={(event) => setPassword(event.target.value)}
+        onChange={setPassword}
+        autoComplete="new-password"
+        minLength={12}
       />
+      <p className="auth-hint">Minimaal 12 tekens.</p>
       <label className="auth-check">
         <input type="checkbox" checked={terms} onChange={(event) => setTerms(event.target.checked)} />
         <span>
@@ -180,7 +210,7 @@ export function RegisterForm() {
         </span>
       </label>
       <button className="button button-dark auth-button" type="submit" disabled={pending}>
-        Gratis account aanmaken
+        {pending ? "Account aanmaken…" : "Gratis account aanmaken"}
       </button>
       <p className="auth-switch">
         Al een account? <Link href="/auth/inloggen">Inloggen</Link>
@@ -237,7 +267,6 @@ export function VerifyActions({ email, mailPath }: { email: string; mailPath: st
 
   return (
     <>
-      <p className="auth-eyebrow">Account / verify</p>
       <h1>Controleer je e-mail.</h1>
       <p className="auth-lead">Verifieer je adres om veilig verder te gaan.</p>
       <div className="auth-panel">
@@ -299,6 +328,7 @@ export function ResetRequestForm() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setPending(true);
+    setError("");
     const result = await postJson("/api/auth/herstel", { email });
     setPending(false);
     if (!result.ok || !result.data.next) {
@@ -311,7 +341,6 @@ export function ResetRequestForm() {
 
   return (
     <form onSubmit={onSubmit}>
-      <p className="auth-eyebrow">Account / reset</p>
       <h1>Wachtwoord vergeten?</h1>
       <p className="auth-lead">Ontvang een beveiligde link om een nieuw wachtwoord in te stellen.</p>
       {error ? (
@@ -333,7 +362,7 @@ export function ResetRequestForm() {
         onChange={(event) => setEmail(event.target.value)}
       />
       <button className="button button-dark auth-button" type="submit" disabled={pending}>
-        Stuur herstel-link
+        {pending ? "Versturen…" : "Stuur herstel-link"}
       </button>
       <p className="auth-inline-note">Resetlinks zijn tijdelijk geldig. Deel de link nooit.</p>
       <Link className="button auth-button auth-button-soft" href="/auth/inloggen">
@@ -352,6 +381,7 @@ export function NewPasswordForm({ token }: { token: string }) {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setPending(true);
+    setError("");
     const result = await postJson("/api/auth/wachtwoord", { token, password });
     setPending(false);
     if (!result.ok || !result.data.next) {
@@ -363,7 +393,6 @@ export function NewPasswordForm({ token }: { token: string }) {
 
   return (
     <form onSubmit={onSubmit}>
-      <p className="auth-eyebrow">Account / reset</p>
       <h1>Kies een nieuw wachtwoord.</h1>
       <p className="auth-lead">De herstel-link werkt één keer. Daarna log je opnieuw in.</p>
       {error ? (
@@ -374,19 +403,16 @@ export function NewPasswordForm({ token }: { token: string }) {
       <label className="auth-label" htmlFor="nieuw-wachtwoord">
         Nieuw wachtwoord
       </label>
-      <input
+      <PasswordField
         id="nieuw-wachtwoord"
-        className="auth-input"
-        type="password"
-        autoComplete="new-password"
-        required
-        minLength={12}
-        placeholder="Minimaal 12 tekens"
         value={password}
-        onChange={(event) => setPassword(event.target.value)}
+        onChange={setPassword}
+        autoComplete="new-password"
+        minLength={12}
       />
+      <p className="auth-hint">Minimaal 12 tekens.</p>
       <button className="button button-dark auth-button" type="submit" disabled={pending}>
-        Wachtwoord opslaan
+        {pending ? "Opslaan…" : "Wachtwoord opslaan"}
       </button>
       <Link className="button auth-button auth-button-soft" href="/auth/inloggen">
         Terug naar inloggen
