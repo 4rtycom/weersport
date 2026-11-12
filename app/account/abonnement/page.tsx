@@ -17,13 +17,12 @@ export default async function AbonnementPage() {
 
   return (
     <AccountShell active="abonnement" accountName={account.name} breadcrumb="Mijn WeerSport / Abonnement">
-      <p className="eyebrow">Quota &amp; plannen</p>
       <div className="account-heading-row">
         <div>
           <h1>Abonnement &amp; verbruik</h1>
           <p className="account-lead">
-            Server-side ledger: Basis {BASIS_MONTHLY_LIMIT} / Pro {PRO_MONTHLY_LIMIT} analyses per kalendermaand.
-            Opslaan van plannen blijft 0.
+            Basis geeft {BASIS_MONTHLY_LIMIT} analyses per kalendermaand, Pro {PRO_MONTHLY_LIMIT}. Plannen bewaren telt
+            niet mee.
           </p>
         </div>
       </div>
@@ -38,7 +37,7 @@ export default async function AbonnementPage() {
           <span style={{ width: `${usedPct}%` }} />
         </div>
         <p>Nog {entitlement.remaining} beschikbaar deze periode.</p>
-        <p className="account-age">Reset / periode-einde: {formatStamp(entitlement.resetAt)}</p>
+        <p className="account-age">Je teller begint opnieuw op {formatStamp(entitlement.resetAt)}.</p>
         {entitlement.cancelAtPeriodEnd ? (
           <p className="account-disclaimer">Opzegging gepland. Pro blijft actief tot {formatStamp(entitlement.currentPeriodEnd)}.</p>
         ) : null}

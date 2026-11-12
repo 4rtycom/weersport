@@ -20,7 +20,6 @@ export default async function MomentsPage() {
 
   return (
     <AccountShell active="momenten" accountName={account.name} breadcrumb="Mijn WeerSport / Sportmomenten">
-      <p className="eyebrow">Jouw persoonlijke sportweer-overzicht</p>
       <div className="account-heading-row">
         <div>
           <h1>Mijn sportmomenten</h1>
@@ -47,7 +46,7 @@ export default async function MomentsPage() {
             live veiligheidsgarantie.
           </p>
           <p className="account-age">
-            Analyseleeftijd: {ageLabel(featured.lastSnapshotAt)}
+            Weeradvies opgehaald: {ageLabel(featured.lastSnapshotAt)}
             {featured.lastScoreLabel ? ` · laatst gezien als ${featured.lastScoreLabel}` : ""}
           </p>
         </section>
@@ -60,7 +59,7 @@ export default async function MomentsPage() {
         </p>
         {moments.length === 0 ? (
           <div className="account-panel">
-            <p>Nog geen geplande momenten. Opslaan kost 0 aanvragen.</p>
+            <p>Je hebt nog geen sportmoment bewaard. Bewaren kost geen analyses.</p>
             <Link className="button button-lime" href="/#planner">
               Plan je eerste moment →
             </Link>
@@ -83,11 +82,11 @@ export default async function MomentsPage() {
                     </div>
                   </div>
                   <p className="account-tag">Plan opgeslagen</p>
-                  <p className="account-age">Leeftijd gekoppelde analyse: {ageLabel(moment.lastSnapshotAt)}</p>
+                  <p className="account-age">Weeradvies opgehaald: {ageLabel(moment.lastSnapshotAt)}</p>
                   <p className="account-disclaimer">{moment.note || "Geen live veiligheidsgarantie."}</p>
                   <div className="account-item-actions">
                     <Link className="button button-lime" href={`/?sport=${moment.sportId}#planner`}>
-                      Details bekijken →
+                      Opnieuw plannen
                     </Link>
                     <DeleteMomentButton id={moment.id} />
                   </div>

@@ -13,12 +13,11 @@ export default async function PreferencesPage() {
 
   return (
     <AccountShell active="voorkeuren" accountName={account.name} breadcrumb="Mijn WeerSport / Voorkeuren">
-      <p className="eyebrow">Persoonlijke voorkeuren</p>
       <div className="account-heading-row">
         <div>
           <h1>Voorkeuren</h1>
           <p className="account-lead">
-            Instellingen bewaren kost geen analyse. Versiebeheer: wijzigingen blijven bij dit Basis-account.
+            Stel in hoe WeerSport voor jou werkt. Bewaren kost geen analyses.
           </p>
         </div>
       </div>
@@ -33,7 +32,7 @@ export default async function PreferencesPage() {
         />
       </section>
       <section className="account-panel">
-        <h2>Privacy &amp; versiebeheer</h2>
+        <h2>Goed om te weten</h2>
         <p>
           Favorieten, filters en plannen staan op jouw account. Plannen zijn geen live veiligheidsgarantie. Oude
           analyses tonen hun leeftijd en vervangen nooit een actuele broncontrole.

@@ -2189,3 +2189,86 @@ ol.uv-scale { gap: 8px; }
 @media (min-width: 1024px) {
   .brand-lockup .brand-mark { width: 52px; height: 52px; }
 }
+
+/* Sign-in and account */
+.auth-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.auth-label-row a { color: var(--ws-teal); font-size: 14px; font-weight: 700; }
+.auth-password { position: relative; }
+.auth-password .auth-input { padding-right: 84px; }
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 12px;
+  background: var(--ws-surface-base);
+  color: var(--ws-teal);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.auth-password-toggle:hover { background: var(--ws-icon-badge); }
+.auth-hint { margin-top: 6px; color: var(--ws-text-secondary); font-size: 13px; }
+.auth-input:hover { border-color: #b9cfc8; }
+.auth-check { font-size: 14px; }
+.auth-check a { font-weight: 700; }
+.auth-switch { font-size: 14px; }
+.auth-switch a { font-weight: 700; }
+.auth-error { font-size: 14px; }
+.auth-body h1 { margin-top: 0; letter-spacing: -0.02em; }
+.auth-button-soft:hover:not(:disabled) { background: var(--ws-icon-badge); }
+.auth-body .auth-button { justify-content: center; padding-left: 18px; }
+.auth-footnote { font-size: 13px; line-height: 1.4; }
+.auth-story .auth-badge { margin-top: 0; }
+@media (min-width: 1100px) {
+  .auth-shell { min-height: 0; }
+  .auth-canvas { justify-content: center; }
+  .auth-body { max-width: 440px; }
+}
+
+.button-danger { color: var(--ws-danger); box-shadow: inset 0 0 0 1.5px currentColor; }
+.button-danger:hover:not(:disabled) { background: var(--ws-danger-bg); }
+.button-danger-solid { background: var(--ws-danger); color: white; }
+.button-danger-solid:hover:not(:disabled) { background: #73281e; }
+.confirm-delete { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+
+.account-side-nav a { font-size: 15px; }
+.account-side-nav a:not(.is-active):hover { background: var(--ws-dark-hover); color: white; }
+.account-topbar p { font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 700; }
+.account-panel h2 { font-size: 18px; }
+.account-panel strong { font-variant-numeric: tabular-nums; line-height: 1; }
+.account-item-card { align-content: start; }
+.account-item-actions { margin-top: auto; }
+.account-tag { letter-spacing: 0; text-transform: none; font-size: 13px; }
+.account-age { color: var(--ws-text-secondary); }
+.account-hero-card .account-age, .account-hero-card .account-disclaimer { color: #c5d5d8; }
+.preference-row { cursor: pointer; }
+.preference-row:hover { background: var(--ws-icon-badge); }
+.preference-row input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ws-teal); }
+@media (max-width: 1023px) {
+  /* Phones: the eight account links become one swipeable row instead of a wall above the content. */
+  .account-sidebar { padding: 8px 0; gap: 0; position: sticky; top: 0; z-index: 4; }
+  .account-sidebar-label, .account-sidebar-foot { display: none; }
+  .account-side-nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 0 12px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .account-side-nav::-webkit-scrollbar { display: none; }
+  .account-side-nav a { flex: none; min-height: 44px; padding: 0 14px; scroll-snap-align: start; white-space: nowrap; }
+  .account-side-nav a.is-active { box-shadow: inset 0 -3px 0 var(--ws-accent-action); }
+  .account-topbar { padding: 12px 16px; }
+  .account-content { padding: 20px 16px 56px; }
+}
+.account-hero-card .account-chip { color: var(--ws-text-primary); }
+.footer-links { column-gap: 20px; row-gap: 0; }
+@media (max-width: 1023px) {
+  .account-topbar p { display: none; }
+  .account-topbar .account-badge { margin-left: 0; }
+}

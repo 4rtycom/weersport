@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BrandMark } from "@/components/brand-mark";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 
 const links = [
@@ -18,7 +17,7 @@ export function AccountShell({
   active,
   accountName,
   breadcrumb,
-  planLabel = "Basis · opslaan = 0",
+  planLabel = "Basis",
   children,
 }: {
   active: (typeof links)[number]["match"];
@@ -35,10 +34,6 @@ export function AccountShell({
           Naar inhoud
         </a>
         <aside className="account-sidebar" aria-label="Accountnavigatie">
-          <Link className="account-brand" href="/" aria-label="WeerSport, naar de homepage">
-            <BrandMark size={36} />
-            <span>WeerSport.</span>
-          </Link>
           <p className="account-sidebar-label">Mijn omgeving</p>
           <nav className="account-side-nav">
             {links.map((link) => (

@@ -16,11 +16,10 @@ export default async function SavedSearchesPage() {
 
   return (
     <AccountShell active="zoekopdrachten" accountName={account.name} breadcrumb="Mijn WeerSport / Zoekopdrachten">
-      <p className="eyebrow">Opgeslagen filters</p>
       <div className="account-heading-row">
         <div>
           <h1>Opgeslagen zoekopdrachten</h1>
-          <p className="account-lead">Filters bewaren kost geen aanvraag. Opnieuw berekenen kan dat later wel.</p>
+          <p className="account-lead">Open een bewaarde zoekopdracht om een nieuw weeradvies op te halen. Alleen dat telt als analyse.</p>
         </div>
         <Link className="button button-dark" href="/#planner">
           Nieuwe zoekopdracht
@@ -29,9 +28,9 @@ export default async function SavedSearchesPage() {
 
       {searches.length === 0 ? (
         <div className="account-panel">
-          <p>Nog geen bewaarde filters.</p>
+          <p>Je hebt nog geen zoekopdracht bewaard.</p>
           <Link className="button button-lime" href="/#planner">
-            Bewaar je eerste filter via een sportmoment →
+            Zoek een sportmoment
           </Link>
         </div>
       ) : (

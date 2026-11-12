@@ -11,7 +11,6 @@ export default async function ResetSentPage() {
   const link = mailPath.startsWith("/auth/herstel/nieuw?token=") ? mailPath : null;
   return (
     <AuthShell>
-      <p className="auth-eyebrow">Account / verify</p>
       <h1>Herstelmail verstuurd.</h1>
       <p className="auth-lead">Gebruik de link in je mailbox om veilig een nieuw wachtwoord in te stellen.</p>
       <div className="auth-panel">

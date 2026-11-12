@@ -13,13 +13,12 @@ export default async function ResumePage() {
 
   return (
     <AuthShell>
-      <p className="auth-eyebrow">Account / resume</p>
       <h1>Je bent ingelogd!</h1>
       <p className="auth-lead">
         {draft ? "Je bewaarde zoekopdracht staat klaar." : "Er is nog geen bewaarde zoekopdracht."}
       </p>
       <div className="auth-draft auth-draft-tall">
-        <p>Account geverifieerd · Basis</p>
+        <p>Je zoekopdracht</p>
         {draft ? (
           <>
             <strong>{`${draft.sportName} in ${draft.placeLabel}`}</strong>
@@ -31,7 +30,7 @@ export default async function ResumePage() {
             <span>De planner op de homepage verbruikt nog niets.</span>
           </>
         )}
-        <small>Eén aanvraag wordt geboekt bij succesvolle nieuwe analyse. In deze fase start er geen analyse.</small>
+        <small>Het advies openen telt als één analyse.</small>
       </div>
       <Link className="button button-dark auth-button" href={draft ? "/moment" : "/#planner"}>
         Bekijk mijn sportmoment →

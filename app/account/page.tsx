@@ -28,12 +28,11 @@ export default async function AccountPage() {
       breadcrumb="Mijn WeerSport / Overzicht"
       planLabel={`${entitlement.plan === "pro" ? "Pro" : "Basis"} · ${entitlement.used}/${entitlement.limit}`}
     >
-      <p className="eyebrow">Jouw persoonlijke sportweer-overzicht</p>
       <div className="account-heading-row">
         <div>
           <h1>Mijn omgeving</h1>
           <p className="account-lead">
-            Plannen en filters bewaren kost geen aanvraag. Opnieuw berekenen volgt in een latere fase.
+            Je plannen, zoekopdrachten en favoriete sporten op één plek. Bewaren kost geen analyses.
           </p>
         </div>
         <Link className="button button-dark" href="/#planner">
@@ -54,7 +53,7 @@ export default async function AccountPage() {
             Opgeslagen plan, geen live weersadvies of veiligheidsgarantie. Controleer de voorspelling opnieuw
             voordat je vertrekt.
           </p>
-          <p className="account-age">Analyseleeftijd: {ageLabel(nextMoment.lastSnapshotAt)}</p>
+          <p className="account-age">Weeradvies opgehaald: {ageLabel(nextMoment.lastSnapshotAt)}</p>
           <Link className="button button-lime" href="/account/momenten">
             Bekijk sportmomenten →
           </Link>
@@ -63,7 +62,7 @@ export default async function AccountPage() {
         <section className="account-hero-card">
           <p className="account-chip">Nog leeg</p>
           <h2>Bewaar je eerste sportmoment</h2>
-          <p>Filters en plannen opslaan verbruikt geen Basis-aanvraag.</p>
+          <p>Zoek een sportmoment en bewaar het. Dat kost geen analyses.</p>
           <Link className="button button-lime" href="/#planner">
             Start met plannen →
           </Link>
@@ -77,7 +76,7 @@ export default async function AccountPage() {
           <Link href="/account/momenten">Bekijk plannen</Link>
         </article>
         <article className="account-panel">
-          <h2>Opgeslagen filters</h2>
+          <h2>Zoekopdrachten</h2>
           <strong>{searches.length}</strong>
           <Link href="/account/zoekopdrachten">Bekijk zoekopdrachten</Link>
         </article>
@@ -101,18 +100,18 @@ export default async function AccountPage() {
           {entitlement.plan === "pro" ? "Pro" : "Basis"} · {entitlement.used}/{entitlement.limit} analyses
         </h2>
         <p>
-          Opslaan van plannen/filters blijft 0. Nieuwe succesvolle analyses tellen server-side. Account:{" "}
+          Alleen een nieuw weeradvies telt als analyse; plannen en zoekopdrachten bewaren is gratis. E-mailadres{" "}
           {account.verified ? "geverifieerd" : "nog niet geverifieerd"}.
         </p>
         <p className="account-email">{account.email}</p>
         {account.draft ? (
           <p>
-            Laatste draft: {findSport(account.draft.sportId).name} in {account.draft.placeLabel}.
+            Laatste zoekopdracht: {findSport(account.draft.sportId).name} in {account.draft.placeLabel}.
           </p>
         ) : null}
         <div className="account-item-actions">
           <Link className="button button-lime" href="/account/abonnement">
-            Bekijk quota
+            Bekijk abonnement
           </Link>
           <LogoutButton />
         </div>

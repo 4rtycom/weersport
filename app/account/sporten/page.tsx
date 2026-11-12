@@ -15,11 +15,10 @@ export default async function FavoriteSportsPage() {
 
   return (
     <AccountShell active="sporten" accountName={account.name} breadcrumb="Mijn WeerSport / Sporten">
-      <p className="eyebrow">Favoriete sportprofielen</p>
       <div className="account-heading-row">
         <div>
           <h1>Mijn sporten</h1>
-          <p className="account-lead">Markeer favorieten zonder aanvraagverbruik. Privacy: alleen zichtbaar in jouw account.</p>
+          <p className="account-lead">Kies je favoriete sporten. Alleen jij ziet ze, en het kost geen analyses.</p>
         </div>
       </div>
       <ul className="account-card-grid account-card-grid-3">
@@ -33,7 +32,7 @@ export default async function FavoriteSportsPage() {
                 </span>
                 <div>
                   <h3>{sport.name}</h3>
-                  <p>{favorite ? "Favoriet in jouw omgeving" : "Nog niet gemarkeerd"}</p>
+                  <p>{favorite ? "Een van je favorieten" : "Geen favoriet"}</p>
                 </div>
               </div>
               <FavoriteToggle sportId={sport.id} favorite={favorite} />
