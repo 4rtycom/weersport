@@ -19,6 +19,15 @@ function formatDay(iso: string) {
   return new Intl.DateTimeFormat("nl-NL", { weekday: "short", timeZone: AMSTERDAM }).format(parseSportTimestamp(iso));
 }
 
+function calendarDay(iso: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: AMSTERDAM,
+  }).format(parseSportTimestamp(iso));
+}
+
 export function ScoreCurve({
   hourly,
   peakTime,
@@ -98,7 +107,7 @@ export function ScoreCurve({
           {Math.round(peakFromProp.score)}
         </text>
         {spaced.map((point, index) => {
-          const newDay = index === 0 || hourOf(point.time) === 0;
+          const newDay = index === 0 || calendarDay(point.time) !== calendarDay(spaced[index - 1].time);
           return (
             <text key={point.time} x={point.x} y={baseline + 24} textAnchor="middle" className="score-curve-label">
               {formatHour(point.time)}
