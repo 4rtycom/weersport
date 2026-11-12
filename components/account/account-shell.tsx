@@ -4,38 +4,42 @@ import { SiteHeaderBar } from "@/components/site-header-bar";
 
 const links = [
   { href: "/account", label: "Overzicht", match: "overview" as const },
-  { href: "/account/momenten", label: "Mijn sportmomenten", match: "momenten" as const },
-  { href: "/account/zoekopdrachten", label: "Opgeslagen zoekopdrachten", match: "zoekopdrachten" as const },
+  { href: "/account/momenten", label: "Sportmomenten", match: "momenten" as const },
+  { href: "/account/zoekopdrachten", label: "Zoekopdrachten", match: "zoekopdrachten" as const },
   { href: "/account/sporten", label: "Mijn sporten", match: "sporten" as const },
   { href: "/account/voorkeuren", label: "Voorkeuren", match: "voorkeuren" as const },
-  { href: "/account/abonnement", label: "Abonnement & quota", match: "abonnement" as const },
+  { href: "/account/abonnement", label: "Abonnement", match: "abonnement" as const },
   { href: "/account/facturering", label: "Facturering", match: "facturering" as const },
-  { href: "/account/privacy", label: "Privacy & data", match: "privacy" as const },
+  { href: "/account/privacy", label: "Privacy", match: "privacy" as const },
 ];
 
+/**
+ * Account pages share the homepage pattern: the dark header band continues with the account tabs and the
+ * page heading, and the first card overlaps the band like the planner does on the homepage.
+ */
 export function AccountShell({
   active,
   accountName,
-  breadcrumb,
+  breadcrumb: _breadcrumb,
   planLabel = "Basis",
   children,
 }: {
   active: (typeof links)[number]["match"];
   accountName: string;
+  /** Kept for existing callers; the tabs now show where you are. */
   breadcrumb: string;
   planLabel?: string;
   children: ReactNode;
 }) {
   return (
     <div className="account-frame">
+      <a className="skip-link" href="#inhoud">
+        Naar inhoud
+      </a>
       <SiteHeaderBar account />
-      <div className="account-app">
-        <a className="skip-link" href="#inhoud">
-          Naar inhoud
-        </a>
-        <aside className="account-sidebar" aria-label="Accountnavigatie">
-          <p className="account-sidebar-label">Mijn omgeving</p>
-          <nav className="account-side-nav">
+      <div className="account-band">
+        <div className="account-band-inner">
+          <nav className="account-tabs" aria-label="Accountnavigatie">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -47,19 +51,15 @@ export function AccountShell({
               </Link>
             ))}
           </nav>
-          <p className="account-sidebar-foot">Sportweer voor Nederland</p>
-        </aside>
-        <div className="account-main">
-          <header className="account-topbar">
-            <p>{breadcrumb}</p>
-            <span className="account-badge">{planLabel}</span>
-            <span className="account-user">{accountName}</span>
-          </header>
-          <div className="account-content" id="inhoud">
-            {children}
-          </div>
+          <p className="account-who">
+            {accountName}
+            <span>{planLabel}</span>
+          </p>
         </div>
       </div>
+      <main className="account-content" id="inhoud">
+        {children}
+      </main>
     </div>
   );
 }

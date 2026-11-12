@@ -16,7 +16,6 @@ export default async function FactureringPage() {
 
   return (
     <AccountShell active="facturering" accountName={account.name} breadcrumb="Mijn WeerSport / Facturering">
-      <p className="eyebrow">Betalingen</p>
       <div className="account-heading-row">
         <div>
           <h1>Facturering</h1>

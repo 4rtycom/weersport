@@ -20,7 +20,6 @@ export default async function AccountPrivacyPage() {
       planLabel={`${entitlement.plan === "pro" ? "Pro" : "Basis"} · ${entitlement.used}/${entitlement.limit}`}
     >
       <>
-        <p className="eyebrow">AVG · export & verwijdering</p>
         <div className="account-heading-row">
           <div>
             <h1>Privacy & data</h1>
