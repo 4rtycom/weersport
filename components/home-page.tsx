@@ -6,7 +6,7 @@ import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { SportSelect } from "@/components/sport-select";
 import { PlaceField } from "@/components/place-field";
-import { families, findSport, periods } from "@/lib/sports";
+import { families, findSport, periods, sportsInFamily } from "@/lib/sports";
 import type { SearchDraft } from "@/lib/draft";
 
 const hours = ["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
@@ -37,23 +37,32 @@ export function HomePage({
     }
     return "";
   });
+  const [noticeIsError, setNoticeIsError] = useState(false);
   const [pending, setPending] = useState(false);
 
   async function onSearch(event: FormEvent) {
     event.preventDefault();
     setPending(true);
-    const response = await fetch("/api/zoeken", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sportId, placeId, placeLabel: location, period }),
-    });
-    const data = (await response.json().catch(() => ({}))) as { error?: string; next?: string; booked?: boolean };
-    if (!response.ok || !data.next || data.booked !== false) {
-      setNotice(data.error ?? "Zoeken is niet gestart. Er is geen analyse geboekt.");
+    setNoticeIsError(false);
+    try {
+      const response = await fetch("/api/zoeken", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sportId, placeId, placeLabel: location, period }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string; next?: string; booked?: boolean };
+      if (!response.ok || !data.next || data.booked !== false) {
+        setNotice(data.error ?? "Zoeken is niet gestart. Er is geen analyse geboekt.");
+        setNoticeIsError(true);
+        setPending(false);
+        return;
+      }
+      window.location.assign(data.next);
+    } catch {
+      setNotice("Geen verbinding. Controleer je internet en probeer het opnieuw. Er is geen analyse geboekt.");
+      setNoticeIsError(true);
       setPending(false);
-      return;
     }
-    window.location.assign(data.next);
   }
 
   return (
@@ -91,7 +100,7 @@ export function HomePage({
           <div className="weather-chip">
             <svg className="weather-sun" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
               <circle cx="14" cy="14" r="4.5" fill="currentColor" />
-              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M14 3v3M14 22v3M3 14h3M22 14h3M6.2 6.2l2.1 2.1M19.7 19.7l2.1 2.1M21.8 6.2l-2.1 2.1M8.3 19.7l-2.1 2.1" />
               </g>
             </svg>
@@ -113,12 +122,10 @@ export function HomePage({
           </h2>
           <form className="planner-grid" onSubmit={onSearch}>
             <div>
-              <label className="field-label" htmlFor="sport-label">
-                Kies je buitensport
-              </label>
-              <div id="sport-label">
-                <SportSelect value={sportId} onChange={setSportId} />
-              </div>
+              <p className="field-label" id="sport-label">
+                Welke sport?
+              </p>
+              <SportSelect value={sportId} onChange={setSportId} labelledBy="sport-label" />
             </div>
             <div>
               <label className="field-label" htmlFor="locatie">
@@ -134,26 +141,44 @@ export function HomePage({
               />
             </div>
             <div>
-              <label className="field-label" htmlFor="periode">
-                Wanneer?
-              </label>
-              <div className="text-field">
-                <select
-                  id="periode"
-                  name="periode"
-                  value={period}
-                  onChange={(event) => setPeriod(event.target.value as (typeof periods)[number])}
-                >
-                  {periods.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {periods.length > 1 ? (
+                <>
+                  <label className="field-label" htmlFor="periode">
+                    Wanneer?
+                  </label>
+                  <div className="text-field">
+                    <select
+                      id="periode"
+                      name="periode"
+                      value={period}
+                      onChange={(event) => setPeriod(event.target.value as (typeof periods)[number])}
+                    >
+                      {periods.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* One period on offer: show it as a fact instead of a dropdown with a single choice. */}
+                  <p className="field-label" id="periode-label">
+                    Wanneer?
+                  </p>
+                  <p className="text-field text-field-static" aria-labelledby="periode-label">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7.2" stroke="currentColor" strokeWidth="1.8" />
+                      <path d="M10 6v4.2l2.8 1.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                    {period}
+                  </p>
+                </>
+              )}
             </div>
             <button className="button button-dark planner-cta" type="submit" disabled={pending}>
-              Bekijk mijn WeerSport-moment →
+              {pending ? "Bezig met zoeken…" : "Bekijk mijn WeerSport-moment →"}
             </button>
           </form>
           <p className="planner-note">
@@ -161,11 +186,10 @@ export function HomePage({
             <span className="planner-note-long">
               Alleen locaties in Nederland · Voorbeeldadvies; data en bronnen volgen bij livegang
             </span>
-            <span className="planner-note-short">Alleen Nederland · Gratis, zonder account</span>
+            <span className="planner-note-short">Alleen locaties in Nederland</span>
           </p>
-          <p className="status" role="status">
-            {notice ||
-              `Geselecteerd: ${findSport(sportId).name}. Het voorbeeld hieronder blijft het fictieve fietsmoment en telt niet als analyse.`}
+          <p className={notice ? (noticeIsError ? "status status-error" : "status status-note") : "status"} role="status">
+            {notice}
           </p>
         </section>
 
@@ -189,7 +213,7 @@ export function HomePage({
                   </span>
                   <span>
                     <strong>{family.name}</strong>
-                    <small>4 sporten</small>
+                    <small>{sportsInFamily(family.id).length} sporten</small>
                   </span>
                   <span className="chevron" aria-hidden="true">
                     ›
@@ -317,20 +341,17 @@ export function HomePage({
           <p className="factors-lead">Je ziet niet alleen de score, maar ook de omstandigheden erachter.</p>
           <ul>
             <li>
-              <span className="index index-lime">01</span>
-              <img src="/factors/wind.svg" alt="" width={46} height={46} />
+              <img className="factor-icon" src="/factors/wind.svg" alt="" width={56} height={56} />
               <h3>Wind & windstoten</h3>
               <p>Windrichting en windstoten wegen per sport anders mee.</p>
             </li>
             <li>
-              <span className="index index-mint">02</span>
-              <img src="/factors/temperature.svg" alt="" width={46} height={46} />
+              <img className="factor-icon" src="/factors/temperature.svg" alt="" width={56} height={56} />
               <h3>Temperatuur & comfort</h3>
               <p>Per sport verschilt wat prettig is: temperatuur, wind of water.</p>
             </li>
             <li>
-              <span className="index index-mint">03</span>
-              <img src="/factors/alerts.svg" alt="" width={46} height={46} />
+              <img className="factor-icon" src="/factors/alerts.svg" alt="" width={56} height={56} />
               <h3>Regen, UV & waarschuwingen</h3>
               <p>Neerslag, UV en officiële waarschuwingen blijven apart zichtbaar.</p>
             </li>
@@ -357,6 +378,9 @@ export function HomePage({
               <p>Tijdvak, score en uitleg.</p>
             </li>
           </ol>
+          <a className="button button-dark steps-cta" href="#planner">
+            Kies je sport en plek
+          </a>
         </section>
 
         <aside className="sponsor">

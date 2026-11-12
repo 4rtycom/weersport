@@ -7,9 +7,11 @@ import { families, findSport, sports, sportsInFamily } from "@/lib/sports";
 type SportSelectProps = {
   value: string;
   onChange: (sportId: string) => void;
+  /** Id of the visible field label, so the button is announced as "label, chosen sport". */
+  labelledBy?: string;
 };
 
-export function SportSelect({ value, onChange }: SportSelectProps) {
+export function SportSelect({ value, onChange, labelledBy }: SportSelectProps) {
   const selected = findSport(value);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -37,6 +39,12 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
   useEffect(() => {
     if (open) searchRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const active = filtered[activeIndex];
+    if (active) document.getElementById(`${listId}-option-${active.id}`)?.scrollIntoView({ block: "nearest" });
+  }, [open, activeIndex, filtered, listId]);
 
   function choose(sportId: string) {
     onChange(sportId);
@@ -78,6 +86,7 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
+        aria-labelledby={labelledBy ? `${labelledBy} ${buttonId}` : undefined}
         onClick={() => {
           setOpen((current) => !current);
           setActiveIndex(Math.max(filtered.findIndex((sport) => sport.id === selected.id), 0));
@@ -88,7 +97,9 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
         </span>
         <span className="sport-select-label">{selected.name}</span>
         <span className="chevron" aria-hidden="true">
-          ⌄
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M4 7l5 5 5-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
       </button>
       {open ? (
@@ -132,6 +143,11 @@ export function SportSelect({ value, onChange }: SportSelectProps) {
                         >
                           <SportIcon src={sport.icon} size={22} />
                           <span>{sport.name}</span>
+                          {sport.id === selected.id ? (
+                            <svg className="option-check" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                              <path d="M4 9.5l3.5 3.5L14 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : null}
                         </button>
                       </li>
                     );
