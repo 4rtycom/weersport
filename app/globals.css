@@ -2169,7 +2169,7 @@ ol.uv-scale { gap: 8px; }
 .account-content > .account-heading-row:first-child .account-lead { color: #c5d5d8; }
 .account-content > .account-heading-row:first-child .button-dark { background: var(--ws-accent-action); color: var(--ws-text-primary); }
 .account-content > .account-heading-row:first-child .button-dark:hover { background: var(--ws-lime-hover); }
-.account-content > .account-heading-row:first-child + :is(.account-hero-card, .account-panel, section, div, ul) {
+.account-content > .account-heading-row:first-child + :is(.account-hero-card, .account-panel, .account-card-grid, .privacy-actions) {
   position: relative;
   z-index: 1;
   margin-top: -72px;
@@ -2187,7 +2187,7 @@ ol.uv-scale { gap: 8px; }
   .account-band-inner { padding: 0 40px; }
   .account-content { padding: 0 40px 88px; gap: 28px; }
   .account-content > .account-heading-row:first-child { padding: 40px 0 96px; }
-  .account-content > .account-heading-row:first-child + :is(.account-hero-card, .account-panel, section, div, ul) { margin-top: -96px; }
+  .account-content > .account-heading-row:first-child + :is(.account-hero-card, .account-panel, .account-card-grid, .privacy-actions) { margin-top: -96px; }
   .account-who {
     display: flex;
     flex: none;
