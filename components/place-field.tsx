@@ -95,7 +95,17 @@ export function PlaceField({
   return (
     <div className="place-field" ref={rootRef}>
       <div className={plain ? "campaign-place" : "text-field"}>
-        {plain ? null : <span aria-hidden="true">⌖</span>}
+        {plain ? null : (
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path
+              d="M10 18s6-5.2 6-9.6A6 6 0 0 0 4 8.4C4 12.8 10 18 10 18z"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+            <circle cx="10" cy="8.5" r="2.2" fill="currentColor" />
+          </svg>
+        )}
         <input
           id={inputId}
           name={inputId}
@@ -107,6 +117,7 @@ export function PlaceField({
           aria-describedby={describedBy}
           aria-busy={phase === "loading" || undefined}
           value={label}
+          placeholder="Plaats in Nederland"
           autoComplete="off"
           onChange={(event) => {
             onChange({ label: event.target.value, placeId: "", detail: "" });
