@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 /** Two-step delete: the first press asks, the second one deletes. */
 function ConfirmDelete({ label, onConfirm }: { label: string; onConfirm: () => Promise<void> }) {
   const [asking, setAsking] = useState(false);
   const [pending, setPending] = useState(false);
+  // Set while Enter is auto-repeating on the confirm button. That repeat arrives
+  // because this button takes focus in the same place as the trigger.
+  const blockRepeatConfirm = useRef(false);
 
   if (!asking) {
     return (
@@ -22,7 +25,20 @@ function ConfirmDelete({ label, onConfirm }: { label: string; onConfirm: () => P
         type="button"
         disabled={pending}
         autoFocus
-        onClick={async () => {
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" || !event.repeat) {
+            blockRepeatConfirm.current = false;
+            return;
+          }
+          blockRepeatConfirm.current = true;
+          event.preventDefault();
+        }}
+        onPointerDown={() => {
+          blockRepeatConfirm.current = false;
+        }}
+        onClick={async (event) => {
+          // A double-click's second click and a held Enter both land on this button.
+          if (event.detail > 1 || blockRepeatConfirm.current) return;
           setPending(true);
           try {
             await onConfirm();
