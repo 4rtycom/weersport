@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import styles from "@/app/sponsoring/signup.module.css";
 import { FietsExampleCard } from "@/components/fiets-example-card";
+import { SportIcon } from "@/components/sport-icon";
 import { sports } from "@/lib/sports";
 
 const GROUPS = [
@@ -173,16 +174,15 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
     <div className={styles.main}>
       <div className={styles.stage}>
       <div className={styles.formTop}>
-      <p className={styles.kicker}>Word sportsponsor</p>
-      <h1>Sponsor een sport, in heel Nederland</h1>
-      <p className={styles.lead}>
-        Eén vast maandbedrag per sport, één contract en één factuur per periode. De eerste termijn gaat via iDEAL.
-        Daarna int WeerSport via een Mollie-verkoopfactuur. Er start geen apart abonnement.
-      </p>
-      {!signupOpen ? <p className={styles.error} role="alert">De sponsoraanmelding is nog niet open.</p> : null}
+      {!signupOpen ? (
+        <p className={styles.closed} role="alert">
+          De sponsoraanmelding is nog niet open. Je kunt alvast kijken hoe het werkt; betalen kan nog niet.
+        </p>
+      ) : null}
 
       <section className={styles.card} aria-labelledby="publiek">
-        <h2 id="publiek">Openbare vermelding</h2>
+        <h2 id="publiek"><span className={styles.step} aria-hidden="true">1</span>Openbare vermelding</h2>
+        <p className={styles.help}>Zo zien sporters je bedrijf bij de gekozen sporten.</p>
         <div className={styles.grid}>
           <label>
             Bedrijfsnaam
@@ -210,11 +210,11 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
       </section>
 
       <section className={styles.card} aria-labelledby="sporten">
-        <h2 id="sporten">Sporten</h2>
+        <h2 id="sporten"><span className={styles.step} aria-hidden="true">2</span>Sporten</h2>
         <p className={styles.help}>Geen sporten zijn voorgeselecteerd. Een sport geldt in alle plaatsen.</p>
         <div className={styles.actions}>
           <button ref={openerRef} className="button button-dark" type="button" onClick={openPicker}>
-            Kies uit 24 sporten
+            {selected.length === 0 ? "Kies uit 24 sporten" : "Wijzig sporten"}
           </button>
         </div>
         {names.length > 4 ? (
@@ -241,7 +241,7 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
 
       </div>
       <section className={`${styles.card} ${styles.invoice}`} aria-labelledby="factuur">
-        <h2 id="factuur">Factuurgegevens</h2>
+        <h2 id="factuur"><span className={styles.step} aria-hidden="true">3</span>Factuurgegevens</h2>
         <p className={styles.help}>Deze gegevens blijven privé en komen niet bij de vermelding.</p>
         <div className={styles.grid}>
           <label>
@@ -312,18 +312,18 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
           <p className={styles.quoteEmpty}>{quoteError || "De offerte wordt berekend."}</p>
         )}
       </aside>
-      <section className={`${styles.card} ${styles.pay}`}>
-        <label>
-          <span>
-            <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Ik machtig de maandelijkse incasso na de eerste iDEAL-betaling.
-          </span>
+      <section className={`${styles.card} ${styles.pay}`} aria-labelledby="betalen">
+        <h2 id="betalen"><span className={styles.step} aria-hidden="true">4</span>Bevestigen en betalen</h2>
+        <label className={styles.consent}>
+          <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
+          <span>Ik machtig de maandelijkse incasso na de eerste iDEAL-betaling.</span>
         </label>
         {errors.consent ? <p className={styles.error} role="alert">{errors.consent}</p> : null}
         {errors.form ? <p className={styles.error} role="alert">{errors.form}</p> : null}
         {errors.quote ? <p className={styles.error} role="alert">{errors.quote}</p> : null}
         <div className={styles.actions}>
           <button className="button button-lime" type="button" disabled={!signupOpen || selected.length === 0 || pending || !quote} onClick={() => void pay()}>
-            Betalen met iDEAL
+            {pending ? "Betaling starten…" : "Betalen met iDEAL"}
           </button>
         </div>
       </section>
@@ -332,7 +332,10 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
 
       <dialog ref={dialogRef} className={styles.picker} aria-labelledby={titleId} onCancel={cancelSelection}>
         <div className={styles.pickerBody}>
-          <h2 id={titleId}>Kies uit 24 sporten</h2>
+          <div className={styles.pickerHead}>
+            <h2 id={titleId}>Kies uit 24 sporten</h2>
+            <p aria-live="polite">{draft.length === 0 ? "Nog niets gekozen" : `${draft.length} gekozen`}</p>
+          </div>
           <div className={styles.groups}>
             {GROUPS.map((group) => (
               <section key={group.title}>
@@ -350,6 +353,7 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
                           );
                         }}
                       />
+                      {sport ? <SportIcon src={sport.icon} size={22} /> : null}
                       <span>{sport?.name ?? id}</span>
                     </label>
                   );
@@ -361,7 +365,7 @@ export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
             <button className="button button-lime" type="button" onClick={useSelection}>
               Gebruik mijn selectie
             </button>
-            <button className="button button-dark" type="button" onClick={cancelSelection}>
+            <button className="button button-ghost" type="button" onClick={cancelSelection}>
               Annuleren
             </button>
           </div>
