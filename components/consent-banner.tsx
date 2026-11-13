@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+/** Fire this event (see CookieSettingsButton) to show the banner again so people can change their choice. */
+export const OPEN_CONSENT_EVENT = "weersport:open-consent";
+
 export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
   const [visible, setVisible] = useState(!initialDecided);
   const [pending, setPending] = useState(false);
@@ -11,6 +14,12 @@ export function ConsentBanner({ initialDecided }: { initialDecided: boolean }) {
   useEffect(() => {
     setVisible(!initialDecided);
   }, [initialDecided]);
+
+  useEffect(() => {
+    const open = () => setVisible(true);
+    window.addEventListener(OPEN_CONSENT_EVENT, open);
+    return () => window.removeEventListener(OPEN_CONSENT_EVENT, open);
+  }, []);
 
   useEffect(() => {
     if (visible) titleRef.current?.focus();

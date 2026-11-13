@@ -5,7 +5,11 @@ import Link from "next/link";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { SportSelect } from "@/components/sport-select";
+import { LiveMomentCard } from "@/components/live-moment-card";
 import { PlaceField } from "@/components/place-field";
+import { ScoreCurve } from "@/components/score-curve";
+import { clock } from "@/lib/format-time";
+import type { LiveMoment } from "@/lib/live";
 import { families, findSport, periods, sportsInFamily } from "@/lib/sports";
 import type { SearchDraft } from "@/lib/draft";
 
@@ -17,12 +21,17 @@ export function HomePage({
   draft = null,
   resumed = false,
   preselectedSportId = null,
+  preselectedPlaceLabel = null,
+  live = null,
 }: {
   viewerName?: string | null;
   draft?: SearchDraft | null;
   resumed?: boolean;
   /** Validated sport from /?sport= — wins over an older draft sport. */
   preselectedSportId?: string | null;
+  preselectedPlaceLabel?: string | null;
+  /** Real best moment from the live forecast; the fictional example is shown when it is missing. */
+  live?: LiveMoment | null;
 }) {
   const [sportId, setSportId] = useState(draft?.sportId ?? "fietsen");
   const [location, setLocation] = useState(draft?.placeLabel ?? "Amsterdam");
@@ -33,7 +42,9 @@ export function HomePage({
       return `Je zoekopdracht voor ${draft.sportName} in ${draft.placeLabel} is bewaard. Er is geen analyse gestart en er is geen aanvraag geboekt. Het voorbeeld hieronder blijft fictief.`;
     }
     if (preselectedSportId) {
-      return `Sport voorgeselecteerd: ${findSport(preselectedSportId).name}. Kies je plek en zoek je sportmoment — er start nog geen analyse.`;
+      return preselectedPlaceLabel
+        ? `Sport voorgeselecteerd: ${findSport(preselectedSportId).name} in ${preselectedPlaceLabel}. Kies de plaats in de lijst en zoek je sportmoment — er start nog geen analyse.`
+        : `Sport voorgeselecteerd: ${findSport(preselectedSportId).name}. Kies je plek en zoek je sportmoment — er start nog geen analyse.`;
     }
     return "";
   });
@@ -105,7 +116,7 @@ export function HomePage({
               </g>
             </svg>
             <p className="weather-temp">16°</p>
-            <p className="weather-note">Fictief · NL</p>
+            <p className="weather-note">Voorbeeld</p>
           </div>
           <figcaption>
             <p>Buiten begint hier</p>
@@ -184,7 +195,7 @@ export function HomePage({
           <p className="planner-note">
             <span>Gratis account nodig bij zoeken</span>
             <span className="planner-note-long">
-              Alleen locaties in Nederland · Voorbeeldadvies; data en bronnen volgen bij livegang
+              Alleen locaties in Nederland · Actuele verwachting van Open-Meteo
             </span>
             <span className="planner-note-short">Alleen locaties in Nederland</span>
           </p>
@@ -236,6 +247,11 @@ export function HomePage({
               WeerSport vertaalt de voorspelling naar één handig tijdvak voor jouw sport. Inclusief de reden waarom.
             </p>
           </div>
+          {live ? (
+            <div id="moment">
+              <LiveMomentCard moment={live} />
+            </div>
+          ) : (
           <article className="signature" id="moment" aria-labelledby="moment-title">
             <div className="signature-top">
               <p className="demo-badge">Voorbeeld · fictief</p>
@@ -297,6 +313,7 @@ export function HomePage({
               <span>UV-risico, extreem weer en databron blijven los van de sportscores.</span>
             </p>
           </article>
+          )}
         </section>
 
         <figure className="editorial">
@@ -306,15 +323,19 @@ export function HomePage({
         <section className="curve" id="uurverloop" aria-labelledby="curve-title">
           <div className="curve-head">
             <div>
-              <p className="eyebrow eyebrow-mint">Tijdvakvergelijking / voorbeeld</p>
+              <p className="eyebrow eyebrow-mint">{live ? `Verloop per uur · ${live.sportName} in ${live.placeLabel}` : "Tijdvakvergelijking / voorbeeld"}</p>
               <h2 id="curve-title">Het beste moment springt eruit.</h2>
               <p>Vergelijk scores per tijdvak. Elke sport gebruikt andere weersfactoren.</p>
             </div>
             <p className="peak">
-              <span>Beste moment · 10–12 uur</span>
-              <strong>91 / 100</strong>
+              <span>Beste moment · {live ? live.windowLabel : "10–12 uur"}</span>
+              <strong>{live ? live.peakScore : 91} / 100</strong>
             </p>
           </div>
+          {live ? (
+            <ScoreCurve hourly={live.hourly} peakTime={live.peakHour?.time ?? live.windowStart} tooltip={live.tooltip} />
+          ) : (
+            <>
           <div className="plot">
             <img
               src="/home/curve.svg"
@@ -328,8 +349,12 @@ export function HomePage({
               </li>
             ))}
           </ol>
+            </>
+          )}
           <p className="curve-note">
-            Illustratieve scores. Definitieve berekening en betrouwbaarheid volgen na koppeling met gevalideerde weerdata.
+            {live
+              ? `Live verloop, bijgewerkt om ${clock(live.generatedAt)}. Je eigen advies rekent met jouw sport en plek.`
+              : "Illustratieve scores. Je eigen advies rekent met de actuele verwachting voor jouw sport en plek."}{" "}
             Gekozen sport en periode ({period.toLowerCase()}
             {location.trim() ? `, ${location.trim()}` : ""}) veranderen dit voorbeeld niet.
           </p>

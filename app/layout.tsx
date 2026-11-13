@@ -35,6 +35,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         {children}
         <SiteFooter />
         <ConsentRoot />
+        {/* Cookieless page-view counts. Turn on Web Analytics in Vercel, then set NEXT_PUBLIC_ANALYTICS=vercel. */}
+        {process.env.NEXT_PUBLIC_ANALYTICS === "vercel" ? <script defer src="/_vercel/insights/script.js" /> : null}
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHero } from "@/components/page-hero";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 
 export const metadata = { title: "Support" };
@@ -34,6 +35,20 @@ export default function SupportPage() {
               </Link>
             </li>
           </ul>
+          <section className="page-card" id="contact">
+            <h2>Contact</h2>
+            {CONTACT_EMAIL ? (
+              <p>
+                Staat je vraag er niet bij? Mail naar <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Vermeld het
+                e-mailadres van je account, nooit je wachtwoord.
+              </p>
+            ) : (
+              <p>
+                Lees eerst de <Link href="/hoe-werkt-het#vragen">veelgestelde vragen</Link>. Je gegevens exporteren of
+                verwijderen kan zelf, onder Privacy in je account.
+              </p>
+            )}
+          </section>
           <section className="page-card page-card-muted">
             <h2>Voor beheerders</h2>
             <p>

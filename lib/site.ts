@@ -24,7 +24,7 @@ export const footerNav = [
     title: "Hulp",
     links: [
       { href: "/hoe-werkt-het#vragen", label: "Veelgestelde vragen" },
-      { href: "/support", label: "Support" },
+      { href: "/support", label: "Support en contact" },
       { href: "/support/terugbetaling", label: "Terugbetalingen" },
       { href: "/account", label: "Mijn account" },
     ],
@@ -32,6 +32,7 @@ export const footerNav = [
   {
     title: "Over",
     links: [
+      { href: "/over", label: "Over WeerSport" },
       { href: "/sponsoring", label: "Samenwerken" },
       { href: "/privacy", label: "Privacy" },
       { href: "/voorwaarden", label: "Voorwaarden" },
@@ -43,3 +44,6 @@ export function formatEuro(value: string | number) {
   const amount = typeof value === "number" ? value : Number(value);
   return `€ ${amount.toFixed(2).replace(".", ",")}`;
 }
+
+/** Public contact address. Set NEXT_PUBLIC_CONTACT_EMAIL in production; without it the site points to Support. */
+export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || null;

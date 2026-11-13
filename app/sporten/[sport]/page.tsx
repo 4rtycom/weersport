@@ -9,6 +9,7 @@ import { getScoreProfile } from "@/lib/scoring/profiles";
 import { guideCopy } from "@/lib/sport-guide-copy";
 import { buildLandGuideExample } from "@/lib/sport-guide-examples";
 import { families, sports } from "@/lib/sports";
+import { cities, landSports } from "@/lib/live";
 import styles from "./guide.module.css";
 
 type Props = { params: Promise<{ sport: string }> };
@@ -158,6 +159,20 @@ export default async function SportGuide({ params }: Props) {
             het verwachte weer bij deze sport past — geen veiligheidsgarantie.
           </p>
         </section>
+
+        {landSports.some((item) => item.id === sport.id) ? (
+          <section className="page-card" aria-labelledby="plaatsen-title">
+            <h2 id="plaatsen-title">Het beste moment in jouw stad</h2>
+            <p>Bekijk de actuele verwachting voor {sport.name.toLowerCase()} in:</p>
+            <ul className="link-chips">
+              {cities.map((city) => (
+                <li key={city.slug}>
+                  <Link href={`/sporten/${sport.id}/${city.slug}`}>{city.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className={`page-card ${styles.cta}`} aria-labelledby="cta-title">
           <h2 id="cta-title">Wanneer kun jij {sport.name.toLowerCase()}?</h2>
