@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { PRO_PRICE_EUR } from "@/lib/billing/constants";
 
@@ -8,9 +9,10 @@ export default function RefundPolicyPage() {
   return (
     <>
       <SiteHeaderBar />
-      <main className="legal" id="inhoud">
-        <p className="eyebrow">Mollie · Pro</p>
-        <h1>Terugbetalingen</h1>
+      <main className="page" id="inhoud">
+        <PageHero eyebrow="Support" title="Terugbetalingen" />
+        <div className="page-body page-body-narrow">
+        <article className="page-card prose">
         <p>
           Pro kost € {PRO_PRICE_EUR} per maand. Een browserredirect is geen betaalbewijs: rechten volgen pas na
           geverifieerde Mollie-status. Bij opzegging blijft Pro actief tot het einde van de betaalde periode.
@@ -25,8 +27,10 @@ export default function RefundPolicyPage() {
           persoonsgegevens zolang een open betaal- of bewaarplicht loopt; gebruik daarna Privacy &amp; data.
         </p>
         <p>
-          <Link href="/account/facturering">Naar facturering</Link> · <Link href="/support">Support</Link>
+          <Link href="/account/facturering">Naar facturering</Link> of <Link href="/support">terug naar support</Link>.
         </p>
+        </article>
+        </div>
       </main>
     </>
   );

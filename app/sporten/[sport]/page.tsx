@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
 import { ICE_CRITICAL_SPORTS, WATER_CRITICAL_SPORTS } from "@/lib/data/types";
 import { getScoreProfile } from "@/lib/scoring/profiles";
 import { guideCopy } from "@/lib/sport-guide-copy";
 import { buildLandGuideExample } from "@/lib/sport-guide-examples";
-import { sports } from "@/lib/sports";
+import { families, sports } from "@/lib/sports";
 import styles from "./guide.module.css";
 
 type Props = { params: Promise<{ sport: string }> };
@@ -49,16 +50,20 @@ export default async function SportGuide({ params }: Props) {
   return (
     <>
       <SiteHeaderBar />
-      <main id="inhoud" className={styles.page}>
-        <Link href={`/sporten#${sport.familyId}`}>← Alle sporten</Link>
-        <header className={styles.intro}>
-          <SportIcon src={sport.icon} size={44} />
-          <h1>{sport.name}: zo werkt het weeradvies</h1>
-          <p className={styles.question}>{question}</p>
-          <p className={styles.answer}>{advice}</p>
-        </header>
-
-        <section className={styles.example} aria-labelledby="example-title">
+      <main id="inhoud" className="page">
+        <PageHero
+          back={{ href: `/sporten#${sport.familyId}`, label: families.find((f) => f.id === sport.familyId)?.name ?? "Alle sporten" }}
+          icon={<SportIcon src={sport.icon} size={32} />}
+          title={`${sport.name}: zo werkt het weeradvies`}
+          lead={
+            <>
+              <p className={styles.question}>{question}</p>
+              <p className={styles.answer}>{advice}</p>
+            </>
+          }
+        />
+        <div className={`page-body page-body-narrow ${styles.body}`}>
+        <section className={`page-card ${styles.example}`} aria-labelledby="example-title">
           <h2 id="example-title">{ice || water ? "Waarom zie ik soms geen score?" : "Vergelijk twee uren"}</h2>
           {ice ? (
             <>
@@ -93,7 +98,7 @@ export default async function SportGuide({ params }: Props) {
               <p className={styles.exampleLabel}>Rekenvoorbeeld · geen live analyse</p>
               <dl className={styles.hours}>
                 {landExample.hours.map((hour) => (
-                  <div key={hour.label}>
+                  <div key={hour.label} style={{ ["--score" as string]: `${hour.score}%` }}>
                     <dt>
                       {hour.label}
                       {landExample.factor === "temperature"
@@ -111,7 +116,7 @@ export default async function SportGuide({ params }: Props) {
           ) : null}
         </section>
 
-        <section aria-labelledby="weights-title">
+        <section className="page-card" aria-labelledby="weights-title">
           <h2 id="weights-title">Wat telt mee voor {sport.name.toLowerCase()}?</h2>
           <p>
             {ice
@@ -120,7 +125,7 @@ export default async function SportGuide({ params }: Props) {
           </p>
           <dl className={styles.weights}>
             {factors.map(([name, weight]) => (
-              <div key={name}>
+              <div key={name} style={{ ["--score" as string]: `${Math.round(weight * 100)}%` }}>
                 <dt>{name}</dt>
                 <dd>{Math.round(weight * 100)}%</dd>
               </div>
@@ -140,7 +145,7 @@ export default async function SportGuide({ params }: Props) {
           </details>
         </section>
 
-        <section aria-labelledby="howto-title">
+        <section className="page-card" aria-labelledby="howto-title">
           <h2 id="howto-title">Hoe lees ik het advies?</h2>
           <p>
             {ice || water
@@ -154,9 +159,14 @@ export default async function SportGuide({ params }: Props) {
           </p>
         </section>
 
-        <Link href={`/?sport=${sport.id}#planner`} className={`button button-dark ${styles.plannerCta}`}>
-          Plan {sport.name.toLowerCase()} in de planner →
-        </Link>
+        <section className={`page-card ${styles.cta}`} aria-labelledby="cta-title">
+          <h2 id="cta-title">Wanneer kun jij {sport.name.toLowerCase()}?</h2>
+          <p>Kies je plek en zie het beste moment in de komende 48 uur.</p>
+          <Link href={`/?sport=${sport.id}#planner`} className={`button button-lime ${styles.plannerCta}`}>
+            Plan {sport.name.toLowerCase()} in de planner →
+          </Link>
+        </section>
+        </div>
       </main>
     </>
   );
