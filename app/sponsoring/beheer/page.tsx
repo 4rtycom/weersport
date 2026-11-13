@@ -1,3 +1,4 @@
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { ManagePanel } from "@/components/sponsor-manage";
 import { manageView, sponsorIdForToken } from "@/lib/sponsoring/manage";
@@ -12,10 +13,19 @@ export default async function SponsorManagePage({ searchParams }: { searchParams
   return (
     <>
       <SiteHeaderBar />
-      <main id="inhoud" className={styles.manage}>
-        <p className={styles.kicker}>Beheer</p>
-        <h1>Je sportsponsoring</h1>
-        {!view ? <p className={styles.error} role="alert">Deze beheerverwijzing is ongeldig of verlopen.</p> : <ManagePanel token={token} view={view} />}
+      <main id="inhoud" className={`page ${styles.manage}`}>
+        <PageHero eyebrow="Sportsponsoring" title="Je sportsponsoring beheren" />
+        <div className="page-body page-body-narrow">
+          {!view ? (
+            <section className={styles.card}>
+              <p className={styles.error} role="alert">
+                Deze beheerverwijzing is ongeldig of verlopen. Gebruik de link uit je laatste e-mail van WeerSport.
+              </p>
+            </section>
+          ) : (
+            <ManagePanel token={token} view={view} />
+          )}
+        </div>
       </main>
     </>
   );

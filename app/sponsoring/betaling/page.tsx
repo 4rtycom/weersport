@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { TestPaymentButton } from "@/components/test-payment-button";
 import { issueManageToken } from "@/lib/sponsoring/manage";
@@ -42,12 +43,19 @@ export default async function SponsorPaymentPage({ searchParams }: { searchParam
   return (
     <>
       <SiteHeaderBar />
-      <main id="inhoud" className={styles.receipt}>
+      <main id="inhoud" className={`page ${styles.receipt}`}>
+        <PageHero
+          eyebrow="Sportsponsoring"
+          title={!view ? "Betaling niet gevonden" : (TITLE[view.status] ?? "Betaling wordt gecontroleerd")}
+          lead={!view ? "Deze betaalverwijzing is ongeldig of verlopen." : undefined}
+        />
+        <div className="page-body page-body-narrow">
         {!view ? (
-          <>
-            <h1>Betaling niet gevonden</h1>
-            <p className={styles.lead}>Deze betaalverwijzing is ongeldig.</p>
-          </>
+          <section className={styles.payCard}>
+            <p className={styles.payMail}>
+              Start opnieuw via <Link href="/sponsoring">Word sportsponsor</Link>.
+            </p>
+          </section>
         ) : (
           <>
             {test ? (
@@ -55,8 +63,7 @@ export default async function SponsorPaymentPage({ searchParams }: { searchParam
                 Testadapter. Dit is geen productiebetaling en er is geen incasso gestart.
               </p>
             ) : null}
-            <h1>{TITLE[view.status] ?? "Betaling wordt gecontroleerd"}</h1>
-            <section className={styles.payCard} aria-labelledby="betaling-sponsor">
+            <section className={`${styles.payCard} ${paid ? styles.payPaid : ""}`} aria-labelledby="betaling-sponsor">
               <h2 id="betaling-sponsor">{view.publicName}</h2>
               <p className={styles.payCount}>{view.sports.length} van 24 geselecteerd</p>
               <p className={styles.paySports}>{view.sports.join(", ")}</p>
@@ -106,6 +113,7 @@ export default async function SponsorPaymentPage({ searchParams }: { searchParam
             ) : null}
           </>
         )}
+        </div>
       </main>
     </>
   );
