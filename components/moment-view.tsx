@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { SaveActions } from "@/components/account/save-actions";
+import { AlertButton } from "@/components/alert-button";
+import { landSports } from "@/lib/live";
 import { AdsHost } from "@/components/ads/ads-host";
 import { AffiliateTip } from "@/components/affiliate-tip";
 import { SportSponsors } from "@/components/sport-sponsors";
@@ -313,6 +315,13 @@ export function MomentView({
             snapshotAt={snapshot.generatedAt}
             scoreLabel={scored ? `${scored.score}/100 · ${scored.badge}` : noScore ? "NO_SCORE" : null}
           />
+          {scored && landSports.some((item) => item.id === snapshot.sportId) ? (
+            <div className="moment-alert">
+              <h3 className="moment-subhead">Niet nu, maar wel binnenkort?</h3>
+              <p>Krijg een e-mail of pushbericht zodra er een goed moment aankomt voor {sport.name.toLowerCase()} in {snapshot.placeLabel}.</p>
+              <AlertButton sportId={snapshot.sportId} placeId={snapshot.placeId} placeLabel={snapshot.placeLabel} />
+            </div>
+          ) : null}
         </section>
 
         <section className="moment-card" aria-labelledby="weer-title">

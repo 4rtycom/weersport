@@ -43,3 +43,19 @@ WEERSPORT_BASE_URL=http://127.0.0.1:3000 npm run check
 | PDOK | Live woonplaats- en centroïde-lookup. Suggest, reverse en sportspot alleen met `DATA_PDOK_V2_ENABLED` |
 
 Gevalideerde sportscore 0–100, quota, Mollie en AdSense horen bij latere fases.
+
+## Meldingen (e-mail en push)
+
+Gebruikers zetten op een sportmoment "Meld me als het goed wordt" aan en beheren meldingen onder **Account → Meldingen**. Elke ochtend om 05:00 UTC roept Vercel Cron `/api/internal/alerts/run` aan (zie `vercel.json`). Per plek wordt één verwachting opgehaald; per melding en dag gaat er hooguit één mail en één pushbericht uit.
+
+Zet in Vercel:
+
+| Variabele | Waarde |
+|---|---|
+| `RESEND_API_KEY` | API-sleutel uit Resend |
+| `ALERT_FROM_EMAIL` | Afzender op een in Resend geverifieerd domein, bijv. `WeerSport <meldingen@jouwdomein.nl>` |
+| `CRON_SECRET` | Willekeurige lange string; Vercel stuurt die mee als `Authorization: Bearer …` |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Maak ze met `npm run vapid`; de privésleutel nooit in git |
+| `VAPID_SUBJECT` | `mailto:` met een adres waarop pushdiensten je kunnen bereiken |
+
+Pas bij Postgres eerst `supabase/migrations/20261113213000_weather_alerts.sql` toe. Op iPhone en iPad werkt push alleen als WeerSport aan het beginscherm is toegevoegd. Controle: `npm run check:alerts`.

@@ -10,7 +10,9 @@
     "check:guides": "node scripts/check-sport-guides.mjs",
     "check:sponsor": "node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/check-sponsor-pilot.ts && node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/check-sportsponsor.ts",
     "check:data": "node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/check-data-integrations.ts",
-    "sponsor": "node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/sponsor-admin.ts"
+    "sponsor": "node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/sponsor-admin.ts",
+    "check:alerts": "node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/check-alerts.ts",
+    "vapid": "node scripts/generate-vapid.mjs"
   },
   "dependencies": {
     "next": "^15.5.6",
