@@ -28,6 +28,12 @@ export default function PrivacyPage() {
           veiligheid. Homepage, auth, Mollie checkout/facturering, kritieke NO_SCORE-schermen en Pro tonen geen
           advertenties. AdSense is geen sport+radius-targetingengine van WeerSport.
         </p>
+        {process.env.NEXT_PUBLIC_ANALYTICS === "vercel" ? (
+          <p>
+            We tellen paginabezoeken met Vercel Web Analytics. Dat werkt zonder cookies en zonder je te volgen over andere
+            websites; we zien alleen geanonimiseerde aantallen, zoals welke pagina&apos;s en sporten het meest bekeken worden.
+          </p>
+        ) : null}
         </article>
         </div>
       </main>

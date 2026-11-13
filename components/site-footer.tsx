@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
+import { CookieSettingsButton } from "@/components/cookie-settings-button";
 import { footerNav } from "@/lib/site";
 
 /** The one site footer. Pages should not render another. */
@@ -23,6 +24,11 @@ export function SiteFooter() {
                   <Link href={link.href}>{link.label}</Link>
                 </li>
               ))}
+              {column.title === "Over" ? (
+                <li>
+                  <CookieSettingsButton />
+                </li>
+              ) : null}
             </ul>
           </div>
         ))}
