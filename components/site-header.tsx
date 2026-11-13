@@ -4,13 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
+import { mainNav as links } from "@/lib/site";
 
-const links = [
-  { href: "/#stappen", label: "Hoe werkt het" },
-  { href: "/sporten", label: "Alle sporten" },
-  { href: "/#weer-uv", label: "Weer & UV" },
-  { href: "/account", label: "Account" },
-];
 
 function isCurrent(pathname: string | null, href: string) {
   if (!pathname || href.includes("#")) return false;

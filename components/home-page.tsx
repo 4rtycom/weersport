@@ -378,9 +378,14 @@ export function HomePage({
               <p>Tijdvak, score en uitleg.</p>
             </li>
           </ol>
-          <a className="button button-dark steps-cta" href="#planner">
-            Kies je sport en plek
-          </a>
+          <p className="steps-actions">
+            <a className="button button-dark" href="#planner">
+              Kies je sport en plek
+            </a>
+            <Link className="button button-ghost" href="/hoe-werkt-het">
+              Meer over hoe het werkt
+            </Link>
+          </p>
         </section>
 
         <aside className="sponsor">

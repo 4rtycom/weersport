@@ -18,8 +18,9 @@ const sponsors = readFileSync(new URL("../components/sport-sponsors.tsx", import
 const affiliate = readFileSync(new URL("../components/affiliate-tip.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../components/home-page.tsx", import.meta.url), "utf8");
 const headerSource = readFileSync(new URL("../components/site-header.tsx", import.meta.url), "utf8");
-if (headerSource.includes("Inloggen") || !headerSource.includes("Mijn momenten →") || !headerSource.includes("Account")) {
-  throw new Error("Header keeps Account and Mijn momenten for every visitor");
+// The header shows the same links to every visitor; the account is reached through "Mijn momenten" and the footer.
+if (headerSource.includes("Inloggen") || !headerSource.includes("Mijn momenten →")) {
+  throw new Error("Header keeps Mijn momenten for every visitor");
 }
 if (!form.includes("<FietsExampleCard />") || form.includes("FietsMomentPage")) {
   throw new Error("Sponsoring signup shows a compact Fietsen example, not the full moment page");

@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import type { ReactNode } from "react";
 import { ConsentRoot } from "@/components/consent-root";
 import { SiteFooter } from "@/components/site-footer";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -13,11 +14,18 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "WeerSport",
+    default: "WeerSport · Het beste moment om buiten te sporten",
     template: "%s · WeerSport",
   },
-  description: "Ontdek het beste moment om buiten te sporten in Nederland. Voorbeeldinterface, nog zonder live weerdata.",
+  description:
+    "Kies je buitensport en je plek in Nederland. WeerSport rekent de komende 48 uur door en laat zien wanneer het weer het beste past.",
+  openGraph: {
+    type: "website",
+    locale: "nl_NL",
+    siteName: "WeerSport",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
