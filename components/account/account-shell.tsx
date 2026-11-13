@@ -6,6 +6,7 @@ const links = [
   { href: "/account", label: "Overzicht", match: "overview" as const },
   { href: "/account/momenten", label: "Sportmomenten", match: "momenten" as const },
   { href: "/account/zoekopdrachten", label: "Zoekopdrachten", match: "zoekopdrachten" as const },
+  { href: "/account/meldingen", label: "Meldingen", match: "meldingen" as const },
   { href: "/account/sporten", label: "Mijn sporten", match: "sporten" as const },
   { href: "/account/voorkeuren", label: "Voorkeuren", match: "voorkeuren" as const },
   { href: "/account/abonnement", label: "Abonnement", match: "abonnement" as const },
