@@ -33,7 +33,7 @@ function euros(cents: number) {
 export function SponsorSignup({ signupOpen }: { signupOpen: boolean }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
-  const attemptRef = useRef(crypto.randomUUID());
+  const attemptRef = useRef<string>(crypto.randomUUID());
   const titleId = useId();
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<string[]>([]);
