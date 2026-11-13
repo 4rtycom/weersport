@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckoutForm } from "@/components/billing/checkout-form";
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { readSession } from "@/lib/auth/cookies";
 import { BILLING_DISCLOSURE, PRO_MONTHLY_LIMIT, PRO_PRICE_EUR } from "@/lib/billing/constants";
@@ -18,14 +18,16 @@ export default async function ProCheckoutPage() {
   return (
     <>
       <SiteHeaderBar account />
-      <main className="billing-page" id="inhoud">
-        <p className="account-tag">Checkout · Pro</p>
-        <p className="eyebrow">WeerSport Pro</p>
-        <h1>Bevestig je Pro-abonnement</h1>
-        <p className="account-lead">€ {PRO_PRICE_EUR}/maand · {PRO_MONTHLY_LIMIT} analyses · opzegbaar per periode.</p>
+      <main className="page" id="inhoud">
+        <PageHero
+          back={{ href: "/account/abonnement", label: "Abonnement" }}
+          eyebrow="WeerSport Pro"
+          title="Bevestig je Pro-abonnement"
+          lead={`€ ${PRO_PRICE_EUR} per maand voor ${PRO_MONTHLY_LIMIT} analyses, zonder advertenties. Opzeggen kan per periode.`}
+        />
+        <div className="page-body">
         <div className="billing-grid">
-          <section className="account-panel">
-            <p className="account-tag">Abonnement</p>
+          <section className="page-card">
             <h2>WeerSport Pro</h2>
             <p className="billing-price">
               € {PRO_PRICE_EUR}
@@ -33,7 +35,7 @@ export default async function ProCheckoutPage() {
             </p>
             <dl className="billing-details">
               <div>
-                <dt>Quota</dt>
+                <dt>Analyses</dt>
                 <dd>{PRO_MONTHLY_LIMIT} analyses / maand</dd>
               </div>
               <div>
@@ -53,9 +55,7 @@ export default async function ProCheckoutPage() {
           </section>
           <CheckoutForm email={account.email} />
         </div>
-        <p className="billing-foot">
-          <Link href="/account/abonnement">Terug naar abonnement</Link>
-        </p>
+        </div>
       </main>
     </>
   );

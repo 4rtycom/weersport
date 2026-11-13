@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SimulatePaymentButtons } from "@/components/billing/checkout-form";
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { readSession } from "@/lib/auth/cookies";
 import { PRO_PRICE_EUR } from "@/lib/billing/constants";
@@ -24,23 +25,25 @@ export default async function BetaalSimulatiePage({
   return (
     <>
       <SiteHeaderBar account />
-      <main className="billing-page" id="inhoud">
-        <p className="account-tag">Mollie sandbox</p>
-        <p className="eyebrow">Providerautorisatie</p>
-        <h1>Bevestig betaling bij Mollie (lokaal)</h1>
-        <p className="account-lead">
-          Dit scherm vervangt Mollie Checkout zonder API-key. WeerSport activeert Pro pas na server-side statuscheck.
-        </p>
-        <section className="account-panel">
-          <p className="account-tag">Eerste betaling</p>
-          <h2>WeerSport Pro</h2>
-          <p className="billing-price">€ {PRO_PRICE_EUR}</p>
-          <p>Checkout {checkout.id.slice(0, 8)} · status {checkout.state}</p>
-          <SimulatePaymentButtons checkoutId={checkout.id} />
-        </section>
-        <p className="billing-foot">
-          <Link href={`/checkout/pending?checkout=${checkout.id}`}>Naar pending-scherm zonder bevestiging</Link>
-        </p>
+      <main className="page" id="inhoud">
+        <PageHero
+          eyebrow="Mollie-sandbox"
+          title="Bevestig de testbetaling"
+          lead="Dit scherm vervangt Mollie Checkout zolang er geen API-sleutel is. Pro wordt pas actief na een controle op de server."
+        />
+        <div className="page-body page-body-narrow">
+          <section className="page-card">
+            <h2>WeerSport Pro</h2>
+            <p className="billing-price">€ {PRO_PRICE_EUR}</p>
+            <p className="billing-note">
+              Checkout {checkout.id.slice(0, 8)}, status {checkout.state}
+            </p>
+            <SimulatePaymentButtons checkoutId={checkout.id} />
+          </section>
+          <p className="billing-foot">
+            <Link href={`/checkout/pending?checkout=${checkout.id}`}>Naar het wachtscherm zonder bevestiging</Link>
+          </p>
+        </div>
       </main>
     </>
   );

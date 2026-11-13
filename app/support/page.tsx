@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 
 export const metadata = { title: "Support" };
@@ -7,31 +8,40 @@ export default function SupportPage() {
   return (
     <>
       <SiteHeaderBar />
-      <main className="legal" id="inhoud">
-        <p className="eyebrow">Hulp & monitoring</p>
-        <h1>Support</h1>
-        <p>
-          WeerSport is een sportweer-advies, geen veiligheidsgarantie. Bij twijfel over weer, water of ijs raadpleeg
-          altijd de officiële bronnen (KNMI, RWS, lokale zwemwaterstatus).
-        </p>
-        <ul className="support-list">
-          <li>
-            <Link href="/support/terugbetaling">Terugbetalingen & geschillen</Link> — Mollie Pro, refundpad en staging.
-          </li>
-          <li>
-            <Link href="/privacy">Privacy</Link> — cookies, AdSense en accountrechten.
-          </li>
-          <li>
-            <Link href="/account/privacy">Export & verwijdering</Link> — na inloggen.
-          </li>
-          <li>
-            <Link href="/release-gate">Release-gate (staging UAT)</Link> — P0-matrix en sign-off.
-          </li>
-        </ul>
-        <p>
-          Productiestatus: <code>/api/health</code> voor databasebereikbaarheid en latency.
-        </p>
-        <Link href="/">Terug naar homepage</Link>
+      <main className="page" id="inhoud">
+        <PageHero
+          title="Support"
+          lead="WeerSport geeft sportweer-advies, geen veiligheidsgarantie. Twijfel je over weer, water of ijs? Kijk altijd bij de officiële bronnen: KNMI, Rijkswaterstaat en de lokale zwemwaterstatus."
+        />
+        <div className="page-body page-body-narrow">
+          <ul className="link-cards">
+            <li>
+              <Link href="/support/terugbetaling">
+                <strong>Terugbetalingen en geschillen</strong>
+                <span>Pro opzeggen, terugbetalen en wat er met je abonnement gebeurt.</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy">
+                <strong>Privacy</strong>
+                <span>Cookies, advertenties en je rechten als accounthouder.</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/account/privacy">
+                <strong>Je gegevens exporteren of verwijderen</strong>
+                <span>Na inloggen, onder Privacy in je account.</span>
+              </Link>
+            </li>
+          </ul>
+          <section className="page-card page-card-muted">
+            <h2>Voor beheerders</h2>
+            <p>
+              Databasestatus en responstijd: <code>/api/health</code>. Testmatrix en akkoord voor livegang:{" "}
+              <Link href="/release-gate">release-gate</Link>.
+            </p>
+          </section>
+        </div>
       </main>
     </>
   );

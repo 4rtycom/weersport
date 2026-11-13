@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHero, StatusCard } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { readSession } from "@/lib/auth/cookies";
 import { PRO_MONTHLY_LIMIT } from "@/lib/billing/constants";
@@ -16,31 +17,34 @@ export default async function SuccesPage() {
   return (
     <>
       <SiteHeaderBar account />
-      <main className="billing-page" id="inhoud">
-        <p className="account-tag">Pro actief</p>
-        <p className="eyebrow">Gelukt</p>
-        <h1>WeerSport Pro is geactiveerd</h1>
-        <p className="account-lead">Geverifieerde Mollie-status ontvangen. Limiet: {PRO_MONTHLY_LIMIT} analyses / maand.</p>
-        <section className="account-hero-card">
-          <p className="account-chip">Pro</p>
-          <h2>Welkom bij Pro</h2>
-          <p>
-            Verbruik {entitlement.used}/{entitlement.limit}. Periode tot{" "}
-            {entitlement.currentPeriodEnd
-              ? new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeZone: "Europe/Amsterdam" }).format(
-                  new Date(entitlement.currentPeriodEnd),
-                )
-              : "—"}
-            .
-          </p>
-        </section>
-        <div className="account-item-actions">
-          <Link className="button button-lime" href={account.draft ? "/moment" : "/#planner"}>
-            Verder met je zoekopdracht →
-          </Link>
-          <Link className="button button-dark" href="/account/facturering">
-            Bekijk facturering
-          </Link>
+      <main className="page" id="inhoud">
+        <PageHero eyebrow="Betaling geslaagd" title="WeerSport Pro is geactiveerd" />
+        <div className="page-body page-body-narrow">
+          <StatusCard
+            tone="success"
+            title="Welkom bij Pro"
+            actions={
+              <>
+                <Link className="button button-lime" href={account.draft ? "/moment" : "/#planner"}>
+                  Verder met je zoekopdracht →
+                </Link>
+                <Link className="button button-ghost" href="/account/facturering">
+                  Bekijk facturering
+                </Link>
+              </>
+            }
+          >
+            <p>
+              Mollie heeft je betaling bevestigd. Je hebt nu {PRO_MONTHLY_LIMIT} analyses per maand; {entitlement.used}{" "}
+              daarvan gebruikt. Pro loopt tot{" "}
+              {entitlement.currentPeriodEnd
+                ? new Intl.DateTimeFormat("nl-NL", { dateStyle: "long", timeZone: "Europe/Amsterdam" }).format(
+                    new Date(entitlement.currentPeriodEnd),
+                  )
+                : "het einde van de periode"}
+              .
+            </p>
+          </StatusCard>
         </div>
       </main>
     </>
