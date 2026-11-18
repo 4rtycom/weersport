@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import type { ReactNode } from "react";
+import { AdsProvider } from "@/components/ads/ads-provider";
 import { ConsentRoot } from "@/components/consent-root";
 import { SiteFooter } from "@/components/site-footer";
 import { SITE_URL } from "@/lib/site";
@@ -32,8 +33,11 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="nl" className={manrope.variable}>
       <body>
-        {children}
-        <SiteFooter />
+        {/* AdsProvider loads AdSense only for Basis visitors who accepted optional cookies in our own banner. */}
+        <AdsProvider>
+          {children}
+          <SiteFooter />
+        </AdsProvider>
         <ConsentRoot />
         {/* Cookieless page-view counts. Turn on Web Analytics in Vercel, then set NEXT_PUBLIC_ANALYTICS=vercel. */}
         {process.env.NEXT_PUBLIC_ANALYTICS === "vercel" ? <script defer src="/_vercel/insights/script.js" /> : null}

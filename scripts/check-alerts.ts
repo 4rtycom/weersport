@@ -4,26 +4,28 @@ import { createDecipheriv, createECDH, createHmac, createPublicKey, verify } fro
 import { findAlertWindow } from "../lib/alerts/evaluate";
 import { encryptPayload, vapidAuthorization } from "../lib/alerts/webpush";
 
-// 1. Window selection: a mild Saturday morning should be found; weekend filter and threshold must hold.
-const now = new Date("2026-11-13T06:00:00Z"); // Friday 07:00 in Amsterdam
+// 1. Window selection. The score only looks at the 48 hours from the real clock, so build the data around now.
+const now = new Date(Math.floor(Date.now() / 3600e3) * 3600e3);
+const amsterdam = (date: Date) =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Amsterdam", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .format(date)
+    .replace(" ", "T");
+const localHour = (date: Date) => Number(amsterdam(date).slice(11, 13));
+// A mild, dry, calm block of four daytime hours roughly a day ahead; everything else is cold, windy and wet.
+const goodStart = Array.from({ length: 20 }, (_, i) => new Date(now.getTime() + (20 + i) * 3600e3)).find((d) => localHour(d) === 10)!;
 const hours = Array.from({ length: 48 }, (_, index) => {
   const time = new Date(now.getTime() + index * 3600e3);
-  const local = new Date(time.getTime() + 3600e3).toISOString().slice(0, 16);
-  const saturdayMorning = index >= 26 && index <= 29; // Sat 09:00–12:00 local
-  return {
-    time: local,
-    temperatureC: saturdayMorning ? 17 : 4,
-    windKmh: saturdayMorning ? 8 : 45,
-    precipitationProbability: saturdayMorning ? 0 : 90,
-    uvIndex: 1,
-  };
+  const good = time.getTime() >= goodStart.getTime() && time.getTime() < goodStart.getTime() + 4 * 3600e3;
+  return { time: amsterdam(time), temperatureC: good ? 17 : 4, windKmh: good ? 8 : 45, precipitationProbability: good ? 0 : 90, uvIndex: 1 };
 });
+const expectedDate = amsterdam(goodStart).slice(0, 10);
 const any = findAlertWindow({ sportId: "fietsen", hours, minScore: 80, days: "any", now });
-assert.ok(any, "a good Saturday window is found");
-assert.equal(any.dayLabel, "Morgen");
-assert.equal(any.date, "2026-11-14");
+assert.ok(any, "a good window is found");
+assert.equal(any.date, expectedDate);
+const weekday = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Amsterdam", weekday: "short" }).format(goodStart);
 const weekend = findAlertWindow({ sportId: "fietsen", hours, minScore: 80, days: "weekend", now });
-assert.equal(weekend?.date, "2026-11-14", "weekend alert accepts Saturday");
+if (weekday === "Sat" || weekday === "Sun") assert.equal(weekend?.date, expectedDate, "weekend alert accepts a weekend day");
+else assert.equal(weekend, null, "weekend alert ignores weekdays");
 assert.equal(findAlertWindow({ sportId: "fietsen", hours, minScore: 101, days: "any", now }), null, "threshold respected");
 assert.equal(findAlertWindow({ sportId: "schaatsen", hours, minScore: 50, days: "any", now }), null, "no-score sports never alert");
 

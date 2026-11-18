@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
@@ -173,6 +174,9 @@ export default async function SportGuide({ params }: Props) {
             </ul>
           </section>
         ) : null}
+
+        {/* Pro visitors never load AdSense, so the block stays empty for them. */}
+        <AdSlot allowed reason="Eén blok ná de uitleg." />
 
         <section className={`page-card ${styles.cta}`} aria-labelledby="cta-title">
           <h2 id="cta-title">Wanneer kun jij {sport.name.toLowerCase()}?</h2>

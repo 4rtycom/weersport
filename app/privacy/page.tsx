@@ -22,11 +22,21 @@ export default function PrivacyPage() {
           Plaatsnamen worden gecontroleerd bij de publieke PDOK Locatieserver, zodat alleen Nederlandse woonplaatsen
           gekozen kunnen worden.
         </p>
+        <p id="cookies">
+          Noodzakelijke cookies houden je ingelogd en bewaren je zoekopdracht. Die staan altijd aan. Voor optionele
+          cookies vragen we eerst toestemming met onze eigen cookiemelding; je keuze wijzig je via Cookie-instellingen
+          onderaan elke pagina.
+        </p>
         <p>
-          We vragen toestemming voor optionele cookies. Noodzakelijke cookies (account/sessie) blijven beschikbaar.
-          Zonder cookie-toestemming laden we geen AdSense. Op Basis staat maximaal één handmatig slot ná sportweer en
-          veiligheid. Homepage, auth, Mollie checkout/facturering, kritieke NO_SCORE-schermen en Pro tonen geen
-          advertenties. AdSense is geen sport+radius-targetingengine van WeerSport.
+          Accepteer je optionele cookies en gebruik je Basis, dan tonen we advertenties van Google AdSense. Zonder
+          toestemming laden we AdSense niet en zie je geen advertenties. Omdat we geen cookiemelding van Google gebruiken,
+          toont Google alleen advertenties die niet op jouw interesses zijn afgestemd. Dezelfde keuze bepaalt of we tellen
+          hoe vaak een sponsor of aanbieding wordt bekeken.
+        </p>
+        <p>
+          Waar advertenties staan: één blok onder je advies, onder je opgeslagen momenten en onder sportgidsen, en af en
+          toe een advertentie over het hele scherm als je naar een andere pagina gaat. Die kun je meteen wegklikken. Op de
+          homepage, bij inloggen en betalen, als er geen score is, en met Pro zie je geen advertenties.
         </p>
         {process.env.NEXT_PUBLIC_ANALYTICS === "vercel" ? (
           <p>
