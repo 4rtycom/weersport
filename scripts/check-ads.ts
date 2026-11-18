@@ -1,12 +1,11 @@
-// Pure AdSense policy rules: consent from our own banner, where blocks and full-screen ads may appear, and ads.txt.
+// Pure AdSense policy rules: where blocks and full-screen ads may appear, and ads.txt. Consent is Google's own message.
 import assert from "node:assert/strict";
 import { adsenseClient, adsTxtLine, decideAdPlacement, fullScreenAllowed } from "../lib/ads/policy";
 
-const basis = { plan: "basis" as const, consentGranted: true };
+const basis = { plan: "basis" as const };
 assert.equal(decideAdPlacement({ ...basis, surface: "moment", suitabilityKind: "SCORED" }).allowed, true);
 assert.equal(decideAdPlacement({ ...basis, surface: "moment", suitabilityKind: "NO_SCORE" }).allowed, false);
-assert.equal(decideAdPlacement({ plan: "pro", consentGranted: true, surface: "moment", suitabilityKind: "SCORED" }).allowed, false, "Pro is ad-free");
-assert.equal(decideAdPlacement({ plan: "basis", consentGranted: false, surface: "moment", suitabilityKind: "SCORED" }).code, "NO_CONSENT", "no ads without cookie consent");
+assert.equal(decideAdPlacement({ plan: "pro", surface: "moment", suitabilityKind: "SCORED" }).allowed, false, "Pro is ad-free");
 for (const surface of ["home", "auth", "checkout", "billing"] as const) {
   assert.equal(decideAdPlacement({ ...basis, surface }).allowed, false, `${surface} has no ads`);
 }

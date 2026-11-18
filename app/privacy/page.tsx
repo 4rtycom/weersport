@@ -23,15 +23,15 @@ export default function PrivacyPage() {
           gekozen kunnen worden.
         </p>
         <p id="cookies">
-          Noodzakelijke cookies houden je ingelogd en bewaren je zoekopdracht. Die staan altijd aan. Voor optionele
-          cookies vragen we eerst toestemming met onze eigen cookiemelding; je keuze wijzig je via Cookie-instellingen
-          onderaan elke pagina.
+          Noodzakelijke cookies houden je ingelogd en bewaren je zoekopdracht. Die staan altijd aan. Als je Basis
+          gebruikt, toont Google je een cookiemelding waarmee je kiest wat Google mag bewaren en gebruiken. Je wijzigt
+          je keuze via Cookie-instellingen onderaan de pagina.
         </p>
         <p>
-          Accepteer je optionele cookies en gebruik je Basis, dan tonen we advertenties van Google AdSense. Zonder
-          toestemming laden we AdSense niet en zie je geen advertenties. Omdat we geen cookiemelding van Google gebruiken,
-          toont Google alleen advertenties die niet op jouw interesses zijn afgestemd. Dezelfde keuze bepaalt of we tellen
-          hoe vaak een sponsor of aanbieding wordt bekeken.
+          Met Basis tonen we advertenties van Google AdSense. Geef je toestemming, dan mogen die op jouw interesses
+          worden afgestemd. Weiger je, dan zie je beperkte advertenties zonder persoonlijke afstemming. Met Pro zie je
+          geen advertenties en toont Google geen melding. Dezelfde keuze bepaalt of we tellen hoe vaak een sponsor of
+          aanbieding wordt bekeken.
         </p>
         <p>
           Waar advertenties staan: één blok onder je advies, onder je opgeslagen momenten en onder sportgidsen, en af en

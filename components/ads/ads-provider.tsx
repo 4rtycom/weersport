@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { fullScreenAllowed } from "@/lib/ads/policy";
+import { loadConsentMessage, mirrorConsent } from "@/lib/ads/cmp";
 
 type AdsState = { status: "loading" | "on" | "off"; client: string | null };
 
@@ -31,8 +32,8 @@ function guardLinks(pathname: string) {
 }
 
 /**
- * Loads AdSense once, and only for visitors who get ads: AdSense set up, not Pro, and optional cookies accepted in
- * our own banner (the banner reloads the page after a choice, so this re-checks). Without consent nothing loads.
+ * Loads Google's certified consent message and then AdSense, once, and only for visitors who get ads: AdSense set
+ * up and not Pro. Google shows the message where it is required and limits the ads when someone declines.
  */
 export function AdsProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AdsState>({ status: "loading", client: null });
@@ -56,6 +57,7 @@ export function AdsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (state.status !== "on" || !state.client) return;
+    loadConsentMessage(state.client);
     if (!document.querySelector("script[data-ws-adsense]")) {
       const script = document.createElement("script");
       script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${state.client}`;
@@ -65,6 +67,20 @@ export function AdsProvider({ children }: { children: ReactNode }) {
       document.head.appendChild(script);
     }
   }, [state]);
+
+  useEffect(() => {
+    if (state.status !== "on") return;
+    let last: boolean | null = null;
+    return mirrorConsent((granted) => {
+      if (last === granted) return;
+      last = granted;
+      void fetch("/api/consent", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ granted }),
+      }).catch(() => undefined);
+    });
+  }, [state.status]);
 
   useEffect(() => {
     if (state.status !== "on") return;

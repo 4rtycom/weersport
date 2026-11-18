@@ -10,20 +10,22 @@ export type AdSurface =
   | "other";
 
 export type AdDecision =
-  | { allowed: false; reason: string; code: "HOME" | "AUTH" | "CHECKOUT" | "BILLING" | "PRO" | "NO_SCORE" | "NO_CONSENT" | "SURFACE" }
+  | { allowed: false; reason: string; code: "HOME" | "AUTH" | "CHECKOUT" | "BILLING" | "PRO" | "NO_SCORE" | "SURFACE" }
   | { allowed: true; reason: string; code: "BASIS_MOMENT" | "BASIS_SAVED" | "BASIS_GUIDE" };
 
 /** Reserved height for an in-content block, so the page does not jump when an ad loads. */
 export const AD_SLOT_MIN_HEIGHT_PX = 280;
-/** Our own cookie banner (not an ads-only CMP). Accepting optional cookies unlocks AdSense on Basis. */
+/**
+ * Mirror of the visitor's choice in Google's consent message. Only the sponsor measurement reads it; ads never do,
+ * because Google's message itself decides what Google may do.
+ */
 export const CONSENT_COOKIE = "ws_consent_cookies";
 export const CONSENT_VERSION = "cookies-v1";
 
-/** Where an in-content AdSense block may appear. AdSense never loads without consent from our cookie banner. */
+/** Where an in-content AdSense block may appear. Google's consent message handles consent for the ads themselves. */
 export function decideAdPlacement(input: {
   surface: AdSurface;
   plan: "basis" | "pro";
-  consentGranted: boolean;
   suitabilityKind?: "SCORED" | "NO_SCORE" | string | null;
 }): AdDecision {
   if (input.surface === "home") return { allowed: false, reason: "Geen advertenties op de homepage.", code: "HOME" };
@@ -34,9 +36,6 @@ export function decideAdPlacement(input: {
   if (input.plan === "pro") return { allowed: false, reason: "Pro is advertentievrij.", code: "PRO" };
   if (input.suitabilityKind === "NO_SCORE") {
     return { allowed: false, reason: "Geen advertenties als er geen score is.", code: "NO_SCORE" };
-  }
-  if (!input.consentGranted) {
-    return { allowed: false, reason: "Geen advertenties zonder cookie-toestemming.", code: "NO_CONSENT" };
   }
   if (input.surface === "moment" && input.suitabilityKind === "SCORED") {
     return { allowed: true, reason: "Eén blok ná score, UV, veiligheid en factoren.", code: "BASIS_MOMENT" };

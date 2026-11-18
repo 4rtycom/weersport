@@ -4,10 +4,9 @@ const required = [
   "lib/ads/policy.ts",
   "lib/ads/server.ts",
   "components/ads/ad-slot.tsx",
-  "components/consent-banner.tsx",
+  "lib/ads/cmp.ts",
   "components/ads/ads-host.tsx",
   "app/api/consent/route.ts",
-  "components/consent-root.tsx",
 ];
 
 for (const file of required) {
@@ -22,7 +21,6 @@ for (const token of [
   "CHECKOUT",
   "PRO",
   "NO_SCORE",
-  "NO_CONSENT",
   "BASIS_MOMENT",
   "CONSENT_COOKIE",
   "ws_consent_cookies",
@@ -31,12 +29,9 @@ for (const token of [
   if (!policy.includes(token)) throw new Error(`Policy missing ${token}`);
 }
 
-const banner = readFileSync(new URL("../components/consent-banner.tsx", import.meta.url), "utf8");
-if (banner.includes("Accepteer advertenties") || banner.includes("Advertenties alleen met jouw toestemming")) {
-  throw new Error("CMP must be cookie consent, not an ads-accept banner");
-}
-if (!banner.includes("Accepteer cookies") || !banner.includes("Cookies alleen met jouw toestemming")) {
-  throw new Error("Cookie CMP copy missing");
+const cmp = readFileSync(new URL("../lib/ads/cmp.ts", import.meta.url), "utf8");
+for (const token of ["fundingchoicesmessages.google.com", "googlefcPresent", "showRevocationMessage"]) {
+  if (!cmp.includes(token)) throw new Error(`Google consent message helper missing ${token}`);
 }
 
 const slot = readFileSync(new URL("../components/ads/ad-slot.tsx", import.meta.url), "utf8");
@@ -47,8 +42,8 @@ if (!slot.includes("no-fill") || !slot.includes("AD_SLOT_MIN_HEIGHT_PX") || !slo
 const momentView = readFileSync(new URL("../components/moment-view.tsx", import.meta.url), "utf8");
 if (!momentView.includes("AdsHost")) throw new Error("Moment view missing AdsHost after content");
 
-const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
-if (!layout.includes("ConsentRoot")) throw new Error("Root layout missing CMP banner");
+const provider = readFileSync(new URL("../components/ads/ads-provider.tsx", import.meta.url), "utf8");
+if (!provider.includes("loadConsentMessage")) throw new Error("Ads provider must load Google's consent message");
 
 const base = process.env.WEERSPORT_BASE_URL;
 if (!base) {
@@ -90,11 +85,6 @@ const home = await (await request("/")).text();
 if (home.includes("ad-slot-sandbox") || home.includes("adsbygoogle")) {
   throw new Error("Homepage must not render ad inventory");
 }
-if (!home.includes("Cookies alleen met jouw toestemming") && !home.includes("consent-banner")) {
-  // banner may be absent if prior cookie exists in other tests; fresh jar should show it
-  throw new Error("Cookie CMP banner should appear for undecided visitors");
-}
-
 const login = await (await request("/auth/inloggen")).text();
 if (login.includes("ad-slot-sandbox") || login.includes('data-ad-state="filled"')) {
   throw new Error("Auth pages must not show ads");

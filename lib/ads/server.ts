@@ -22,7 +22,6 @@ export async function resolveAdPlacement(input: { surface: AdSurface; suitabilit
   const decision = decideAdPlacement({
     surface: input.surface,
     plan,
-    consentGranted: consent.granted,
     suitabilityKind: input.suitabilityKind,
   });
   return { decision, consent, plan, scriptEnabled: decision.allowed };

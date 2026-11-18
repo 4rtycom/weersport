@@ -18,10 +18,10 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      // AdSense (in-content blocks and vignettes) and its ad-quality checks.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagservices.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google",
-      "connect-src 'self' https://api.open-meteo.com https://api.pdok.nl https://api.mollie.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google",
-      "frame-src https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.adtrafficquality.google",
+      // AdSense (in-content blocks and vignettes), its ad-quality checks and Google's certified consent message.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fundingchoicesmessages.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagservices.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google",
+      "connect-src 'self' https://fundingchoicesmessages.google.com https://api.open-meteo.com https://api.pdok.nl https://api.mollie.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google",
+      "frame-src https://fundingchoicesmessages.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.adtrafficquality.google",
       "form-action 'self'",
     ].join("; "),
   },
