@@ -1,113 +1,78 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AD_SLOT_MIN_HEIGHT_PX, adsenseConfigured } from "@/lib/ads/policy";
+import { usePathname } from "next/navigation";
+import { useAds } from "@/components/ads/ads-provider";
+import { AD_SLOT_MIN_HEIGHT_PX } from "@/lib/ads/policy";
 
-type FillState = "idle" | "loading" | "filled" | "no-fill" | "blocked";
+type FillState = "loading" | "filled" | "no-fill" | "blocked";
 
-export function AdSlot({
-  allowed,
-  reason,
-  label = "Advertentie",
-}: {
-  allowed: boolean;
-  reason: string;
-  label?: string;
-}) {
-  const [state, setState] = useState<FillState>(allowed ? "loading" : "blocked");
+/**
+ * One in-content AdSense block. It reserves height while loading (no layout shift), collapses when Google has
+ * no ad (no-fill), and renders an invisible marker when ads are not allowed here.
+ */
+export function AdSlot({ allowed, reason }: { allowed: boolean; reason: string }) {
+  const ads = useAds();
+  const pathname = usePathname();
   const ref = useRef<HTMLModElement>(null);
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
-  const slot = process.env.NEXT_PUBLIC_ADSENSE_SLOT;
-  const configured = Boolean(client && slot);
+  const [state, setState] = useState<FillState>("loading");
+  const slot = process.env.NEXT_PUBLIC_ADSENSE_SLOT?.trim();
+  const active = allowed && ads.status === "on" && Boolean(slot && ads.client);
 
   useEffect(() => {
-    if (!allowed) {
-      setState("blocked");
-      return;
-    }
+    if (!active) return;
     setState("loading");
-
-    if (!configured) {
-      // Sandbox: demonstrate fill/no-fill without loading third-party scripts.
-      const timer = window.setTimeout(() => {
-        const forceNoFill = window.location.search.includes("ad=nofill");
-        setState(forceNoFill ? "no-fill" : "filled");
-      }, 450);
-      return () => window.clearTimeout(timer);
-    }
-
-    const w = window as Window & { adsbygoogle?: unknown[] };
-    w.adsbygoogle = w.adsbygoogle || [];
+    const element = ref.current;
+    if (!element) return;
     try {
-      w.adsbygoogle.push({});
-      const timer = window.setTimeout(() => {
-        const filled = Boolean(ref.current?.getAttribute("data-ad-status") === "filled" || (ref.current?.clientHeight ?? 0) > 40);
-        setState(filled ? "filled" : "no-fill");
-      }, 1800);
-      return () => window.clearTimeout(timer);
+      const w = window as Window & { adsbygoogle?: unknown[] };
+      (w.adsbygoogle = w.adsbygoogle || []).push({});
     } catch {
       setState("no-fill");
+      return;
     }
-  }, [allowed, configured]);
+    // AdSense sets data-ad-status to "filled" or "unfilled" on the <ins> element.
+    const observer = new MutationObserver(() => {
+      const status = element.getAttribute("data-ad-status");
+      if (status === "filled") setState("filled");
+      if (status === "unfilled") setState("no-fill");
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["data-ad-status"] });
+    const timeout = window.setTimeout(() => {
+      if (!element.getAttribute("data-ad-status")) setState("no-fill");
+    }, 8000);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timeout);
+    };
+  }, [active, pathname]);
 
-  if (!allowed) {
-    return (
-      <aside className="ad-slot ad-slot-blocked" aria-label="Advertentie uitgesloten" data-ad-state="blocked">
-        <p className="ad-slot-label">Geen advertentie</p>
-        <p>{reason}</p>
-      </aside>
-    );
+  if (!allowed || ads.status === "off") {
+    return <div hidden data-ad-state="blocked" data-ad-reason={reason} />;
+  }
+  if (!active || state === "no-fill") {
+    return <div hidden className="ad-slot ad-slot-pending" data-ad-state={ads.status === "loading" ? "pending" : "no-fill"} />;
   }
 
   return (
     <aside
       className={`ad-slot ad-slot-${state}`}
-      aria-label={label}
+      aria-label="Advertentie"
       data-ad-state={state}
-      style={{ minHeight: AD_SLOT_MIN_HEIGHT_PX }}
+      style={{ minHeight: state === "filled" ? undefined : AD_SLOT_MIN_HEIGHT_PX }}
     >
-      <p className="ad-slot-label">
-        {state === "loading" && "Advertentie laden…"}
-        {state === "filled" && "Advertentie"}
-        {state === "no-fill" && "Geen advertentie beschikbaar (no-fill)"}
-        {state === "idle" && "Advertentie"}
-      </p>
-      {configured ? (
-        <ins
-          ref={ref}
-          className="adsbygoogle"
-          style={{ display: "block", minHeight: AD_SLOT_MIN_HEIGHT_PX - 36 }}
-          data-ad-client={client}
-          data-ad-slot={slot}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      ) : (
-        <div className="ad-slot-sandbox" aria-hidden={state !== "filled"}>
-          {state === "filled" ? (
-            <p>Sandbox-advertentie · één handmatig Basis-slot · vaste hoogte tegen CLS</p>
-          ) : state === "no-fill" ? (
-            <p>No-fill: ruimte blijft gereserveerd, layout schuift niet.</p>
-          ) : (
-            <p>Bezig met laden…</p>
-          )}
-        </div>
-      )}
-      <p className="ad-slot-note">{reason} AdSense is geen sport+radius-targetingengine.</p>
+      <p className="ad-slot-label">Advertentie</p>
+      {/* A fresh <ins> per page, so client-side navigation requests a new ad. */}
+      <ins
+        key={pathname}
+        ref={ref}
+        className="adsbygoogle"
+        style={{ display: "block", minHeight: AD_SLOT_MIN_HEIGHT_PX - 40 }}
+        data-ad-client={ads.client ?? undefined}
+        data-ad-slot={slot}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
     </aside>
   );
-}
-
-export function AdSenseScript({ enabled }: { enabled: boolean }) {
-  useEffect(() => {
-    if (!enabled || !adsenseConfigured()) return;
-    if (document.querySelector("script[data-ws-adsense]")) return;
-    const script = document.createElement("script");
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`;
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.dataset.wsAdsense = "true";
-    document.head.appendChild(script);
-  }, [enabled]);
-  return null;
 }

@@ -50,7 +50,7 @@ export default async function PricingPage() {
                   <Check /> Momenten en zoekopdrachten bewaren
                 </li>
                 <li>
-                  <Check /> Eén advertentie onder je advies, alleen met je toestemming
+                  <Check /> Advertenties, jij kiest de cookies
                 </li>
               </ul>
               <Link className="button button-dark" href="/auth/registreren">

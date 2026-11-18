@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import type { ReactNode } from "react";
-import { ConsentRoot } from "@/components/consent-root";
+import { AdsProvider } from "@/components/ads/ads-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -32,9 +32,11 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="nl" className={manrope.variable}>
       <body>
-        {children}
-        <SiteFooter />
-        <ConsentRoot />
+        {/* AdsProvider loads Google's certified consent message and AdSense for Basis visitors only. */}
+        <AdsProvider>
+          {children}
+          <SiteFooter />
+        </AdsProvider>
         {/* Cookieless page-view counts. Turn on Web Analytics in Vercel, then set NEXT_PUBLIC_ANALYTICS=vercel. */}
         {process.env.NEXT_PUBLIC_ANALYTICS === "vercel" ? <script defer src="/_vercel/insights/script.js" /> : null}
       </body>

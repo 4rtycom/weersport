@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CtaCard, Meter } from "@/components/info-blocks";
 import { LiveMomentCard } from "@/components/live-moment-card";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { PageHero } from "@/components/page-hero";
 import { SiteHeaderBar } from "@/components/site-header-bar";
 import { SportIcon } from "@/components/sport-icon";
@@ -81,6 +82,8 @@ export default async function LocalSportPage({ params }: Props) {
               tot {profile.idealWindKmh[1]} km/u wind. <Link href={`/sporten/${sport.id}`}>Lees de hele sportgids</Link>.
             </p>
           </section>
+
+          <AdSlot allowed reason="Eén blok ná de uitleg." />
 
           <CtaCard
             title={`Plan ${sport.name.toLowerCase()} in ${city.label}`}
